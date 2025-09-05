@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "bill_transactions")
-public class BillTransaction {
+@Table(name = "exchange_transactions")
+public class ExchangeTransaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,9 +28,6 @@ public class BillTransaction {
     
     // Item Information
     @Column(nullable = false)
-    private String itemCode;
-    
-    @Column(nullable = false)
     private String itemName;
     
     @Column(nullable = false)
@@ -39,16 +36,20 @@ public class BillTransaction {
     // Weight
     @Column(nullable = false, precision = 10, scale = 3)
     @Builder.Default
-    private BigDecimal weight = BigDecimal.ZERO;
+    private BigDecimal grossWeight = BigDecimal.ZERO;
+    
+    @Column(precision = 10, scale = 3)
+    @Builder.Default
+    private BigDecimal deduction = BigDecimal.ZERO;
+    
+    @Column(nullable = false, precision = 10, scale = 3)
+    @Builder.Default
+    private BigDecimal netWeight = BigDecimal.ZERO;
     
     // Pricing
     @Column(nullable = false, precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal ratePerTenGrams = BigDecimal.ZERO;
-    
-    @Column(precision = 12, scale = 2)
-    @Builder.Default
-    private BigDecimal labourCharges = BigDecimal.ZERO;
     
     // Total amount
     @Column(nullable = false, precision = 12, scale = 2)
@@ -65,27 +66,29 @@ public class BillTransaction {
     @PrePersist
     protected void onCreate() {
         createdDate = LocalDateTime.now();
-        calculateTotalAmount();
+        calculateNetWeightAndAmount();
     }
     
     @PreUpdate
     protected void onUpdate() {
         updatedDate = LocalDateTime.now();
-        calculateTotalAmount();
+        calculateNetWeightAndAmount();
     }
     
-    public void calculateTotalAmount() {
-        // Calculate gold value: (weight * ratePerTenGrams) / 10
-        BigDecimal goldValue = BigDecimal.ZERO;
-        if (weight != null && ratePerTenGrams != null) {
-            goldValue = weight.multiply(ratePerTenGrams)
-                .divide(BigDecimal.valueOf(10), 2, RoundingMode.HALF_UP);
+    public void calculateNetWeightAndAmount() {
+        // Calculate net weight = grossWeight - deduction
+        if (grossWeight != null && deduction != null) {
+            netWeight = grossWeight.subtract(deduction);
+        } else if (grossWeight != null) {
+            netWeight = grossWeight;
         }
         
-        // Calculate total amount = goldValue + labourCharges
-        totalAmount = goldValue;
-        if (labourCharges != null) {
-            totalAmount = totalAmount.add(labourCharges);
+        // Calculate total amount: (netWeight * ratePerTenGrams) / 10
+        if (netWeight != null && ratePerTenGrams != null) {
+            totalAmount = netWeight.multiply(ratePerTenGrams)
+                .divide(BigDecimal.valueOf(10), 2, RoundingMode.HALF_UP);
+        } else {
+            totalAmount = BigDecimal.ZERO;
         }
     }
 }

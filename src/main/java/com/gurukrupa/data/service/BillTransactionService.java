@@ -34,9 +34,6 @@ public class BillTransactionService {
         return billTransactionRepository.findByBillId(billId);
     }
     
-    public List<BillTransaction> findByTransactionType(BillTransaction.TransactionType transactionType) {
-        return billTransactionRepository.findByTransactionType(transactionType);
-    }
     
     public List<BillTransaction> findByItemCode(String itemCode) {
         return billTransactionRepository.findByItemCodeContainingIgnoreCase(itemCode);
@@ -54,52 +51,21 @@ public class BillTransactionService {
         return billTransactionRepository.findByDateRange(startDate, endDate);
     }
     
-    public BillTransaction createSaleTransaction(Long jewelryItemId, String itemCode, String itemName, String metalType,
-                                               Integer quantity, BigDecimal weightPerUnit, 
-                                               BigDecimal ratePerTenGrams, BigDecimal labourCharges,
-                                               BigDecimal stoneCharges, BigDecimal otherCharges) {
+    public BillTransaction createBillTransaction(String itemCode, String itemName, String metalType,
+                                               BigDecimal weight, BigDecimal ratePerTenGrams, 
+                                               BigDecimal labourCharges) {
         
         BillTransaction transaction = BillTransaction.builder()
-                .jewelryItemId(jewelryItemId)
                 .itemCode(itemCode)
                 .itemName(itemName)
                 .metalType(metalType)
-                .quantity(quantity)
-                .weightPerUnit(weightPerUnit)
+                .weight(weight)
                 .ratePerTenGrams(ratePerTenGrams)
                 .labourCharges(labourCharges != null ? labourCharges : BigDecimal.ZERO)
-                .stoneCharges(stoneCharges != null ? stoneCharges : BigDecimal.ZERO)
-                .otherCharges(otherCharges != null ? otherCharges : BigDecimal.ZERO)
-                .transactionType(BillTransaction.TransactionType.SALE)
                 .build();
         
-        // Calculate amounts
-        transaction.calculateAmounts();
-        
-        return transaction;
-    }
-    
-    public BillTransaction createExchangeTransaction(String itemName, String metalType,
-                                                   BigDecimal totalWeight, BigDecimal deductionWeight,
-                                                   BigDecimal ratePerTenGrams) {
-        
-        BillTransaction transaction = BillTransaction.builder()
-                .itemCode("EXCHANGE-" + System.currentTimeMillis()) // Generate temporary code for exchange
-                .itemName(itemName)
-                .metalType(metalType)
-                .quantity(1) // Exchange items are typically counted as 1
-                .weightPerUnit(totalWeight)
-                .totalWeight(totalWeight)
-                .deductionWeight(deductionWeight != null ? deductionWeight : BigDecimal.ZERO)
-                .ratePerTenGrams(ratePerTenGrams)
-                .labourCharges(BigDecimal.ZERO) // Exchange items typically don't have labour charges
-                .stoneCharges(BigDecimal.ZERO)
-                .otherCharges(BigDecimal.ZERO)
-                .transactionType(BillTransaction.TransactionType.EXCHANGE)
-                .build();
-        
-        // Calculate amounts
-        transaction.calculateAmounts();
+        // Calculate total amount
+        transaction.calculateTotalAmount();
         
         return transaction;
     }
@@ -115,10 +81,6 @@ public class BillTransactionService {
     
     public Double getTotalWeightSoldByMetal(String metalType) {
         return billTransactionRepository.getTotalWeightSoldByMetal(metalType);
-    }
-    
-    public Double getTotalWeightExchangedByMetal(String metalType) {
-        return billTransactionRepository.getTotalWeightExchangedByMetal(metalType);
     }
     
     public List<Object[]> getTopSellingItems() {

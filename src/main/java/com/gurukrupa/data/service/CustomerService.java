@@ -75,4 +75,12 @@ public class CustomerService {
     public Optional<Customer> findByMobile(String mobile){
         return customerRepository.findByMobile(mobile);
     }
+    
+    public List<Customer> searchByName(String name) {
+        return customerRepository.searchByNameContaining(name);
+    }
+    
+    public Optional<Customer> findByNameAndMobile(String name, String mobile) {
+        return customerRepository.findByNameAndMobile(name, mobile);
+    }
 }

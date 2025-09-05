@@ -14,34 +14,25 @@ public interface BillTransactionRepository extends JpaRepository<BillTransaction
     
     List<BillTransaction> findByBillId(Long billId);
     
-    List<BillTransaction> findByTransactionType(BillTransaction.TransactionType transactionType);
-    
     List<BillTransaction> findByItemCodeContainingIgnoreCase(String itemCode);
     
     List<BillTransaction> findByItemNameContainingIgnoreCase(String itemName);
     
     List<BillTransaction> findByMetalType(String metalType);
     
-    @Query("SELECT bt FROM BillTransaction bt WHERE bt.bill.id = :billId AND bt.transactionType = :transactionType")
-    List<BillTransaction> findByBillIdAndTransactionType(@Param("billId") Long billId, 
-                                                          @Param("transactionType") BillTransaction.TransactionType transactionType);
-    
     @Query("SELECT bt FROM BillTransaction bt WHERE bt.createdDate BETWEEN :startDate AND :endDate")
     List<BillTransaction> findByDateRange(@Param("startDate") LocalDateTime startDate, 
                                           @Param("endDate") LocalDateTime endDate);
     
-    @Query("SELECT COALESCE(SUM(bt.quantity), 0) FROM BillTransaction bt WHERE bt.itemCode = :itemCode AND bt.transactionType = 'SALE'")
+    @Query("SELECT COUNT(bt) FROM BillTransaction bt WHERE bt.itemCode = :itemCode")
     Integer getTotalQuantitySoldByItemCode(@Param("itemCode") String itemCode);
     
-    @Query("SELECT COALESCE(SUM(bt.totalWeight), 0) FROM BillTransaction bt WHERE bt.metalType = :metalType AND bt.transactionType = 'SALE'")
+    @Query("SELECT COALESCE(SUM(bt.weight), 0) FROM BillTransaction bt WHERE bt.metalType = :metalType")
     Double getTotalWeightSoldByMetal(@Param("metalType") String metalType);
     
-    @Query("SELECT COALESCE(SUM(bt.totalWeight), 0) FROM BillTransaction bt WHERE bt.metalType = :metalType AND bt.transactionType = 'EXCHANGE'")
-    Double getTotalWeightExchangedByMetal(@Param("metalType") String metalType);
-    
-    @Query("SELECT bt.itemName, COALESCE(SUM(bt.quantity), 0) as totalQuantity FROM BillTransaction bt WHERE bt.transactionType = 'SALE' GROUP BY bt.itemName ORDER BY totalQuantity DESC")
+    @Query("SELECT bt.itemName, COUNT(bt) as totalCount FROM BillTransaction bt GROUP BY bt.itemName ORDER BY totalCount DESC")
     List<Object[]> getTopSellingItems();
     
-    @Query("SELECT bt.metalType, COALESCE(SUM(bt.totalWeight), 0) as totalWeight FROM BillTransaction bt WHERE bt.transactionType = 'SALE' GROUP BY bt.metalType ORDER BY totalWeight DESC")
+    @Query("SELECT bt.metalType, COALESCE(SUM(bt.weight), 0) as totalWeight FROM BillTransaction bt GROUP BY bt.metalType ORDER BY totalWeight DESC")
     List<Object[]> getSalesByMetal();
 }

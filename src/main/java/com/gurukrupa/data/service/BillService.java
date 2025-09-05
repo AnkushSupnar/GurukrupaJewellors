@@ -2,9 +2,11 @@ package com.gurukrupa.data.service;
 
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
+import com.gurukrupa.data.entities.ExchangeTransaction;
 import com.gurukrupa.data.entities.Customer;
 import com.gurukrupa.data.repository.BillRepository;
 import com.gurukrupa.data.repository.BillTransactionRepository;
+import com.gurukrupa.data.repository.ExchangeTransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,9 @@ public class BillService {
     
     @Autowired
     private BillTransactionRepository billTransactionRepository;
+    
+    @Autowired
+    private ExchangeTransactionRepository exchangeTransactionRepository;
     
     @Autowired
     private CustomerService customerService;
@@ -51,8 +56,8 @@ public class BillService {
     }
     
     public Bill createBillFromTransaction(Customer customer,
-                                        List<BillTransaction> saleTransactions, 
-                                        List<BillTransaction> exchangeTransactions,
+                                        List<BillTransaction> billTransactions, 
+                                        List<ExchangeTransaction> exchangeTransactions,
                                         BigDecimal discount, BigDecimal gstRate, 
                                         Bill.PaymentMethod paymentMethod) {
         
@@ -69,25 +74,23 @@ public class BillService {
                 .paymentMethod(paymentMethod != null ? paymentMethod : Bill.PaymentMethod.CASH)
                 .status(Bill.BillStatus.DRAFT)
                 .billDate(LocalDateTime.now())
+                .paidAmount(BigDecimal.ZERO)
+                .pendingAmount(BigDecimal.ZERO)
                 .billTransactions(new ArrayList<>())
+                .exchangeTransactions(new ArrayList<>())
                 .build();
         
-        // Add all transactions
-        saleTransactions.forEach(transaction -> {
-            transaction.setTransactionType(BillTransaction.TransactionType.SALE);
+        // Add all bill transactions with proper bill reference
+        billTransactions.forEach(transaction -> {
+            transaction.setBill(bill);
             bill.getBillTransactions().add(transaction);
         });
         
+        // Add all exchange transactions with proper bill reference
         exchangeTransactions.forEach(transaction -> {
-            transaction.setTransactionType(BillTransaction.TransactionType.EXCHANGE);
-            bill.getBillTransactions().add(transaction);
+            transaction.setBill(bill);
+            bill.getExchangeTransactions().add(transaction);
         });
-        
-        // Calculate exchange amount
-        BigDecimal exchangeAmount = exchangeTransactions.stream()
-                .map(BillTransaction::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        bill.setExchangeAmount(exchangeAmount);
         
         return saveBill(bill);
     }
@@ -175,11 +178,27 @@ public class BillService {
         return billTransactionRepository.findByBillId(billId);
     }
     
-    public List<BillTransaction> getSaleTransactions(Long billId) {
-        return billTransactionRepository.findByBillIdAndTransactionType(billId, BillTransaction.TransactionType.SALE);
+    public List<ExchangeTransaction> getExchangeTransactions(Long billId) {
+        return exchangeTransactionRepository.findByBillId(billId);
     }
     
-    public List<BillTransaction> getExchangeTransactions(Long billId) {
-        return billTransactionRepository.findByBillIdAndTransactionType(billId, BillTransaction.TransactionType.EXCHANGE);
+    public List<Bill> findByCustomerId(Long customerId) {
+        return billRepository.findByCustomerIdOrderByBillDateDesc(customerId);
+    }
+    
+    public List<Bill> findByCustomerIdAndDateRange(Long customerId, LocalDateTime fromDate, LocalDateTime toDate) {
+        return billRepository.findByCustomerIdAndBillDateBetween(customerId, fromDate, toDate);
+    }
+    
+    public BigDecimal getTotalPendingAmountForCustomer(Long customerId) {
+        return billRepository.getTotalPendingAmountByCustomerId(customerId);
+    }
+    
+    public Double getTodaysCollectedAmount() {
+        return billRepository.getTodaysCollectedAmount();
+    }
+    
+    public Double getCollectedAmountByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return billRepository.getCollectedAmountByDateRange(startDate, endDate);
     }
 }

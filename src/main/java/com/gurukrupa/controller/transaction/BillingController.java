@@ -6,6 +6,9 @@ import com.gurukrupa.customUI.AutoCompleteTextField;
 import com.gurukrupa.data.entities.Customer;
 import com.gurukrupa.data.service.CustomerService;
 import com.gurukrupa.data.service.MetalService;
+import com.gurukrupa.data.service.MetalRateService;
+import com.gurukrupa.data.entities.Metal;
+import com.gurukrupa.data.entities.MetalRate;
 import com.gurukrupa.view.AlertNotification;
 import com.gurukrupa.view.FxmlView;
 import com.gurukrupa.view.StageManager;
@@ -21,6 +24,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -28,9 +32,11 @@ import com.gurukrupa.data.entities.JewelryItem;
 import com.gurukrupa.data.service.JewelryItemService;
 import com.gurukrupa.data.service.BillService;
 import com.gurukrupa.data.service.BillTransactionService;
+import com.gurukrupa.data.service.ExchangeTransactionService;
 import com.gurukrupa.data.service.AppSettingsService;
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
+import com.gurukrupa.data.entities.ExchangeTransaction;
 import javafx.stage.Stage;
 import java.util.List;
 import javafx.scene.input.KeyCode;
@@ -52,6 +58,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import com.gurukrupa.data.service.BillPdfService;
 import java.io.File;
 import javafx.stage.FileChooser;
@@ -69,9 +77,13 @@ public class BillingController implements Initializable {
     @Autowired
     private MetalService metalService;
     @Autowired
+    private MetalRateService metalRateService;
+    @Autowired
     private BillService billService;
     @Autowired
     private BillTransactionService billTransactionService;
+    @Autowired
+    private ExchangeTransactionService exchangeTransactionService;
     @Autowired
     private AppSettingsService appSettingsService;
     @Autowired
@@ -82,21 +94,23 @@ public class BillingController implements Initializable {
     private Stage dialogStage;
     @FXML
     private Button btnAddCustomer, btnSearchCustomer, btnCloseFrame, btnAddItem, btnClearItem, 
-                   btnSearchItem, btnSelectCustomer, btnGenerateBill, btnPrintInvoice, 
-                   btnSaveDraft, btnAddExchange, btnClearExchange,
-                   btnRefreshItems, btnNewBill, btnCloseBilling, btnClearSearch, btnRefreshCatalog,
-                   btnCash, btnUPI, btnCard;
+                   btnSearchItem, btnSelectCustomer, btnPrintBill, 
+                   btnAddExchange, btnClearExchange,
+                   btnNewBill, btnCloseBilling, btnClearSearch, btnRefreshCatalog,
+                   btnCash, btnUPI, btnCard, btnPartial, btnCredit;
     @FXML
     private TextField txtCustomerName, txtMobileNo, txtCustomerAddress, txtItemCode, 
                       txtItemName, txtRate, txtQuantity, txtWeight, txtLabour, txtTotalAmount,
                       txtExchangeItemName, txtExchangeRate, txtExchangeWeight, 
-                      txtExchangeDeduction, txtExchangeAmount;
+                      txtExchangeDeduction, txtExchangeAmount, txtPartialAmount;
     @FXML
-    private ComboBox<String> cmbMetal, cmbExchangeMetal;
+    private ComboBox<Metal> cmbMetal, cmbExchangeMetal;
     @FXML
     private TableView itemsTable, exchangeTable;
     @FXML
     private Label lblBillAmount, lblExchangeAmount, lblFinalAmount, lblItemCount, lblSubtotal, lblCGST, lblSGST, lblGrandTotal;
+    @FXML
+    private VBox partialPaymentBox;
     @FXML
     private TextField txtItemSearch;
     @FXML
@@ -118,6 +132,7 @@ public class BillingController implements Initializable {
     private final int[] selectedIndex = {0}; // track current selected suggestion index
     private SuggestionProvider<String> customerNames;
     private Bill currentBill = null; // Store the current bill after generation
+    private boolean isPartialPayment = false; // Track if partial payment is selected
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize button actions
@@ -128,16 +143,13 @@ public class BillingController implements Initializable {
         btnClearItem.setOnAction(e -> clearItemFields());
         btnSearchItem.setOnAction(e -> searchItem());
         btnSelectCustomer.setOnAction(e -> selectCustomer());
-        btnGenerateBill.setOnAction(e -> generateBill());
-        btnPrintInvoice.setOnAction(e -> printInvoice());
-        btnSaveDraft.setOnAction(e -> saveDraft());
+        btnPrintBill.setOnAction(e -> printBill());
         
         // Exchange section buttons
         btnAddExchange.setOnAction(e -> addExchange());
         btnClearExchange.setOnAction(e -> clearExchangeFields());
         
         // Navigation buttons
-        btnRefreshItems.setOnAction(e -> refreshItemCatalog());
         btnNewBill.setOnAction(e -> newBill());
         btnCloseBilling.setOnAction(e -> closeFrame());
         
@@ -145,6 +157,8 @@ public class BillingController implements Initializable {
         btnCash.setOnAction(e -> processCashPayment());
         btnUPI.setOnAction(e -> processUPIPayment());
         btnCard.setOnAction(e -> processCardPayment());
+        btnPartial.setOnAction(e -> togglePartialPayment());
+        btnCredit.setOnAction(e -> processCreditPayment());
         
         // Item catalog functionality
         btnClearSearch.setOnAction(e -> clearSearch());
@@ -327,7 +341,8 @@ public class BillingController implements Initializable {
             // Get values
             String itemCode = txtItemCode.getText().trim();
             String itemName = txtItemName.getText().trim();
-            String metal = cmbMetal.getSelectionModel().getSelectedItem();
+            Metal selectedMetal = cmbMetal.getSelectionModel().getSelectedItem();
+            String metalName = selectedMetal.getMetalName();
             double rate = Double.parseDouble(txtRate.getText());
             int quantity = txtQuantity.getText().isEmpty() ? 1 : Integer.parseInt(txtQuantity.getText());
             double weight = Double.parseDouble(txtWeight.getText());
@@ -337,7 +352,7 @@ public class BillingController implements Initializable {
             // Add item to billing table
             int sno = billingItems.size() + 1;
             Long jewelryItemId = selectedJewelryItem != null ? selectedJewelryItem.getId() : null;
-            BillingItem billingItem = new BillingItem(sno, jewelryItemId, itemCode, itemName, metal, rate, quantity, weight, labour, totalAmount);
+            BillingItem billingItem = new BillingItem(sno, jewelryItemId, itemCode, itemName, metalName, rate, quantity, weight, labour, totalAmount);
             billingItems.add(billingItem);
             System.out.println("Adding item: " + itemName + ", Amount: " + totalAmount);
             
@@ -404,31 +419,30 @@ public class BillingController implements Initializable {
         txtItemCode.setText(item.getItemCode());
         txtItemName.setText(item.getItemName());
         
-        // Set metal type with detailed debugging
+        // Set metal type
         if (item.getMetalType() != null) {
             String itemMetalType = item.getMetalType();
             System.out.println("Item metal type from database: '" + itemMetalType + "'");
-            System.out.println("Available metals in dropdown: " + cmbMetal.getItems());
             
             boolean found = false;
             
-            // First try exact match
-            for (String metal : cmbMetal.getItems()) {
-                if (metal.equals(itemMetalType)) {
+            // First try exact match by metal name
+            for (Metal metal : cmbMetal.getItems()) {
+                if (metal.getMetalName().equals(itemMetalType)) {
                     cmbMetal.getSelectionModel().select(metal);
                     found = true;
-                    System.out.println("Found exact match: " + metal);
+                    System.out.println("Found exact match: " + metal.getMetalName());
                     break;
                 }
             }
             
             // If no exact match, try case-insensitive match
             if (!found) {
-                for (String metal : cmbMetal.getItems()) {
-                    if (metal.equalsIgnoreCase(itemMetalType)) {
+                for (Metal metal : cmbMetal.getItems()) {
+                    if (metal.getMetalName().equalsIgnoreCase(itemMetalType)) {
                         cmbMetal.getSelectionModel().select(metal);
                         found = true;
-                        System.out.println("Found case-insensitive match: " + metal);
+                        System.out.println("Found case-insensitive match: " + metal.getMetalName());
                         break;
                     }
                 }
@@ -436,13 +450,13 @@ public class BillingController implements Initializable {
             
             // If still no match, try contains
             if (!found) {
-                for (String metal : cmbMetal.getItems()) {
+                for (Metal metal : cmbMetal.getItems()) {
                     // Check if dropdown metal contains item metal or vice versa
-                    if (metal.toUpperCase().contains(itemMetalType.toUpperCase()) || 
-                        itemMetalType.toUpperCase().contains(metal.split(" ")[0].toUpperCase())) {
+                    if (metal.getMetalName().toUpperCase().contains(itemMetalType.toUpperCase()) || 
+                        itemMetalType.toUpperCase().contains(metal.getMetalName().split(" ")[0].toUpperCase())) {
                         cmbMetal.getSelectionModel().select(metal);
                         found = true;
-                        System.out.println("Found partial match: " + metal);
+                        System.out.println("Found partial match: " + metal.getMetalName());
                         break;
                     }
                 }
@@ -453,10 +467,7 @@ public class BillingController implements Initializable {
             }
         }
         
-        // Set rate
-        if (item.getGoldRate() != null) {
-            txtRate.setText(item.getGoldRate().toString());
-        }
+        // Don't set rate from item - it will be set automatically from metal rates when metal is selected
         
         // Set weight - use net weight if available, otherwise gross weight
         if (item.getNetWeight() != null) {
@@ -489,47 +500,43 @@ public class BillingController implements Initializable {
         }
     }
     
-    private void generateBill() {
+    private Bill createBillFromCurrentData() {
         try {
             // Validate customer information
             if (txtCustomerName.getText().trim().isEmpty()) {
                 alert.showError("Please enter customer information");
-                return;
+                return null;
             }
             
             // Validate that we have items to bill
             if (billingItems.isEmpty()) {
                 alert.showError("Please add items to generate bill");
-                return;
+                return null;
             }
             
-            // Create sale transactions from billing items
-            List<BillTransaction> saleTransactions = new ArrayList<>();
+            // Create bill transactions from billing items
+            List<BillTransaction> billTransactions = new ArrayList<>();
             for (BillingItem item : billingItems) {
-                BillTransaction transaction = billTransactionService.createSaleTransaction(
-                    item.getJewelryItemId(),
+                BillTransaction transaction = billTransactionService.createBillTransaction(
                     item.getItemCode(),
                     item.getItemName(),
                     item.getMetal(),
-                    item.getQuantity(),
                     new BigDecimal(item.getWeight()),
                     new BigDecimal(item.getRate()),
-                    new BigDecimal(item.getLabour()),
-                    null, // stone charges
-                    null  // other charges
+                    new BigDecimal(item.getLabour())
                 );
-                saleTransactions.add(transaction);
+                billTransactions.add(transaction);
             }
             
             // Create exchange transactions from exchange items
-            List<BillTransaction> exchangeTransactions = new ArrayList<>();
+            List<ExchangeTransaction> exchangeTransactions = new ArrayList<>();
             for (ExchangeItem item : exchangeItems) {
-                BillTransaction transaction = billTransactionService.createExchangeTransaction(
+                ExchangeTransaction transaction = exchangeTransactionService.createExchangeTransaction(
                     item.getItemName(),
                     item.getMetal(),
-                        BigDecimal.valueOf(item.getWeight()),
-                        BigDecimal.valueOf(item.getDeduction()),
-                        BigDecimal.valueOf(item.getRate())
+                    BigDecimal.valueOf(item.getWeight()),
+                    BigDecimal.valueOf(item.getDeduction()),
+                    BigDecimal.valueOf(item.getRate())
                 );
                 exchangeTransactions.add(transaction);
             }
@@ -542,11 +549,11 @@ public class BillingController implements Initializable {
                     customer = customerOpt.get();
                 } else {
                     alert.showError("Customer not found. Please search and select a customer first.");
-                    return;
+                    return null;
                 }
             } else {
                 alert.showError("Please search and select a customer first.");
-                return;
+                return null;
             }
             
             // Get payment details
@@ -558,7 +565,7 @@ public class BillingController implements Initializable {
             // Create and save bill (without specifying payment method yet)
             Bill savedBill = billService.createBillFromTransaction(
                 customer,
-                saleTransactions,
+                billTransactions,
                 exchangeTransactions,
                 discount,
                 gstRate,
@@ -570,60 +577,34 @@ public class BillingController implements Initializable {
             // Store the current bill for payment processing
             currentBill = savedBill;
             
-            alert.showSuccess("Bill generated successfully! Bill Number: " + savedBill.getBillNumber() + "\nNow select a payment method.");
+            return savedBill;
             
         } catch (Exception e) {
             e.printStackTrace();
-            alert.showError("Error generating bill: " + e.getMessage());
+            alert.showError("Error creating bill: " + e.getMessage());
+            return null;
         }
     }
     
-    private void printInvoice() {
+    private void printBill() {
         try {
-            // Validate if bill is generated
             if (currentBill == null) {
-                alert.showError("Please generate and save the bill first by selecting a payment method.");
+                alert.showError("No bill available to print. Please complete a transaction first.");
                 return;
             }
             
-            // Check if bill is paid
-            if (currentBill.getStatus() != Bill.BillStatus.PAID) {
+            if (currentBill.getStatus() != Bill.BillStatus.PAID && 
+                currentBill.getStatus() != Bill.BillStatus.CONFIRMED) {
                 alert.showError("Please complete the payment first by selecting a payment method.");
                 return;
             }
             
-            // Generate filename
-            String fileName = "Bill_" + currentBill.getBillNumber().replace("/", "_") + ".pdf";
-            File pdfFile = new File("bills" + File.separator + fileName);
-            
-            // Check if PDF file exists
-            if (!pdfFile.exists()) {
-                // Generate PDF if it doesn't exist
-                billPdfService.generateBillPdf(currentBill, pdfFile.getPath());
-            }
-            
-            // Open the PDF file
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().open(pdfFile);
-                System.out.println("Opening PDF: " + pdfFile.getPath());
-            } else {
-                alert.showError("Desktop operations are not supported on this system.");
-            }
+            // Generate and open PDF
+            generateAndSavePdf(currentBill);
             
         } catch (Exception e) {
             e.printStackTrace();
-            alert.showError("Error opening invoice: " + e.getMessage());
-        }
-    }
-    
-    private void saveDraft() {
-        try {
-            // TODO: Implement actual draft saving to database
-            System.out.println("Saving draft bill");
-            alert.showSuccess("Draft saved successfully!");
-            
-        } catch (Exception e) {
-            alert.showError("Error saving draft: " + e.getMessage());
+            alert.showError("Error printing bill: " + e.getMessage());
         }
     }
     
@@ -707,7 +688,8 @@ public class BillingController implements Initializable {
             
             // Get values
             String itemName = txtExchangeItemName.getText().trim();
-            String metal = cmbExchangeMetal.getSelectionModel().getSelectedItem();
+            Metal selectedMetal = cmbExchangeMetal.getSelectionModel().getSelectedItem();
+            String metalName = selectedMetal.getMetalName();
             double rate = Double.parseDouble(txtExchangeRate.getText());
             double weight = Double.parseDouble(txtExchangeWeight.getText());
             double deduction = txtExchangeDeduction.getText().isEmpty() ? 0 : Double.parseDouble(txtExchangeDeduction.getText());
@@ -715,7 +697,7 @@ public class BillingController implements Initializable {
             
             // Add item to exchange table
             int sno = exchangeItems.size() + 1;
-            ExchangeItem exchangeItem = new ExchangeItem(sno, itemName, metal, rate, weight, deduction, amount);
+            ExchangeItem exchangeItem = new ExchangeItem(sno, itemName, metalName, rate, weight, deduction, amount);
             exchangeItems.add(exchangeItem);
             System.out.println("Adding exchange item: " + itemName + ", Amount: " + amount);
             
@@ -845,6 +827,14 @@ public class BillingController implements Initializable {
         txtDiscount.setText("");
         txtGSTRate.setText("3");
         currentBill = null; // Reset current bill
+        
+        // Reset partial payment state
+        isPartialPayment = false;
+        partialPaymentBox.setVisible(false);
+        partialPaymentBox.setManaged(false);
+        txtPartialAmount.clear();
+        btnPartial.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        
         System.out.println("Started new bill");
     }
     
@@ -1083,16 +1073,103 @@ public class BillingController implements Initializable {
     
     private void loadMetalTypes() {
         try {
-            // Get metal names from Metal table
-            List<String> metalNames = metalService.getAllMetalNames();
-            ObservableList<String> metalTypes = FXCollections.observableArrayList(metalNames);
-            cmbMetal.setItems(metalTypes);
-            cmbExchangeMetal.setItems(metalTypes);
+            // Get active metals from Metal table
+            List<Metal> metals = metalService.getAllActiveMetals();
+            ObservableList<Metal> metalList = FXCollections.observableArrayList(metals);
             
-            System.out.println("Loaded " + metalTypes.size() + " metal types from database: " + metalTypes);
+            // Configure ComboBox to display metal name
+            cmbMetal.setItems(metalList);
+            cmbMetal.setConverter(new javafx.util.StringConverter<Metal>() {
+                @Override
+                public String toString(Metal metal) {
+                    return metal != null ? metal.getMetalName() : "";
+                }
+                
+                @Override
+                public Metal fromString(String string) {
+                    return null;
+                }
+            });
+            
+            cmbExchangeMetal.setItems(metalList);
+            cmbExchangeMetal.setConverter(new javafx.util.StringConverter<Metal>() {
+                @Override
+                public String toString(Metal metal) {
+                    return metal != null ? metal.getMetalName() : "";
+                }
+                
+                @Override
+                public Metal fromString(String string) {
+                    return null;
+                }
+            });
+            
+            // Add listener to update rate when metal is selected for billing
+            cmbMetal.valueProperty().addListener((obs, oldMetal, newMetal) -> {
+                if (newMetal != null) {
+                    updateMetalRate(newMetal);
+                }
+            });
+            
+            // Add listener to update rate when metal is selected for exchange
+            cmbExchangeMetal.valueProperty().addListener((obs, oldMetal, newMetal) -> {
+                if (newMetal != null) {
+                    updateExchangeMetalRate(newMetal);
+                }
+            });
+            
+            System.out.println("Loaded " + metalList.size() + " metal types from database");
         } catch (Exception e) {
             System.err.println("Error loading metal types: " + e.getMessage());
             alert.showError("Failed to load metal types: " + e.getMessage());
+        }
+    }
+    
+    private void updateMetalRate(Metal metal) {
+        try {
+            // Get the latest rate for the selected metal
+            Optional<MetalRate> latestRate = metalRateService.getLatestMetalRate(metal.getId(), LocalDate.now());
+            
+            if (latestRate.isPresent()) {
+                // Set the selling rate in the rate field
+                BigDecimal sellingRate = latestRate.get().getSellingRate();
+                if (sellingRate == null) {
+                    // If no selling rate, use rate per 10 grams
+                    sellingRate = latestRate.get().getRatePerTenGrams();
+                }
+                txtRate.setText(sellingRate.setScale(2, RoundingMode.HALF_UP).toString());
+            } else {
+                // No rate found for today or earlier
+                alert.showError("No rate found for " + metal.getMetalName() + ". Please set the metal rate first.");
+                txtRate.setText("0.00");
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching metal rate: " + e.getMessage());
+            alert.showError("Error fetching metal rate: " + e.getMessage());
+        }
+    }
+    
+    private void updateExchangeMetalRate(Metal metal) {
+        try {
+            // Get the latest rate for the selected metal
+            Optional<MetalRate> latestRate = metalRateService.getLatestMetalRate(metal.getId(), LocalDate.now());
+            
+            if (latestRate.isPresent()) {
+                // Set the buying rate for exchange
+                BigDecimal buyingRate = latestRate.get().getBuyingRate();
+                if (buyingRate == null) {
+                    // If no buying rate, use rate per 10 grams
+                    buyingRate = latestRate.get().getRatePerTenGrams();
+                }
+                txtExchangeRate.setText(buyingRate.setScale(2, RoundingMode.HALF_UP).toString());
+            } else {
+                // No rate found for today or earlier
+                alert.showError("No rate found for " + metal.getMetalName() + ". Please set the metal rate first.");
+                txtExchangeRate.setText("0.00");
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching metal rate: " + e.getMessage());
+            alert.showError("Error fetching metal rate: " + e.getMessage());
         }
     }
     
@@ -1115,14 +1192,45 @@ public class BillingController implements Initializable {
     
     private void processCashPayment() {
         try {
+            // Create bill if not already created
             if (currentBill == null) {
-                alert.showError("Please generate the bill first before processing payment.");
-                return;
+                currentBill = createBillFromCurrentData();
+                if (currentBill == null) {
+                    return; // Error already shown in createBillFromCurrentData
+                }
             }
             
-            // Update bill payment method to CASH
+            // Check if partial payment is active
+            BigDecimal paidAmount = currentBill.getGrandTotal(); // Default to full payment
+            if (isPartialPayment) {
+                String amountText = txtPartialAmount.getText().trim();
+                if (amountText.isEmpty()) {
+                    alert.showError("Please enter a valid partial payment amount.");
+                    return;
+                }
+                
+                try {
+                    paidAmount = new BigDecimal(amountText);
+                    if (paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                        alert.showError("Partial payment amount must be greater than zero.");
+                        return;
+                    }
+                    if (paidAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+                        alert.showError("Payment amount cannot exceed the bill total.");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    alert.showError("Please enter a valid numeric amount.");
+                    return;
+                }
+            }
+            
+            // Update bill payment details
             currentBill.setPaymentMethod(Bill.PaymentMethod.CASH);
-            currentBill.setStatus(Bill.BillStatus.PAID);
+            currentBill.setPaidAmount(paidAmount);
+            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(paidAmount));
+            currentBill.setStatus(paidAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
+                                 Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
             
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
@@ -1130,8 +1238,26 @@ public class BillingController implements Initializable {
             // Generate PDF
             generateAndSavePdf(updatedBill);
             
+            // Hide partial payment box
+            if (isPartialPayment) {
+                partialPaymentBox.setVisible(false);
+                partialPaymentBox.setManaged(false);
+                txtPartialAmount.clear();
+                isPartialPayment = false;
+            }
+            
             // Show success message
-            alert.showSuccess("Cash payment processed successfully!\nBill saved and PDF generated.");
+            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                alert.showSuccess(String.format(
+                    "Cash payment processed successfully!\n" +
+                    "Paid Amount: ₹%.2f\n" +
+                    "Pending Amount: ₹%.2f\n" +
+                    "Bill saved and PDF generated.",
+                    paidAmount, updatedBill.getPendingAmount()
+                ));
+            } else {
+                alert.showSuccess("Cash payment processed successfully!\nBill saved and PDF generated.");
+            }
             
             // Reset for new bill
             newBill();
@@ -1144,14 +1270,45 @@ public class BillingController implements Initializable {
     
     private void processUPIPayment() {
         try {
+            // Create bill if not already created
             if (currentBill == null) {
-                alert.showError("Please generate the bill first before processing payment.");
-                return;
+                currentBill = createBillFromCurrentData();
+                if (currentBill == null) {
+                    return; // Error already shown in createBillFromCurrentData
+                }
             }
             
-            // Update bill payment method to UPI
+            // Check if partial payment is active
+            BigDecimal paidAmount = currentBill.getGrandTotal(); // Default to full payment
+            if (isPartialPayment) {
+                String amountText = txtPartialAmount.getText().trim();
+                if (amountText.isEmpty()) {
+                    alert.showError("Please enter a valid partial payment amount.");
+                    return;
+                }
+                
+                try {
+                    paidAmount = new BigDecimal(amountText);
+                    if (paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                        alert.showError("Partial payment amount must be greater than zero.");
+                        return;
+                    }
+                    if (paidAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+                        alert.showError("Payment amount cannot exceed the bill total.");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    alert.showError("Please enter a valid numeric amount.");
+                    return;
+                }
+            }
+            
+            // Update bill payment details
             currentBill.setPaymentMethod(Bill.PaymentMethod.UPI);
-            currentBill.setStatus(Bill.BillStatus.PAID);
+            currentBill.setPaidAmount(paidAmount);
+            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(paidAmount));
+            currentBill.setStatus(paidAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
+                                 Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
             
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
@@ -1159,8 +1316,26 @@ public class BillingController implements Initializable {
             // Generate PDF
             generateAndSavePdf(updatedBill);
             
+            // Hide partial payment box
+            if (isPartialPayment) {
+                partialPaymentBox.setVisible(false);
+                partialPaymentBox.setManaged(false);
+                txtPartialAmount.clear();
+                isPartialPayment = false;
+            }
+            
             // Show success message
-            alert.showSuccess("UPI payment processed successfully!\nBill saved and PDF generated.");
+            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                alert.showSuccess(String.format(
+                    "UPI payment processed successfully!\n" +
+                    "Paid Amount: ₹%.2f\n" +
+                    "Pending Amount: ₹%.2f\n" +
+                    "Bill saved and PDF generated.",
+                    paidAmount, updatedBill.getPendingAmount()
+                ));
+            } else {
+                alert.showSuccess("UPI payment processed successfully!\nBill saved and PDF generated.");
+            }
             
             // Reset for new bill
             newBill();
@@ -1173,14 +1348,45 @@ public class BillingController implements Initializable {
     
     private void processCardPayment() {
         try {
+            // Create bill if not already created
             if (currentBill == null) {
-                alert.showError("Please generate the bill first before processing payment.");
-                return;
+                currentBill = createBillFromCurrentData();
+                if (currentBill == null) {
+                    return; // Error already shown in createBillFromCurrentData
+                }
             }
             
-            // Update bill payment method to CARD
+            // Check if partial payment is active
+            BigDecimal paidAmount = currentBill.getGrandTotal(); // Default to full payment
+            if (isPartialPayment) {
+                String amountText = txtPartialAmount.getText().trim();
+                if (amountText.isEmpty()) {
+                    alert.showError("Please enter a valid partial payment amount.");
+                    return;
+                }
+                
+                try {
+                    paidAmount = new BigDecimal(amountText);
+                    if (paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                        alert.showError("Partial payment amount must be greater than zero.");
+                        return;
+                    }
+                    if (paidAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+                        alert.showError("Payment amount cannot exceed the bill total.");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    alert.showError("Please enter a valid numeric amount.");
+                    return;
+                }
+            }
+            
+            // Update bill payment details
             currentBill.setPaymentMethod(Bill.PaymentMethod.CARD);
-            currentBill.setStatus(Bill.BillStatus.PAID);
+            currentBill.setPaidAmount(paidAmount);
+            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(paidAmount));
+            currentBill.setStatus(paidAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
+                                 Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
             
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
@@ -1188,8 +1394,26 @@ public class BillingController implements Initializable {
             // Generate PDF
             generateAndSavePdf(updatedBill);
             
+            // Hide partial payment box
+            if (isPartialPayment) {
+                partialPaymentBox.setVisible(false);
+                partialPaymentBox.setManaged(false);
+                txtPartialAmount.clear();
+                isPartialPayment = false;
+            }
+            
             // Show success message
-            alert.showSuccess("Card payment processed successfully!\nBill saved and PDF generated.");
+            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                alert.showSuccess(String.format(
+                    "Card payment processed successfully!\n" +
+                    "Paid Amount: ₹%.2f\n" +
+                    "Pending Amount: ₹%.2f\n" +
+                    "Bill saved and PDF generated.",
+                    paidAmount, updatedBill.getPendingAmount()
+                ));
+            } else {
+                alert.showSuccess("Card payment processed successfully!\nBill saved and PDF generated.");
+            }
             
             // Reset for new bill
             newBill();
@@ -1234,6 +1458,184 @@ public class BillingController implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             alert.showError("Error generating PDF: " + e.getMessage());
+        }
+    }
+    
+    private void togglePartialPayment() {
+        // Toggle partial payment mode
+        isPartialPayment = !isPartialPayment;
+        
+        if (isPartialPayment) {
+            // Show the partial payment input box
+            partialPaymentBox.setVisible(true);
+            partialPaymentBox.setManaged(true);
+            
+            // Set focus to the amount input field
+            txtPartialAmount.requestFocus();
+            
+            // Pre-fill with empty value
+            txtPartialAmount.clear();
+            
+            // Update button style to show it's active
+            btnPartial.setStyle("-fx-background-color: #6A1B9A; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        } else {
+            // Hide the partial payment input box
+            partialPaymentBox.setVisible(false);
+            partialPaymentBox.setManaged(false);
+            txtPartialAmount.clear();
+            
+            // Reset button style
+            btnPartial.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        }
+    }
+    
+    private void showPartialPaymentInput() {
+        if (currentBill == null) {
+            alert.showError("Please generate the bill first before processing payment.");
+            return;
+        }
+        
+        // Show the partial payment input box
+        partialPaymentBox.setVisible(true);
+        partialPaymentBox.setManaged(true);
+        
+        // Set focus to the amount input field
+        txtPartialAmount.requestFocus();
+        
+        // Pre-fill with grand total for convenience
+        txtPartialAmount.setText(currentBill.getGrandTotal().toString());
+        txtPartialAmount.selectAll();
+    }
+    
+    private void processPartialPayment() {
+        try {
+            if (currentBill == null) {
+                alert.showError("Please generate the bill first before processing payment.");
+                return;
+            }
+            
+            // Validate partial amount
+            String amountText = txtPartialAmount.getText().trim();
+            if (amountText.isEmpty()) {
+                alert.showError("Please enter a valid partial payment amount.");
+                return;
+            }
+            
+            BigDecimal partialAmount = new BigDecimal(amountText);
+            BigDecimal grandTotal = currentBill.getGrandTotal();
+            
+            if (partialAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                alert.showError("Partial payment amount must be greater than zero.");
+                return;
+            }
+            
+            if (partialAmount.compareTo(grandTotal) >= 0) {
+                alert.showError("Partial payment amount must be less than the total bill amount.\nFor full payment, please use Cash/UPI/Card options.");
+                return;
+            }
+            
+            // Update bill with partial payment
+            currentBill.setPaymentMethod(Bill.PaymentMethod.PARTIAL);
+            currentBill.setPaidAmount(partialAmount);
+            currentBill.setPendingAmount(grandTotal.subtract(partialAmount));
+            currentBill.setStatus(Bill.BillStatus.CONFIRMED);
+            
+            // Save the updated bill
+            Bill updatedBill = billService.saveBill(currentBill);
+            
+            // Generate PDF
+            generateAndSavePdf(updatedBill);
+            
+            // Hide partial payment box
+            partialPaymentBox.setVisible(false);
+            partialPaymentBox.setManaged(false);
+            txtPartialAmount.clear();
+            
+            // Show success message
+            alert.showSuccess(String.format(
+                "Partial payment processed successfully!\n" +
+                "Paid Amount: ₹%.2f\n" +
+                "Pending Amount: ₹%.2f\n" +
+                "Bill saved and PDF generated.",
+                partialAmount, updatedBill.getPendingAmount()
+            ));
+            
+            // Reset for new bill
+            newBill();
+            
+        } catch (NumberFormatException e) {
+            alert.showError("Please enter a valid numeric amount.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert.showError("Error processing partial payment: " + e.getMessage());
+        }
+    }
+    
+    private void processCreditPayment() {
+        try {
+            // Create bill if not already created
+            if (currentBill == null) {
+                currentBill = createBillFromCurrentData();
+                if (currentBill == null) {
+                    return; // Error already shown in createBillFromCurrentData
+                }
+            }
+            
+            // Get customer name
+            String customerName = currentBill.getCustomer() != null ? 
+                                 currentBill.getCustomer().getCustomerFullName() : 
+                                 txtCustomerName.getText();
+            
+            // Confirm credit sale
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Credit Sale Confirmation");
+            confirmAlert.setHeaderText("Confirm Credit Sale");
+            confirmAlert.setContentText(String.format(
+                "This will mark the entire amount as pending:\n" +
+                "Total Amount: ₹%.2f\n" +
+                "Customer: %s\n\n" +
+                "Do you want to proceed with credit sale?",
+                currentBill.getGrandTotal(),
+                customerName
+            ));
+            
+            Optional<ButtonType> result = confirmAlert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                // Update bill for credit sale
+                currentBill.setPaymentMethod(Bill.PaymentMethod.CREDIT);
+                currentBill.setPaidAmount(BigDecimal.ZERO);
+                currentBill.setPendingAmount(currentBill.getGrandTotal());
+                currentBill.setStatus(Bill.BillStatus.CONFIRMED);
+                
+                // Save the updated bill
+                Bill updatedBill = billService.saveBill(currentBill);
+                
+                // Generate PDF
+                generateAndSavePdf(updatedBill);
+                
+                // Hide partial payment box if visible
+                if (isPartialPayment) {
+                    partialPaymentBox.setVisible(false);
+                    partialPaymentBox.setManaged(false);
+                    txtPartialAmount.clear();
+                    isPartialPayment = false;
+                }
+                
+                // Show success message
+                alert.showSuccess(String.format(
+                    "Credit sale processed successfully!\n" +
+                    "Total Pending Amount: ₹%.2f\n" +
+                    "Bill saved and PDF generated.",
+                    updatedBill.getPendingAmount()
+                ));
+                
+                // Reset for new bill
+                newBill();
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert.showError("Error processing credit sale: " + e.getMessage());
         }
     }
 }

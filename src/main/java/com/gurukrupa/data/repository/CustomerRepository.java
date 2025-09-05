@@ -26,4 +26,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     // Search by full name and mobile number (unique combination)
     @Query("SELECT c FROM Customer c WHERE c.firstName = :firstName AND c.middleName = :middleName AND c.lastName = :lastName AND c.mobile = :mobile")
     Optional<Customer> searchByFullNameAndMobile(String firstName, String middleName, String lastName, String mobile);
+    
+    // Search by name containing
+    @Query("SELECT c FROM Customer c WHERE LOWER(CONCAT(c.firstName, ' ', COALESCE(c.middleName, ''), ' ', COALESCE(c.lastName, ''))) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<Customer> searchByNameContaining(String name);
+    
+    // Find by name and mobile
+    @Query("SELECT c FROM Customer c WHERE LOWER(CONCAT(c.firstName, ' ', COALESCE(c.middleName, ''), ' ', COALESCE(c.lastName, ''))) LIKE LOWER(CONCAT('%', :name, '%')) AND c.mobile = :mobile")
+    Optional<Customer> findByNameAndMobile(String name, String mobile);
 }

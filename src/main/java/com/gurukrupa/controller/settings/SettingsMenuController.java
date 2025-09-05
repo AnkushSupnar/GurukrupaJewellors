@@ -34,6 +34,9 @@ public class SettingsMenuController implements Initializable {
     private Button btnAddMetal;
     
     @FXML
+    private Button btnMetalRate;
+    
+    @FXML
     private Button btnAppSettings;
     
     @FXML
@@ -49,6 +52,7 @@ public class SettingsMenuController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         // Set up button actions
         btnAddMetal.setOnAction(event -> openMetalManagement());
+        btnMetalRate.setOnAction(event -> openMetalRateManagement());
         btnAppSettings.setOnAction(event -> openAppSettings());
         btnConfigureTax.setOnAction(event -> openTaxConfiguration());
         btnBackup.setOnAction(event -> performBackup());
@@ -128,5 +132,34 @@ public class SettingsMenuController implements Initializable {
     private void openUserManagement() {
         // TODO: Implement user management
         alert.showSuccess("User Management feature will be available soon!");
+    }
+    
+    private void openMetalRateManagement() {
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the FXML and get both the root and controller
+            Map.Entry<Parent, MetalRateFormController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.METAL_RATE_FORM.getFxmlFile(), MetalRateFormController.class);
+            
+            Parent root = entry.getKey();
+            MetalRateFormController controller = entry.getValue();
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Metal Rate Management");
+            dialog.setResizable(true);
+            dialog.setWidth(1200);
+            dialog.setHeight(700);
+            
+            // Show the dialog and wait for it to close
+            dialog.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Failed to open Metal Rate Management: " + e.getMessage());
+        }
     }
 }

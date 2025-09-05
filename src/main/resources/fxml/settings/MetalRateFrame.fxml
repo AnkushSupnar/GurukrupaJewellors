@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.settings.MetalRateFormController">
+   <top>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <Label alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #2196f3; -fx-text-fill: white;" text="METAL RATE MANAGEMENT" textAlignment="CENTER">
+               <font>
+                  <Font name="System Bold" size="20.0" />
+               </font>
+               <padding>
+                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+               </padding>
+            </Label>
+         </children>
+      </VBox>
+   </top>
+   <center>
+      <VBox spacing="20.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <!-- Input Form Section -->
+            <VBox spacing="15.0" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Add / Update Metal Rate" />
+                  
+                  <HBox alignment="CENTER_LEFT" spacing="20.0">
+                     <children>
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Date:" />
+                              <DatePicker fx:id="dpRateDate" prefWidth="200.0" promptText="Select Date" />
+                           </children>
+                        </VBox>
+                        
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Metal Type:" />
+                              <ComboBox fx:id="cmbMetalType" prefWidth="200.0" promptText="Select Metal Type" />
+                           </children>
+                        </VBox>
+                        
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Metal Name:" />
+                              <ComboBox fx:id="cmbMetalName" prefWidth="250.0" promptText="Select Metal Name" />
+                           </children>
+                        </VBox>
+                        
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Rate (Per 10g):" />
+                              <TextField fx:id="txtRatePerTenGrams" prefWidth="150.0" promptText="Enter Rate" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  
+                  <HBox alignment="CENTER_LEFT" spacing="20.0">
+                     <children>
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Buying Rate (Optional):" />
+                              <TextField fx:id="txtBuyingRate" prefWidth="150.0" promptText="Buying Rate" />
+                           </children>
+                        </VBox>
+                        
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Selling Rate (Optional):" />
+                              <TextField fx:id="txtSellingRate" prefWidth="150.0" promptText="Selling Rate" />
+                           </children>
+                        </VBox>
+                        
+                        <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Remarks (Optional):" />
+                              <TextField fx:id="txtRemarks" promptText="Enter any remarks" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <Button fx:id="btnSave" mnemonicParsing="false" onAction="#handleSave" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20 10 20;" text="SAVE">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="btnUpdate" mnemonicParsing="false" onAction="#handleUpdate" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20 10 20;" text="UPDATE" visible="false">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="btnClear" mnemonicParsing="false" onAction="#handleClear" style="-fx-background-color: #9E9E9E; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20 10 20;" text="CLEAR">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="btnDelete" mnemonicParsing="false" onAction="#handleDelete" style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20 10 20;" text="DELETE" visible="false">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            
+            <!-- Search Section -->
+            <HBox alignment="CENTER_LEFT" spacing="20.0" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 15;">
+               <children>
+                  <Label style="-fx-font-weight: bold;" text="Search History:" />
+                  <DatePicker fx:id="dpSearchDate" promptText="Select Date" />
+                  <ComboBox fx:id="cmbSearchMetalType" prefWidth="150.0" promptText="All Metal Types" />
+                  <Button fx:id="btnSearch" mnemonicParsing="false" onAction="#handleSearch" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;" text="SEARCH" />
+                  <Button fx:id="btnShowAll" mnemonicParsing="false" onAction="#handleShowAll" style="-fx-background-color: #607D8B; -fx-text-fill: white; -fx-font-weight: bold;" text="SHOW ALL" />
+               </children>
+            </HBox>
+            
+            <!-- Table Section -->
+            <VBox VBox.vgrow="ALWAYS">
+               <children>
+                  <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Metal Rate History">
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </Label>
+                  <TableView fx:id="tblMetalRates" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="colNo" prefWidth="50.0" text="No" />
+                        <TableColumn fx:id="colDate" prefWidth="120.0" text="Date" />
+                        <TableColumn fx:id="colMetalType" prefWidth="100.0" text="Metal Type" />
+                        <TableColumn fx:id="colMetalName" prefWidth="200.0" text="Metal Name" />
+                        <TableColumn fx:id="colPurity" prefWidth="80.0" text="Purity" />
+                        <TableColumn fx:id="colRatePerGram" prefWidth="120.0" text="Rate/Gram" />
+                        <TableColumn fx:id="colRatePerTenGrams" prefWidth="120.0" text="Rate/10g" />
+                        <TableColumn fx:id="colBuyingRate" prefWidth="120.0" text="Buying Rate" />
+                        <TableColumn fx:id="colSellingRate" prefWidth="120.0" text="Selling Rate" />
+                        <TableColumn fx:id="colRemarks" minWidth="100.0" text="Remarks" />
+                     </columns>
+                  </TableView>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </center>
+</BorderPane>

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,31 +32,48 @@ public class Bill {
     
     // Bill Details
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal;
+    @Builder.Default
+    private BigDecimal subtotal = BigDecimal.ZERO;
     
     @Column(precision = 12, scale = 2)
+    @Builder.Default
     private BigDecimal discount = BigDecimal.ZERO;
     
     @Column(nullable = false, precision = 5, scale = 2)
-    private BigDecimal gstRate;
+    @Builder.Default
+    private BigDecimal gstRate = new BigDecimal("3.00");
     
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal cgstAmount;
+    @Builder.Default
+    private BigDecimal cgstAmount = BigDecimal.ZERO;
     
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal sgstAmount;
+    @Builder.Default
+    private BigDecimal sgstAmount = BigDecimal.ZERO;
     
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalTaxAmount;
+    @Builder.Default
+    private BigDecimal totalTaxAmount = BigDecimal.ZERO;
     
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal netTotal;
+    @Builder.Default
+    private BigDecimal netTotal = BigDecimal.ZERO;
     
     @Column(precision = 12, scale = 2)
+    @Builder.Default
     private BigDecimal exchangeAmount = BigDecimal.ZERO;
     
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal grandTotal;
+    @Builder.Default
+    private BigDecimal grandTotal = BigDecimal.ZERO;
+    
+    @Column(nullable = false, precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+    
+    @Column(nullable = false, precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal pendingAmount = BigDecimal.ZERO;
     
     // Payment Information
     @Column(nullable = false)
@@ -79,7 +97,13 @@ public class Bill {
     // Relationships
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
+    @Builder.Default
     private List<BillTransaction> billTransactions = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @Builder.Default
+    private List<ExchangeTransaction> exchangeTransactions = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -91,11 +115,13 @@ public class Bill {
             status = BillStatus.DRAFT;
         }
         generateBillNumber();
+        calculateTotals();
     }
     
     @PreUpdate
     protected void onUpdate() {
         updatedDate = LocalDateTime.now();
+        calculateTotals();
     }
     
     private void generateBillNumber() {
@@ -112,20 +138,37 @@ public class Bill {
             .map(BillTransaction::getTotalAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
+        // Calculate exchange amount from exchange transactions
+        exchangeAmount = exchangeTransactions.stream()
+            .map(ExchangeTransaction::getTotalAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
         // Calculate net total after discount
         netTotal = subtotal.subtract(discount);
         
-        // Calculate tax amounts
-        totalTaxAmount = netTotal.multiply(gstRate).divide(BigDecimal.valueOf(100));
-        cgstAmount = totalTaxAmount.divide(BigDecimal.valueOf(2));
-        sgstAmount = totalTaxAmount.divide(BigDecimal.valueOf(2));
+        // Calculate tax amounts (GST only on billing items, not exchange)
+        BigDecimal taxableAmount = subtotal.subtract(discount);
+        totalTaxAmount = taxableAmount.multiply(gstRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        cgstAmount = totalTaxAmount.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        sgstAmount = totalTaxAmount.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
         
         // Calculate grand total
         grandTotal = netTotal.add(totalTaxAmount).subtract(exchangeAmount);
+        
+        // Calculate pending amount
+        if (paidAmount == null) {
+            paidAmount = BigDecimal.ZERO;
+        }
+        pendingAmount = grandTotal.subtract(paidAmount);
+        
+        // If paid amount equals or exceeds grand total, pending is zero
+        if (pendingAmount.compareTo(BigDecimal.ZERO) < 0) {
+            pendingAmount = BigDecimal.ZERO;
+        }
     }
     
     public enum PaymentMethod {
-        CASH, UPI, CARD, CHEQUE, BANK_TRANSFER
+        CASH, UPI, CARD, CHEQUE, BANK_TRANSFER, PARTIAL, CREDIT
     }
     
     public enum BillStatus {

@@ -689,30 +689,62 @@
                            </font>
                         </Label>
                         
-                        <HBox spacing="8.0">
+                        <VBox spacing="8.0">
                            <children>
-                              <Button fx:id="btnCash" text="CASH" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+                              <Button fx:id="btnPartial" text="PARTIAL PAYMENT" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" maxWidth="Infinity">
                                  <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="MONEY" size="1.1em" />
+                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="PERCENT" size="1.1em" />
                                  </graphic>
                               </Button>
-                              <Button fx:id="btnUPI" text="UPI" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+                              <HBox spacing="8.0">
+                                 <children>
+                                    <Button fx:id="btnCash" text="CASH" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="MONEY" size="1.1em" />
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="btnUPI" text="UPI" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="MOBILE" size="1.1em" />
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="btnCard" text="CARD" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="CREDIT_CARD" size="1.1em" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                              <Button fx:id="btnCredit" text="CREDIT (FULL PENDING)" style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" maxWidth="Infinity">
                                  <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="MOBILE" size="1.1em" />
+                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="CLOCK_O" size="1.1em" />
                                  </graphic>
                               </Button>
-                              <Button fx:id="btnCard" text="CARD" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-                                 <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="CREDIT_CARD" size="1.1em" />
-                                 </graphic>
-                              </Button>
+                              <!-- Partial Payment Amount Input -->
+                              <VBox fx:id="partialPaymentBox" spacing="8.0" visible="false" managed="false">
+                                 <children>
+                                    <Label text="Enter Partial Payment Amount:" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#424242">
+                                       <font>
+                                          <Font size="14.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtPartialAmount" promptText="Enter amount" prefHeight="35.0" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #E0E0E0;">
+                                       <font>
+                                          <Font size="14.0" />
+                                       </font>
+                                    </TextField>
+                                 </children>
+                              </VBox>
                            </children>
-                        </HBox>
+                        </VBox>
                      </children>
                   </VBox>
                   
-                  <!-- Action Buttons -->
-                  <VBox spacing="12.0" VBox.vgrow="ALWAYS">
+                  <!-- Spacer to push action buttons to bottom -->
+                  <Region VBox.vgrow="ALWAYS" />
+                  
+                  <!-- Action Buttons at Bottom -->
+                  <VBox spacing="12.0">
                      <children>
                         <Label text="Actions" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#424242">
                            <font>
@@ -722,46 +754,13 @@
                         
                         <VBox spacing="8.0">
                            <children>
-                              <Button fx:id="btnGenerateBill" text="GENERATE BILL" style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 14 20 14 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(25,118,210,0.3), 6, 0, 0, 3); -fx-font-size: 14;" maxWidth="Infinity">
+                              <Button fx:id="btnPrintBill" text="PRINT BILL" style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 14 20 14 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(25,118,210,0.3), 6, 0, 0, 3); -fx-font-size: 14;" maxWidth="Infinity">
                                  <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="FILE_TEXT" size="1.2em" />
+                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="PRINT" size="1.2em" />
                                  </graphic>
                               </Button>
                               
-                              <Button fx:id="btnPrintInvoice" text="PRINT INVOICE" style="-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(46,125,50,0.3), 4, 0, 0, 2);" maxWidth="Infinity">
-                                 <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="PRINT" size="1.1em" />
-                                 </graphic>
-                              </Button>
-                              
-                              <Button fx:id="btnSaveDraft" text="SAVE DRAFT" style="-fx-background-color: #F57C00; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(245,124,0,0.3), 4, 0, 0, 2);" maxWidth="Infinity">
-                                 <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="SAVE" size="1.1em" />
-                                 </graphic>
-                              </Button>
-                           </children>
-                        </VBox>
-                        
-                        <!-- Separator -->
-                        <Label text="Navigation" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#424242">
-                           <font>
-                              <Font size="16.0" />
-                           </font>
-                           <VBox.margin>
-                              <Insets top="20.0" />
-                           </VBox.margin>
-                        </Label>
-                        
-                        <!-- Navigation Buttons -->
-                        <VBox spacing="8.0">
-                           <children>
-                              <Button fx:id="btnRefreshItems" text="REFRESH ITEMS" style="-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(46,125,50,0.3), 4, 0, 0, 2);" maxWidth="Infinity">
-                                 <graphic>
-                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="REFRESH" size="1.1em" />
-                                 </graphic>
-                              </Button>
-                              
-                              <Button fx:id="btnNewBill" text="NEW BILL" style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(25,118,210,0.3), 4, 0, 0, 2);" maxWidth="Infinity">
+                              <Button fx:id="btnNewBill" text="NEW BILL" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(76,175,80,0.3), 4, 0, 0, 2);" maxWidth="Infinity">
                                  <graphic>
                                     <FontAwesomeIcon fill="#FFFFFF" glyphName="PLUS_CIRCLE" size="1.1em" />
                                  </graphic>

@@ -2,6 +2,7 @@ package com.gurukrupa.data.service;
 
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
+import com.gurukrupa.data.entities.ExchangeTransaction;
 import com.gurukrupa.data.entities.ShopInfo;
 import com.gurukrupa.data.repository.ShopInfoRepository;
 import com.itextpdf.text.*;
@@ -116,7 +117,6 @@ public class BillPdfService {
         rightCell.addElement(new Paragraph("Invoice No: " + bill.getBillNumber(), normalFont));
         rightCell.addElement(new Paragraph("Date: " + bill.getBillDate().format(dateFormatter), normalFont));
         rightCell.addElement(new Paragraph("Time: " + bill.getBillDate().format(timeFormatter), normalFont));
-        rightCell.addElement(new Paragraph("Payment: " + bill.getPaymentMethod(), normalFont));
 
         invoiceDetailsTable.addCell(leftCell);
         invoiceDetailsTable.addCell(rightCell);
@@ -124,36 +124,31 @@ public class BillPdfService {
 
         document.add(new Paragraph(" "));
 
-        // Get sale and exchange transactions
-        List<BillTransaction> saleTransactions = bill.getBillTransactions().stream()
-                .filter(t -> t.getTransactionType() == BillTransaction.TransactionType.SALE)
-                .collect(Collectors.toList());
-
-        List<BillTransaction> exchangeTransactions = bill.getBillTransactions().stream()
-                .filter(t -> t.getTransactionType() == BillTransaction.TransactionType.EXCHANGE)
-                .collect(Collectors.toList());
+        // Get bill transactions (sales) and exchange transactions
+        List<BillTransaction> billTransactions = bill.getBillTransactions();
+        List<ExchangeTransaction> exchangeTransactions = bill.getExchangeTransactions();
 
         // Sale Items Table
-        if (!saleTransactions.isEmpty()) {
+        if (!billTransactions.isEmpty()) {
             Paragraph saleHeader = new Paragraph("Sale Items", subHeaderFont);
             document.add(saleHeader);
 
             PdfPTable saleTable = new PdfPTable(8);
             saleTable.setWidthPercentage(100);
             saleTable.setSpacingBefore(5f);
-            saleTable.setWidths(new float[]{0.5f, 2f, 1f, 0.8f, 0.8f, 0.8f, 0.8f, 1.2f});
+            saleTable.setWidths(new float[]{0.5f, 1f, 2f, 1f, 0.8f, 0.8f, 0.8f, 1.2f});
 
             // Headers
-            addTableHeader(saleTable, new String[]{"S.No", "Item Name", "Metal", "Qty", "Weight", "Rate", "Labour", "Amount"}, smallFont);
+            addTableHeader(saleTable, new String[]{"S.No", "Code", "Item Name", "Metal", "Weight", "Rate/10g", "Labour", "Amount"}, smallFont);
 
             // Data rows
             int sno = 1;
-            for (BillTransaction transaction : saleTransactions) {
+            for (BillTransaction transaction : billTransactions) {
                 saleTable.addCell(createCell(String.valueOf(sno++), smallFont, Element.ALIGN_CENTER));
+                saleTable.addCell(createCell(transaction.getItemCode(), smallFont, Element.ALIGN_LEFT));
                 saleTable.addCell(createCell(transaction.getItemName(), smallFont, Element.ALIGN_LEFT));
                 saleTable.addCell(createCell(transaction.getMetalType(), smallFont, Element.ALIGN_CENTER));
-                saleTable.addCell(createCell(transaction.getQuantity().toString(), smallFont, Element.ALIGN_CENTER));
-                saleTable.addCell(createCell(formatDecimal(transaction.getTotalWeight()), smallFont, Element.ALIGN_RIGHT));
+                saleTable.addCell(createCell(formatDecimal(transaction.getWeight()) + "g", smallFont, Element.ALIGN_RIGHT));
                 saleTable.addCell(createCell(formatDecimal(transaction.getRatePerTenGrams()), smallFont, Element.ALIGN_RIGHT));
                 saleTable.addCell(createCell(formatDecimal(transaction.getLabourCharges()), smallFont, Element.ALIGN_RIGHT));
                 saleTable.addCell(createCell("₹ " + formatDecimal(transaction.getTotalAmount()), smallFont, Element.ALIGN_RIGHT));
@@ -168,22 +163,23 @@ public class BillPdfService {
             Paragraph exchangeHeader = new Paragraph("Exchange Items", subHeaderFont);
             document.add(exchangeHeader);
 
-            PdfPTable exchangeTable = new PdfPTable(6);
+            PdfPTable exchangeTable = new PdfPTable(7);
             exchangeTable.setWidthPercentage(100);
             exchangeTable.setSpacingBefore(5f);
-            exchangeTable.setWidths(new float[]{0.5f, 2.5f, 1f, 1f, 1f, 1.5f});
+            exchangeTable.setWidths(new float[]{0.5f, 2.5f, 1f, 1f, 1f, 1f, 1.5f});
 
             // Headers
-            addTableHeader(exchangeTable, new String[]{"S.No", "Item Name", "Metal", "Weight", "Deduction", "Amount"}, smallFont);
+            addTableHeader(exchangeTable, new String[]{"S.No", "Item Name", "Metal", "Gross Wt", "Deduction", "Net Wt", "Amount"}, smallFont);
 
             // Data rows
             int sno = 1;
-            for (BillTransaction transaction : exchangeTransactions) {
+            for (ExchangeTransaction transaction : exchangeTransactions) {
                 exchangeTable.addCell(createCell(String.valueOf(sno++), smallFont, Element.ALIGN_CENTER));
                 exchangeTable.addCell(createCell(transaction.getItemName(), smallFont, Element.ALIGN_LEFT));
                 exchangeTable.addCell(createCell(transaction.getMetalType(), smallFont, Element.ALIGN_CENTER));
-                exchangeTable.addCell(createCell(formatDecimal(transaction.getTotalWeight()), smallFont, Element.ALIGN_RIGHT));
-                exchangeTable.addCell(createCell(formatDecimal(transaction.getDeductionWeight()), smallFont, Element.ALIGN_RIGHT));
+                exchangeTable.addCell(createCell(formatDecimal(transaction.getGrossWeight()) + "g", smallFont, Element.ALIGN_RIGHT));
+                exchangeTable.addCell(createCell(formatDecimal(transaction.getDeduction()) + "g", smallFont, Element.ALIGN_RIGHT));
+                exchangeTable.addCell(createCell(formatDecimal(transaction.getNetWeight()) + "g", smallFont, Element.ALIGN_RIGHT));
                 exchangeTable.addCell(createCell("₹ " + formatDecimal(transaction.getTotalAmount()), smallFont, Element.ALIGN_RIGHT));
             }
 
@@ -223,6 +219,44 @@ public class BillPdfService {
         summaryTable.addCell(grandTotalValue);
 
         document.add(summaryTable);
+
+        // Payment Details Section
+        document.add(new Paragraph(" "));
+        PdfPTable paymentTable = new PdfPTable(2);
+        paymentTable.setWidthPercentage(50);
+        paymentTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        paymentTable.setSpacingBefore(10f);
+
+        // Payment Method
+        Font paymentFont = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD);
+        String paymentMethodDisplay = formatPaymentMethod(bill.getPaymentMethod());
+        addSummaryRow(paymentTable, "Payment Method:", paymentMethodDisplay, paymentFont);
+        
+        // Paid Amount
+        addSummaryRow(paymentTable, "Paid Amount:", "₹ " + formatDecimal(bill.getPaidAmount()), paymentFont);
+        
+        // Pending Amount (if any)
+        if (bill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+            Font pendingFont = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD, BaseColor.RED);
+            PdfPCell pendingLabel = new PdfPCell(new Paragraph("Pending Amount:", pendingFont));
+            pendingLabel.setBorder(Rectangle.NO_BORDER);
+            pendingLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            pendingLabel.setPadding(5);
+
+            PdfPCell pendingValue = new PdfPCell(new Paragraph("₹ " + formatDecimal(bill.getPendingAmount()), pendingFont));
+            pendingValue.setBorder(Rectangle.NO_BORDER);
+            pendingValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            pendingValue.setPadding(5);
+
+            paymentTable.addCell(pendingLabel);
+            paymentTable.addCell(pendingValue);
+        } else {
+            // Show payment status as PAID
+            Font paidFont = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD, BaseColor.GREEN.darker());
+            addSummaryRow(paymentTable, "Payment Status:", "PAID", paidFont);
+        }
+
+        document.add(paymentTable);
 
         // Footer
         document.add(new Paragraph(" "));
@@ -278,5 +312,27 @@ public class BillPdfService {
     private String formatDecimal(BigDecimal value) {
         if (value == null) return "0.00";
         return String.format("%.2f", value);
+    }
+    
+    private String formatPaymentMethod(Bill.PaymentMethod paymentMethod) {
+        if (paymentMethod == null) return "N/A";
+        switch (paymentMethod) {
+            case CASH:
+                return "Cash";
+            case UPI:
+                return "UPI";
+            case CARD:
+                return "Card";
+            case CHEQUE:
+                return "Cheque";
+            case BANK_TRANSFER:
+                return "Bank Transfer";
+            case PARTIAL:
+                return "Partial Payment";
+            case CREDIT:
+                return "Credit (Pending)";
+            default:
+                return paymentMethod.toString();
+        }
     }
 }

@@ -254,6 +254,26 @@ public enum FxmlView {
         public String getFxmlFile() {
             return "/fxml/settings/BusinessSettingsMenu.fxml";
         }
+    },
+    METAL_RATE_FORM {
+        @Override
+        String getTitle() {
+            return "Metal Rate Management";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/settings/MetalRateFrame.fxml";
+        }
+    },
+    VIEW_BILLS {
+        @Override
+        String getTitle() {
+            return "View Bills";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/transaction/ViewBills.fxml";
+        }
     }
     ;
     abstract String getTitle();
