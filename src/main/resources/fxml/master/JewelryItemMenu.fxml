@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane prefHeight="680.0" prefWidth="1000.0" style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.master.JewelryItemMenuController">
+   <children>
+      
+      <!-- Header Section -->
+      <VBox spacing="10.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="15.0">
+               <children>
+                  <StackPane prefHeight="50.0" prefWidth="50.0" style="-fx-background-color: #2196F3; -fx-background-radius: 25;">
+                     <children>
+                        <FontAwesomeIcon fill="WHITE" glyphName="COGS" size="1.5em" />
+                     </children>
+                  </StackPane>
+                  <VBox spacing="2.0">
+                     <children>
+                        <Text fill="#212121" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 28px; -fx-font-family: 'Segoe UI';" text="Master Data Management" />
+                        <Text fill="#757575" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="Configure and manage your business data" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      
+      <!-- Main Cards Container -->
+      <FlowPane fx:id="mainFlowPane" alignment="TOP_LEFT" hgap="15.0" vgap="15.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="110.0">
+         <children>
+            
+            <!-- Jewelry Items Card -->
+            <VBox alignment="TOP_CENTER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2); -fx-border-color: #E3F2FD; -fx-border-width: 1; -fx-border-radius: 12;">
+               <children>
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #2196F3; -fx-background-radius: 30;">
+                     <children>
+                        <Label text="💎" style="-fx-font-size: 24px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Text fill="#2196F3" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Segoe UI';" text="JEWELRY ITEMS" textAlignment="CENTER" />
+                        <Text fill="#616161" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="Manage your gold jewelry inventory with comprehensive item details and pricing" textAlignment="CENTER" wrappingWidth="240.0" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="8.0">
+                     <children>
+                        <Button fx:id="btnAddItem" mnemonicParsing="false" prefHeight="38.0" prefWidth="200.0" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(33,150,243,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="➕ ADD NEW ITEM" />
+                        <Button fx:id="btnViewItems" mnemonicParsing="false" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent; -fx-text-fill: #2196F3; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #2196F3; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-font-family: 'Segoe UI';" text="📋 VIEW ALL ITEMS" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            
+            <!-- Customer Management Card -->
+            <VBox alignment="TOP_CENTER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2); -fx-border-color: #E8F5E8; -fx-border-width: 1; -fx-border-radius: 12;">
+               <children>
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #4CAF50; -fx-background-radius: 30;">
+                     <children>
+                        <Label text="👥" style="-fx-font-size: 24px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Text fill="#4CAF50" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Segoe UI';" text="CUSTOMERS" textAlignment="CENTER" />
+                        <Text fill="#616161" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="Manage customer information, contact details and purchase history for better service" textAlignment="CENTER" wrappingWidth="240.0" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="8.0">
+                     <children>
+                        <Button fx:id="btnAddCustomer" mnemonicParsing="false" prefHeight="38.0" prefWidth="200.0" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(76,175,80,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="➕ ADD CUSTOMER" />
+                        <Button fx:id="btnViewCustomers" mnemonicParsing="false" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent; -fx-text-fill: #4CAF50; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #4CAF50; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-font-family: 'Segoe UI';" text="📇 VIEW CUSTOMERS" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            
+            <!-- Categories Management Card -->
+            <VBox alignment="TOP_CENTER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2); -fx-border-color: #FFF3E0; -fx-border-width: 1; -fx-border-radius: 12;">
+               <children>
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #FF9800; -fx-background-radius: 30;">
+                     <children>
+                        <Label text="🏷️" style="-fx-font-size: 24px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Text fill="#FF9800" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Segoe UI';" text="CATEGORIES" textAlignment="CENTER" />
+                        <Text fill="#616161" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="Organize your jewelry items into categories like rings, necklaces, bracelets and more" textAlignment="CENTER" wrappingWidth="240.0" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="8.0">
+                     <children>
+                        <Button fx:id="btnAddCategory" mnemonicParsing="false" prefHeight="38.0" prefWidth="200.0" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(255,152,0,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="➕ ADD CATEGORY" />
+                        <Button fx:id="btnViewCategories" mnemonicParsing="false" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent; -fx-text-fill: #FF9800; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #FF9800; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-font-family: 'Segoe UI';" text="📋 MANAGE CATEGORIES" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            
+            <!-- Metal Rates Management Card -->
+            <VBox alignment="TOP_CENTER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2); -fx-border-color: #F3E5F5; -fx-border-width: 1; -fx-border-radius: 12;">
+               <children>
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #9C27B0; -fx-background-radius: 30;">
+                     <children>
+                        <Label text="📈" style="-fx-font-size: 24px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Text fill="#9C27B0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Segoe UI';" text="METAL RATES" textAlignment="CENTER" />
+                        <Text fill="#616161" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="Manage current metal rates for gold, silver, platinum and other precious metals" textAlignment="CENTER" wrappingWidth="240.0" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="8.0">
+                     <children>
+                        <Button fx:id="btnUpdateRates" mnemonicParsing="false" prefHeight="38.0" prefWidth="200.0" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(156,39,176,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="🔄 UPDATE RATES" />
+                        <Button fx:id="btnViewRates" mnemonicParsing="false" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent; -fx-text-fill: #9C27B0; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #9C27B0; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-font-family: 'Segoe UI';" text="🕰️ VIEW RATES HISTORY" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            
+            <!-- Suppliers Management Card -->
+            <VBox alignment="TOP_CENTER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2); -fx-border-color: #FFEBEE; -fx-border-width: 1; -fx-border-radius: 12;">
+               <children>
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #F44336; -fx-background-radius: 30;">
+                     <children>
+                        <Label text="🚚" style="-fx-font-size: 24px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Text fill="#F44336" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Segoe UI';" text="SUPPLIERS" textAlignment="CENTER" />
+                        <Text fill="#616161" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="Manage supplier information, contact details and track your inventory sources" textAlignment="CENTER" wrappingWidth="240.0" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="8.0">
+                     <children>
+                        <Button fx:id="btnAddSupplier" mnemonicParsing="false" prefHeight="38.0" prefWidth="200.0" style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(244,67,54,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="➕ ADD SUPPLIER" />
+                        <Button fx:id="btnViewSuppliers" mnemonicParsing="false" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent; -fx-text-fill: #F44336; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #F44336; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-font-family: 'Segoe UI';" text="🏢 VIEW SUPPLIERS" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            
+            <!-- Settings & Configuration Card -->
+            <VBox alignment="TOP_CENTER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 8, 0, 0, 2); -fx-border-color: #FAFAFA; -fx-border-width: 1; -fx-border-radius: 12;">
+               <children>
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #607D8B; -fx-background-radius: 30;">
+                     <children>
+                        <Label text="⚙️" style="-fx-font-size: 24px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox alignment="CENTER" spacing="6.0">
+                     <children>
+                        <Text fill="#607D8B" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Segoe UI';" text="SETTINGS" textAlignment="CENTER" />
+                        <Text fill="#616161" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="Configure business settings, tax rates, shop information and system preferences" textAlignment="CENTER" wrappingWidth="240.0" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="8.0">
+                     <children>
+                        <Button fx:id="btnBusinessSettings" mnemonicParsing="false" prefHeight="38.0" prefWidth="200.0" style="-fx-background-color: #607D8B; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(96,125,139,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="🏢 BUSINESS SETTINGS" />
+                        <Button fx:id="btnSystemConfig" mnemonicParsing="false" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent; -fx-text-fill: #607D8B; -fx-font-weight: 600; -fx-background-radius: 6; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #607D8B; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-font-family: 'Segoe UI';" text="🔧 SYSTEM CONFIG" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            
+         </children>
+         <padding>
+            <Insets bottom="15.0" left="0.0" right="0.0" top="0.0" />
+         </padding>
+      </FlowPane>
+   </children>
+</AnchorPane>

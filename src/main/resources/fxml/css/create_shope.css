@@ -1,0 +1,71 @@
+/* Background for center pane */
+.anchor-pane {
+    -fx-background-color: #f9fafb; /* Light grey */
+}
+
+/* Label styling */
+.form-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #616161;  /* Material Grey 700 */
+    -fx-padding: 5 0;
+    -fx-font-weight: 500;
+}
+
+/* TextField and PasswordField styling */
+.form-input {
+    -fx-background-color: #ffffff; /* White background */
+    -fx-border-color: #9e9e9e; /* Material Grey 400 */
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12;
+    -fx-font-size: 14px;
+    -fx-effect: dropshadow( gaussian , rgba(0,0,0,0.05) , 2,0,0,1);
+    -fx-focus-color: #6200ea;  /* Material Purple 500 */
+}
+
+/* Focused input with accent border */
+.form-input:focused {
+    -fx-border-color: #6200ea; /* Material Purple 500 */
+    -fx-effect: dropshadow( gaussian , rgba(98,0,234,0.3) , 5,0,0,0);
+}
+
+/* Buttons (Primary) */
+.form-button {
+    -fx-background-color: #6200ea; /* Material Purple 500 */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 10 30;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow( gaussian , rgba(98,0,234,0.4) , 5,0,0,1);
+    -fx-transition: background-color 0.3s ease;
+}
+
+.form-button:hover {
+    -fx-background-color: #3700b3; /* Material Purple 700 */
+}
+
+/* Cancel button (Secondary) */
+.form-button-cancel {
+    -fx-background-color: #b00020; /* Material Red 700 */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 10 30;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow( gaussian , rgba(176,0,32,0.4) , 5,0,0,1);
+    -fx-transition: background-color 0.3s ease;
+}
+
+.form-button-cancel:hover {
+    -fx-background-color: #790000; /* Darker Red */
+}
+
+/* Title Text */
+.top > Pane > .text {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-fill: #212121; /* Material Grey 900 */
+}

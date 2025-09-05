@@ -1,0 +1,76 @@
+.anchor-pane {
+    -fx-background-color: #f9fafb;
+    -fx-font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+    -fx-background-color: white;
+    -fx-padding: 40;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 10,0,0,4);
+}
+
+/* Titles */
+.form-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-fill: #212121; /* Material Grey 900 */
+    -fx-padding: 0 0 15 0;
+}
+
+/* Labels */
+.form-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #616161;  /* Material Grey 700 */
+    -fx-font-weight: 500;
+}
+
+/* Text fields and password fields */
+.form-input {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #9e9e9e; /* Material Grey 400 */
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12;
+    -fx-font-size: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2,0,0,1);
+    -fx-focus-color: #6200ea; /* Material Purple 500 */
+}
+
+.form-input:focused {
+    -fx-border-color: #6200ea;
+    -fx-effect: dropshadow(gaussian, rgba(98,0,234,0.3), 5,0,0,0);
+}
+
+/* Buttons */
+.form-button {
+    -fx-background-color: #6200ea; /* Material Purple 500 */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 10 0;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(98,0,234,0.4), 5,0,0,1);
+    -fx-transition: background-color 0.3s ease;
+}
+
+.form-button:hover {
+    -fx-background-color: #3700b3; /* Material Purple 700 */
+}
+
+.form-button-cancel {
+    -fx-background-color: #b00020; /* Material Red 700 */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 10 0;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(176,0,32,0.4), 5,0,0,1);
+    -fx-transition: background-color 0.3s ease;
+}
+
+.form-button-cancel:hover {
+    -fx-background-color: #790000; /* Darker Red */
+}

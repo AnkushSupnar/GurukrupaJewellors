@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane prefHeight="600.0" prefWidth="550.0" style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.settings.BankAccountFormController">
+   <children>
+      <!-- Main Content Container -->
+      <VBox spacing="20.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 16, 0, 0, 4);" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+         <children>
+            <!-- Header -->
+            <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: #2196F3; -fx-background-radius: 12 12 0 0; -fx-padding: 20;">
+               <children>
+                  <StackPane prefHeight="50.0" prefWidth="50.0" style="-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 25;">
+                     <children>
+                        <Label text="🏦" style="-fx-font-size: 20px;" textFill="WHITE" />
+                     </children>
+                  </StackPane>
+                  <VBox spacing="2.0">
+                     <children>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 24px; -fx-font-family: 'Segoe UI';" text="Bank Account Management" />
+                        <Text fill="rgba(255,255,255,0.8)" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 14px; -fx-font-family: 'Segoe UI';" text="Add or edit bank account information" />
+                     </children>
+                  </VBox>
+               </children>
+               <VBox.margin>
+                  <Insets bottom="-20.0" left="-20.0" right="-20.0" top="-20.0" />
+               </VBox.margin>
+            </HBox>
+            
+            <!-- Form Content -->
+            <VBox spacing="20.0" style="-fx-padding: 30;">
+               <children>
+                  <!-- Account Basic Information -->
+                  <VBox spacing="15.0">
+                     <children>
+                        <Label text="Account Information" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" textFill="#2196F3">
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Label>
+                        
+                        <!-- Bank Name and Account Type Row -->
+                        <HBox spacing="15.0">
+                           <children>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Bank Name *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtBankName" promptText="Enter bank name" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Account Type *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <ComboBox fx:id="cmbAccountType" prefWidth="200.0" promptText="Select account type" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" maxWidth="Infinity" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        
+                        <!-- Account Number and IFSC Row -->
+                        <HBox spacing="15.0">
+                           <children>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Account Number *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtAccountNumber" promptText="Enter account number" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="IFSC Code *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtIFSCCode" promptText="Enter IFSC code" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        
+                        <!-- Account Holder Name -->
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label text="Account Holder Name *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="txtAccountHolderName" promptText="Enter account holder name" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Branch Information -->
+                  <VBox spacing="15.0">
+                     <children>
+                        <Label text="Branch Information" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" textFill="#2196F3">
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Label>
+                        
+                        <!-- Branch Name and Address Row -->
+                        <HBox spacing="15.0">
+                           <children>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Branch Name" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtBranchName" promptText="Enter branch name" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Branch Address" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtBranchAddress" promptText="Enter branch address" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Balance Information -->
+                  <VBox spacing="15.0">
+                     <children>
+                        <Label text="Opening Balance" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" textFill="#2196F3">
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Label>
+                        
+                        <!-- Opening Balance and Balance Type Row -->
+                        <HBox spacing="15.0">
+                           <children>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Opening Balance *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="txtOpeningBalance" promptText="0.00" text="0.00" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label text="Balance Type *" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#424242">
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Label>
+                                    <ComboBox fx:id="cmbBalanceType" prefWidth="200.0" promptText="Select balance type" style="-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" maxWidth="Infinity" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Action Buttons -->
+                  <HBox alignment="CENTER" spacing="15.0" style="-fx-padding: 20 0 0 0;">
+                     <children>
+                        <Button fx:id="btnSave" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(33,150,243,0.3), 6, 0, 0, 3); -fx-font-family: 'Segoe UI';" text="💾 SAVE" />
+                        <Button fx:id="btnCancel" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(117,117,117,0.3), 6, 0, 0, 3); -fx-font-family: 'Segoe UI';" text="❌ CANCEL" />
+                        <Button fx:id="btnClear" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(255,152,0,0.3), 6, 0, 0, 3); -fx-font-family: 'Segoe UI';" text="🔄 CLEAR" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+         <padding>
+            <Insets />
+         </padding>
+      </VBox>
+   </children>
+</AnchorPane>
