@@ -3,6 +3,7 @@ package com.gurukrupa.data.service;
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
 import com.gurukrupa.data.entities.ExchangeTransaction;
+import com.gurukrupa.data.entities.Exchange;
 import com.gurukrupa.data.entities.Customer;
 import com.gurukrupa.data.repository.BillRepository;
 import com.gurukrupa.data.repository.BillTransactionRepository;
@@ -29,7 +30,7 @@ public class BillService {
     private BillTransactionRepository billTransactionRepository;
     
     @Autowired
-    private ExchangeTransactionRepository exchangeTransactionRepository;
+    private ExchangeService exchangeService;
     
     @Autowired
     private CustomerService customerService;
@@ -57,7 +58,7 @@ public class BillService {
     
     public Bill createBillFromTransaction(Customer customer,
                                         List<BillTransaction> billTransactions, 
-                                        List<ExchangeTransaction> exchangeTransactions,
+                                        Exchange exchange,
                                         BigDecimal discount, BigDecimal gstRate, 
                                         Bill.PaymentMethod paymentMethod) {
         
@@ -66,18 +67,20 @@ public class BillService {
         }
         
         // Create new bill
+        BigDecimal exchangeAmt = exchange != null ? exchange.getTotalExchangeAmount() : BigDecimal.ZERO;
+        System.out.println("Creating bill with exchange amount: " + exchangeAmt);
+        
         Bill bill = Bill.builder()
                 .customer(customer)
                 .discount(discount != null ? discount : BigDecimal.ZERO)
                 .gstRate(gstRate != null ? gstRate : new BigDecimal("3.00"))
-                .exchangeAmount(BigDecimal.ZERO)
+                .exchangeAmount(exchangeAmt)
                 .paymentMethod(paymentMethod != null ? paymentMethod : Bill.PaymentMethod.CASH)
                 .status(Bill.BillStatus.DRAFT)
                 .billDate(LocalDateTime.now())
                 .paidAmount(BigDecimal.ZERO)
                 .pendingAmount(BigDecimal.ZERO)
                 .billTransactions(new ArrayList<>())
-                .exchangeTransactions(new ArrayList<>())
                 .build();
         
         // Add all bill transactions with proper bill reference
@@ -86,13 +89,31 @@ public class BillService {
             bill.getBillTransactions().add(transaction);
         });
         
-        // Add all exchange transactions with proper bill reference
-        exchangeTransactions.forEach(transaction -> {
-            transaction.setBill(bill);
-            bill.getExchangeTransactions().add(transaction);
-        });
+        // Save the bill first
+        Bill savedBill = saveBill(bill);
         
-        return saveBill(bill);
+        // Update exchange with bill reference if present
+        if (exchange != null) {
+            exchange.setBill(savedBill);
+            exchange.setStatus(Exchange.ExchangeStatus.USED_IN_BILL);
+            Exchange savedExchange = exchangeService.saveExchange(exchange);
+            
+            // Set exchange on bill for transient use (not persisted)
+            savedBill.setExchange(savedExchange);
+            
+            // Exchange amount is already set, just ensure totals are calculated
+            savedBill.setExchangeAmount(savedExchange.getTotalExchangeAmount());
+            
+            // Recalculate totals with exchange
+            savedBill.calculateTotals();
+            
+            // Save the updated bill (without exchange reference in DB)
+            savedBill = billRepository.save(savedBill);
+            
+            System.out.println("BillService: Bill updated with exchange amount: " + savedBill.getExchangeAmount());
+        }
+        
+        return savedBill;
     }
     
     public String generateBillNumber() {
@@ -104,7 +125,14 @@ public class BillService {
     }
     
     public Optional<Bill> findById(Long id) {
-        return billRepository.findById(id);
+        Optional<Bill> billOpt = billRepository.findById(id);
+        // Load associated exchange if exists
+        if (billOpt.isPresent()) {
+            Bill bill = billOpt.get();
+            Exchange exchange = exchangeService.findByBillId(id).orElse(null);
+            bill.setExchange(exchange);
+        }
+        return billOpt;
     }
     
     public Optional<Bill> findByBillNumber(String billNumber) {
@@ -179,7 +207,13 @@ public class BillService {
     }
     
     public List<ExchangeTransaction> getExchangeTransactions(Long billId) {
-        return exchangeTransactionRepository.findByBillId(billId);
+        Optional<Bill> billOpt = billRepository.findById(billId);
+        if (billOpt.isPresent() && billOpt.get().getExchange() != null) {
+            return exchangeService.findById(billOpt.get().getExchange().getId())
+                    .map(Exchange::getExchangeTransactions)
+                    .orElse(new ArrayList<>());
+        }
+        return new ArrayList<>();
     }
     
     public List<Bill> findByCustomerId(Long customerId) {

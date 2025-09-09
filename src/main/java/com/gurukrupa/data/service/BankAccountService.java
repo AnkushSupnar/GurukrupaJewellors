@@ -1,6 +1,7 @@
 package com.gurukrupa.data.service;
 
 import com.gurukrupa.data.entities.BankAccount;
+import com.gurukrupa.data.entities.BankTransaction;
 import com.gurukrupa.data.repository.BankAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,9 @@ public class BankAccountService {
     @Autowired
     private BankAccountRepository bankAccountRepository;
     
+    @Autowired
+    private BankTransactionService bankTransactionService;
+    
     public BankAccount saveBankAccount(BankAccount bankAccount) {
         return bankAccountRepository.save(bankAccount);
     }
@@ -31,6 +35,8 @@ public class BankAccountService {
             throw new IllegalArgumentException("Bank account with this account number already exists");
         }
         
+        // Set initial balance to zero for new accounts
+        // The opening balance will be added via transaction
         BankAccount bankAccount = BankAccount.builder()
                 .bankName(bankName)
                 .accountNumber(accountNumber)
@@ -39,13 +45,34 @@ public class BankAccountService {
                 .accountType(accountType)
                 .branchName(branchName)
                 .branchAddress(branchAddress)
-                .openingBalance(openingBalance)
-                .currentBalance(openingBalance)
+                .openingBalance(openingBalance != null ? openingBalance : BigDecimal.ZERO)
+                .currentBalance(BigDecimal.ZERO) // Start with zero balance
                 .balanceType(balanceType)
                 .isActive(true)
                 .build();
         
-        return saveBankAccount(bankAccount);
+        BankAccount savedAccount = saveBankAccount(bankAccount);
+        
+        // Create opening balance transaction if balance is greater than zero
+        if (openingBalance != null && openingBalance.compareTo(BigDecimal.ZERO) > 0) {
+            // This will update the current balance to the opening balance
+            bankTransactionService.recordCredit(
+                savedAccount,
+                openingBalance,
+                BankTransaction.TransactionSource.OPENING_BALANCE,
+                "OPENING",
+                savedAccount.getId(),
+                "OPENING-" + savedAccount.getAccountNumber(),
+                null,
+                accountHolderName,
+                "Opening balance for account " + accountNumber
+            );
+            
+            // Refresh the account to get the updated balance
+            savedAccount = bankAccountRepository.findById(savedAccount.getId()).orElse(savedAccount);
+        }
+        
+        return savedAccount;
     }
     
     public Optional<BankAccount> findById(Long id) {

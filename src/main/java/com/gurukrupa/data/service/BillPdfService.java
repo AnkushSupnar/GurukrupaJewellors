@@ -2,6 +2,7 @@ package com.gurukrupa.data.service;
 
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
+import com.gurukrupa.data.entities.Exchange;
 import com.gurukrupa.data.entities.ExchangeTransaction;
 import com.gurukrupa.data.entities.ShopInfo;
 import com.gurukrupa.data.repository.ShopInfoRepository;
@@ -14,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -126,7 +128,9 @@ public class BillPdfService {
 
         // Get bill transactions (sales) and exchange transactions
         List<BillTransaction> billTransactions = bill.getBillTransactions();
-        List<ExchangeTransaction> exchangeTransactions = bill.getExchangeTransactions();
+        List<ExchangeTransaction> exchangeTransactions = (bill.getExchange() != null && bill.getExchange().getExchangeTransactions() != null) 
+            ? bill.getExchange().getExchangeTransactions() 
+            : new ArrayList<>();
 
         // Sale Items Table
         if (!billTransactions.isEmpty()) {
@@ -195,14 +199,19 @@ public class BillPdfService {
 
         addSummaryRow(summaryTable, "Subtotal:", "₹ " + formatDecimal(bill.getSubtotal()), normalFont);
         if (bill.getDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            addSummaryRow(summaryTable, "Discount:", "₹ " + formatDecimal(bill.getDiscount()), normalFont);
-        }
-        if (bill.getExchangeAmount().compareTo(BigDecimal.ZERO) > 0) {
-            addSummaryRow(summaryTable, "Exchange:", "₹ " + formatDecimal(bill.getExchangeAmount()), normalFont);
+            addSummaryRow(summaryTable, "Discount:", "-₹ " + formatDecimal(bill.getDiscount()), normalFont);
         }
         addSummaryRow(summaryTable, "Net Total:", "₹ " + formatDecimal(bill.getNetTotal()), normalFont);
         addSummaryRow(summaryTable, "CGST (" + bill.getGstRate().divide(BigDecimal.valueOf(2)) + "%):", "₹ " + formatDecimal(bill.getCgstAmount()), normalFont);
         addSummaryRow(summaryTable, "SGST (" + bill.getGstRate().divide(BigDecimal.valueOf(2)) + "%):", "₹ " + formatDecimal(bill.getSgstAmount()), normalFont);
+        
+        // Add total after GST
+        BigDecimal totalAfterGST = bill.getNetTotal().add(bill.getTotalTaxAmount());
+        addSummaryRow(summaryTable, "Total after GST:", "₹ " + formatDecimal(totalAfterGST), normalFont);
+        
+        if (bill.getExchangeAmount() != null && bill.getExchangeAmount().compareTo(BigDecimal.ZERO) > 0) {
+            addSummaryRow(summaryTable, "Less: Exchange Amount:", "-₹ " + formatDecimal(bill.getExchangeAmount()), normalFont);
+        }
         
         // Grand Total
         PdfPCell grandTotalLabel = new PdfPCell(new Paragraph("Grand Total:", headerFont));

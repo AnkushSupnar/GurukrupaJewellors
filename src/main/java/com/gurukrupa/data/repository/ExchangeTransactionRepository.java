@@ -11,14 +11,14 @@ import java.util.List;
 @Repository
 public interface ExchangeTransactionRepository extends JpaRepository<ExchangeTransaction, Long> {
     
-    List<ExchangeTransaction> findByBillId(Long billId);
+    List<ExchangeTransaction> findByExchangeId(Long exchangeId);
     
-    @Query("SELECT et FROM ExchangeTransaction et WHERE et.bill.id = :billId ORDER BY et.createdDate")
-    List<ExchangeTransaction> findByBillIdOrderByCreatedDate(@Param("billId") Long billId);
+    @Query("SELECT et FROM ExchangeTransaction et WHERE et.exchange.id = :exchangeId ORDER BY et.createdDate")
+    List<ExchangeTransaction> findByExchangeIdOrderByCreatedDate(@Param("exchangeId") Long exchangeId);
     
-    @Query("SELECT COUNT(et) FROM ExchangeTransaction et WHERE et.bill.id = :billId")
-    Long countByBillId(@Param("billId") Long billId);
+    @Query("SELECT COUNT(et) FROM ExchangeTransaction et WHERE et.exchange.id = :exchangeId")
+    Long countByExchangeId(@Param("exchangeId") Long exchangeId);
     
-    @Query("SELECT SUM(et.totalAmount) FROM ExchangeTransaction et WHERE et.bill.id = :billId")
-    Double getTotalExchangeAmountByBillId(@Param("billId") Long billId);
+    @Query("SELECT SUM(et.totalAmount) FROM ExchangeTransaction et WHERE et.exchange.id = :exchangeId")
+    Double getTotalExchangeAmountByExchangeId(@Param("exchangeId") Long exchangeId);
 }

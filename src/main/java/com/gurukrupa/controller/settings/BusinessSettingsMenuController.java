@@ -91,8 +91,35 @@ public class BusinessSettingsMenuController implements Initializable {
     }
     
     private void viewAllBankAccounts() {
-        // TODO: Implement view all bank accounts functionality
-        alert.showSuccess("View All Bank Accounts feature will be implemented soon!");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the Bank Account List FXML
+            Map.Entry<Parent, BankAccountListController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController("/fxml/settings/BankAccountList.fxml", BankAccountListController.class);
+            
+            Parent root = entry.getKey();
+            BankAccountListController controller = entry.getValue();
+            
+            // Set the dialog stage in controller
+            controller.setDialogStage(dialog);
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Bank Accounts Management");
+            dialog.setWidth(1200);
+            dialog.setHeight(700);
+            dialog.setResizable(true);
+            
+            // Show the dialog
+            dialog.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Error opening bank accounts list: " + e.getMessage());
+        }
     }
     
     private void editShopInformation() {

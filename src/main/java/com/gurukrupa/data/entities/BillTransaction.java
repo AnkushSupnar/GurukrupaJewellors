@@ -2,6 +2,7 @@ package com.gurukrupa.data.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,6 +25,7 @@ public class BillTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bill_id", nullable = false)
     @ToString.Exclude
+    @JsonIgnoreProperties({"billTransactions", "exchange", "paymentModes", "customer"})
     private Bill bill;
     
     // Item Information

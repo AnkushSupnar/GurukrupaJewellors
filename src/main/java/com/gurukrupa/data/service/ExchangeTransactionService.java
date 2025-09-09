@@ -43,16 +43,16 @@ public class ExchangeTransactionService {
         return exchangeTransactionRepository.findById(id);
     }
     
-    public List<ExchangeTransaction> findByBillId(Long billId) {
-        return exchangeTransactionRepository.findByBillId(billId);
+    public List<ExchangeTransaction> findByExchangeId(Long exchangeId) {
+        return exchangeTransactionRepository.findByExchangeId(exchangeId);
     }
     
     public void deleteExchangeTransaction(Long id) {
         exchangeTransactionRepository.deleteById(id);
     }
     
-    public BigDecimal getTotalExchangeAmountByBillId(Long billId) {
-        Double total = exchangeTransactionRepository.getTotalExchangeAmountByBillId(billId);
+    public BigDecimal getTotalExchangeAmountByExchangeId(Long exchangeId) {
+        Double total = exchangeTransactionRepository.getTotalExchangeAmountByExchangeId(exchangeId);
         return total != null ? BigDecimal.valueOf(total) : BigDecimal.ZERO;
     }
 }

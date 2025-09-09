@@ -196,7 +196,7 @@
                         <Button fx:id="btnCancel" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(117,117,117,0.3), 6, 0, 0, 3); -fx-font-family: 'Segoe UI';" text="❌ CANCEL" />
                         <Button fx:id="btnClear" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(255,152,0,0.3), 6, 0, 0, 3); -fx-font-family: 'Segoe UI';" text="🔄 CLEAR" />
                      </children>
-                  </VBox>
+                  </HBox>
                </children>
             </VBox>
          </children>

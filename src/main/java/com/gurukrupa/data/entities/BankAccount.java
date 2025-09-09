@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -60,6 +62,12 @@ public class BankAccount {
     
     @Column
     private LocalDateTime updatedDate;
+    
+    // Bank transactions
+    @OneToMany(mappedBy = "bankAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @Builder.Default
+    private List<BankTransaction> bankTransactions = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {

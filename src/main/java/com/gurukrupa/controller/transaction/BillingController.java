@@ -37,6 +37,12 @@ import com.gurukrupa.data.service.AppSettingsService;
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
 import com.gurukrupa.data.entities.ExchangeTransaction;
+import com.gurukrupa.data.entities.Exchange;
+import com.gurukrupa.data.service.ExchangeService;
+import com.gurukrupa.data.entities.BankAccount;
+import com.gurukrupa.data.service.BankAccountService;
+import com.gurukrupa.data.entities.PaymentMode;
+import com.gurukrupa.data.service.PaymentModeService;
 import javafx.stage.Stage;
 import java.util.List;
 import javafx.scene.input.KeyCode;
@@ -85,6 +91,12 @@ public class BillingController implements Initializable {
     @Autowired
     private ExchangeTransactionService exchangeTransactionService;
     @Autowired
+    private ExchangeService exchangeService;
+    @Autowired
+    private BankAccountService bankAccountService;
+    @Autowired
+    private PaymentModeService paymentModeService;
+    @Autowired
     private AppSettingsService appSettingsService;
     @Autowired
     private BillPdfService billPdfService;
@@ -96,21 +108,24 @@ public class BillingController implements Initializable {
     private Button btnAddCustomer, btnSearchCustomer, btnCloseFrame, btnAddItem, btnClearItem, 
                    btnSearchItem, btnSelectCustomer, btnPrintBill, 
                    btnAddExchange, btnClearExchange,
-                   btnNewBill, btnCloseBilling, btnClearSearch, btnRefreshCatalog,
-                   btnCash, btnUPI, btnCard, btnPartial, btnCredit;
+                   btnNewBill, btnClearSearch, btnRefreshCatalog,
+                   btnCash, btnUPI, btnCard, btnPartial, btnCredit, btnBank, btnBankDone;
     @FXML
     private TextField txtCustomerName, txtMobileNo, txtCustomerAddress, txtItemCode, 
                       txtItemName, txtRate, txtQuantity, txtWeight, txtLabour, txtTotalAmount,
                       txtExchangeItemName, txtExchangeRate, txtExchangeWeight, 
-                      txtExchangeDeduction, txtExchangeAmount, txtPartialAmount;
+                      txtExchangeDeduction, txtExchangeAmount, txtPartialAmount,
+                      txtBankTransactionNo, txtBankAmount;
     @FXML
     private ComboBox<Metal> cmbMetal, cmbExchangeMetal;
+    @FXML
+    private ComboBox<BankAccount> cmbBankAccount;
     @FXML
     private TableView itemsTable, exchangeTable;
     @FXML
     private Label lblBillAmount, lblExchangeAmount, lblFinalAmount, lblItemCount, lblSubtotal, lblCGST, lblSGST, lblGrandTotal;
     @FXML
-    private VBox partialPaymentBox;
+    private VBox partialPaymentBox, bankPaymentBox;
     @FXML
     private TextField txtItemSearch;
     @FXML
@@ -132,7 +147,9 @@ public class BillingController implements Initializable {
     private final int[] selectedIndex = {0}; // track current selected suggestion index
     private SuggestionProvider<String> customerNames;
     private Bill currentBill = null; // Store the current bill after generation
+    private Exchange currentExchange = null; // Store the current exchange
     private boolean isPartialPayment = false; // Track if partial payment is selected
+    private boolean isBankPayment = false; // Track if bank payment is selected
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize button actions
@@ -151,7 +168,6 @@ public class BillingController implements Initializable {
         
         // Navigation buttons
         btnNewBill.setOnAction(e -> newBill());
-        btnCloseBilling.setOnAction(e -> closeFrame());
         
         // Payment method buttons
         btnCash.setOnAction(e -> processCashPayment());
@@ -159,6 +175,8 @@ public class BillingController implements Initializable {
         btnCard.setOnAction(e -> processCardPayment());
         btnPartial.setOnAction(e -> togglePartialPayment());
         btnCredit.setOnAction(e -> processCreditPayment());
+        btnBank.setOnAction(e -> toggleBankPayment());
+        btnBankDone.setOnAction(e -> processBankPayment());
         
         // Item catalog functionality
         btnClearSearch.setOnAction(e -> clearSearch());
@@ -197,6 +215,7 @@ public class BillingController implements Initializable {
         // Payment field restrictions
         makeNumericOnly(txtDiscount, 10);
         makeNumericOnly(txtGSTRate, 5);
+        makeNumericOnly(txtBankAmount, 10);
         
         // Auto-calculate total amount for billing
         txtRate.textProperty().addListener((obs, old, newVal) -> calculateTotal());
@@ -225,6 +244,12 @@ public class BillingController implements Initializable {
         
         // Load default GST rate from settings
         loadDefaultGstRate();
+        
+        // Load bank accounts
+        loadBankAccounts();
+        
+        // Configure bank account ComboBox
+        configureBankAccountComboBox();
     }
     void searchCustomer(){
         System.out.println("searching customer");
@@ -514,34 +539,7 @@ public class BillingController implements Initializable {
                 return null;
             }
             
-            // Create bill transactions from billing items
-            List<BillTransaction> billTransactions = new ArrayList<>();
-            for (BillingItem item : billingItems) {
-                BillTransaction transaction = billTransactionService.createBillTransaction(
-                    item.getItemCode(),
-                    item.getItemName(),
-                    item.getMetal(),
-                    new BigDecimal(item.getWeight()),
-                    new BigDecimal(item.getRate()),
-                    new BigDecimal(item.getLabour())
-                );
-                billTransactions.add(transaction);
-            }
-            
-            // Create exchange transactions from exchange items
-            List<ExchangeTransaction> exchangeTransactions = new ArrayList<>();
-            for (ExchangeItem item : exchangeItems) {
-                ExchangeTransaction transaction = exchangeTransactionService.createExchangeTransaction(
-                    item.getItemName(),
-                    item.getMetal(),
-                    BigDecimal.valueOf(item.getWeight()),
-                    BigDecimal.valueOf(item.getDeduction()),
-                    BigDecimal.valueOf(item.getRate())
-                );
-                exchangeTransactions.add(transaction);
-            }
-            
-            // Find customer by mobile number
+            // Find customer by mobile number first
             Customer customer = null;
             if (!txtMobileNo.getText().trim().isEmpty()) {
                 Optional<Customer> customerOpt = customerService.findByMobile(txtMobileNo.getText().trim());
@@ -556,6 +554,43 @@ public class BillingController implements Initializable {
                 return null;
             }
             
+            // Create bill transactions from billing items
+            List<BillTransaction> billTransactions = new ArrayList<>();
+            for (BillingItem item : billingItems) {
+                BillTransaction transaction = billTransactionService.createBillTransaction(
+                    item.getItemCode(),
+                    item.getItemName(),
+                    item.getMetal(),
+                    new BigDecimal(item.getWeight()),
+                    new BigDecimal(item.getRate()),
+                    new BigDecimal(item.getLabour())
+                );
+                billTransactions.add(transaction);
+            }
+            
+            // Create exchange if we have exchange items
+            Exchange exchange = null;
+            if (!exchangeItems.isEmpty()) {
+                // Create exchange transactions
+                List<ExchangeTransaction> exchangeTransactions = new ArrayList<>();
+                for (ExchangeItem item : exchangeItems) {
+                    ExchangeTransaction transaction = exchangeTransactionService.createExchangeTransaction(
+                        item.getItemName(),
+                        item.getMetal(),
+                        BigDecimal.valueOf(item.getWeight()),
+                        BigDecimal.valueOf(item.getDeduction()),
+                        BigDecimal.valueOf(item.getRate())
+                    );
+                    exchangeTransactions.add(transaction);
+                }
+                
+                // Create exchange entity with customer and transactions
+                exchange = exchangeService.createExchange(customer, exchangeTransactions, 
+                    "Exchange at billing time for customer: " + customer.getCustomerFullName());
+                currentExchange = exchange;
+                System.out.println("Exchange created with total amount: " + exchange.getTotalExchangeAmount());
+            }
+            
             // Get payment details
             BigDecimal discount = txtDiscount.getText().isEmpty() ? BigDecimal.ZERO : new BigDecimal(txtDiscount.getText());
             BigDecimal gstRate = txtGSTRate.getText().isEmpty() ? 
@@ -566,7 +601,7 @@ public class BillingController implements Initializable {
             Bill savedBill = billService.createBillFromTransaction(
                 customer,
                 billTransactions,
-                exchangeTransactions,
+                exchange,
                 discount,
                 gstRate,
                 null // Payment method will be set when user clicks payment button
@@ -783,6 +818,7 @@ public class BillingController implements Initializable {
             double gstRate = txtGSTRate.getText().isEmpty() ? 3 : Double.parseDouble(txtGSTRate.getText());
             
             // Calculate GST amounts (GST is split equally between CGST and SGST)
+            // GST should be calculated only on billing items (billAmount), not on exchange
             double gstAmount = (billAmount * gstRate) / 100;
             double cgstAmount = gstAmount / 2;
             double sgstAmount = gstAmount / 2;
@@ -827,6 +863,7 @@ public class BillingController implements Initializable {
         txtDiscount.setText("");
         txtGSTRate.setText("3");
         currentBill = null; // Reset current bill
+        currentExchange = null; // Reset current exchange
         
         // Reset partial payment state
         isPartialPayment = false;
@@ -834,6 +871,13 @@ public class BillingController implements Initializable {
         partialPaymentBox.setManaged(false);
         txtPartialAmount.clear();
         btnPartial.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        
+        // Reset bank payment state
+        isBankPayment = false;
+        bankPaymentBox.setVisible(false);
+        bankPaymentBox.setManaged(false);
+        clearBankPaymentFields();
+        btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
         
         System.out.println("Started new bill");
     }
@@ -1235,6 +1279,9 @@ public class BillingController implements Initializable {
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
             
+            // Create PaymentMode entry for cash payment
+            PaymentMode cashPayment = paymentModeService.createCashPayment(updatedBill, paidAmount);
+            
             // Generate PDF
             generateAndSavePdf(updatedBill);
             
@@ -1313,6 +1360,9 @@ public class BillingController implements Initializable {
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
             
+            // Create PaymentMode entry for UPI payment (TODO: need to collect UPI ID/reference)
+            PaymentMode upiPayment = paymentModeService.createUPIPayment(updatedBill, paidAmount, "UPI-REF-" + System.currentTimeMillis(), null);
+            
             // Generate PDF
             generateAndSavePdf(updatedBill);
             
@@ -1390,6 +1440,9 @@ public class BillingController implements Initializable {
             
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
+            
+            // Create PaymentMode entry for card payment (TODO: need to collect card details)
+            PaymentMode cardPayment = paymentModeService.createCardPayment(updatedBill, paidAmount, "CARD-REF-" + System.currentTimeMillis(), null, null, null);
             
             // Generate PDF
             generateAndSavePdf(updatedBill);
@@ -1543,6 +1596,9 @@ public class BillingController implements Initializable {
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
             
+            // Create PaymentMode entry for partial cash payment
+            PaymentMode partialPayment = paymentModeService.createCashPayment(updatedBill, partialAmount);
+            
             // Generate PDF
             generateAndSavePdf(updatedBill);
             
@@ -1610,6 +1666,8 @@ public class BillingController implements Initializable {
                 // Save the updated bill
                 Bill updatedBill = billService.saveBill(currentBill);
                 
+                // Note: No PaymentMode entry for credit sale as no payment is made
+                
                 // Generate PDF
                 generateAndSavePdf(updatedBill);
                 
@@ -1637,5 +1695,227 @@ public class BillingController implements Initializable {
             e.printStackTrace();
             alert.showError("Error processing credit sale: " + e.getMessage());
         }
+    }
+    
+    private void loadBankAccounts() {
+        try {
+            List<BankAccount> bankAccounts = bankAccountService.getAllActiveBankAccounts();
+            cmbBankAccount.getItems().clear();
+            cmbBankAccount.getItems().addAll(bankAccounts);
+        } catch (Exception e) {
+            System.err.println("Error loading bank accounts: " + e.getMessage());
+        }
+    }
+    
+    private void configureBankAccountComboBox() {
+        // Set string converter for displaying bank account names
+        cmbBankAccount.setConverter(new javafx.util.StringConverter<BankAccount>() {
+            @Override
+            public String toString(BankAccount bankAccount) {
+                return bankAccount != null ? bankAccount.getBankName() + " - " + bankAccount.getAccountNumber() : "";
+            }
+            
+            @Override
+            public BankAccount fromString(String string) {
+                return cmbBankAccount.getItems().stream()
+                        .filter(item -> (item.getBankName() + " - " + item.getAccountNumber()).equals(string))
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+    }
+    
+    private void toggleBankPayment() {
+        // Toggle bank payment mode
+        isBankPayment = !isBankPayment;
+        
+        if (isBankPayment) {
+            // Show the bank payment details box
+            bankPaymentBox.setVisible(true);
+            bankPaymentBox.setManaged(true);
+            
+            // Hide partial payment box if visible
+            if (isPartialPayment) {
+                partialPaymentBox.setVisible(false);
+                partialPaymentBox.setManaged(false);
+                txtPartialAmount.clear();
+                isPartialPayment = false;
+            }
+            
+            // Set focus to the bank account dropdown
+            cmbBankAccount.requestFocus();
+            
+            // Pre-fill with grand total if bill exists
+            if (currentBill != null) {
+                txtBankAmount.setText(currentBill.getGrandTotal().toString());
+            } else if (billingItems.size() > 0 || exchangeItems.size() > 0) {
+                BigDecimal total = calculateGrandTotal();
+                txtBankAmount.setText(total.toString());
+            }
+            
+            // Update button style to show it's active
+            btnBank.setStyle("-fx-background-color: #4A148C; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        } else {
+            // Hide the bank payment details box
+            bankPaymentBox.setVisible(false);
+            bankPaymentBox.setManaged(false);
+            clearBankPaymentFields();
+            
+            // Reset button style
+            btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        }
+    }
+    
+    private void clearBankPaymentFields() {
+        cmbBankAccount.getSelectionModel().clearSelection();
+        txtBankTransactionNo.clear();
+        txtBankAmount.clear();
+    }
+    
+    private void processBankPayment() {
+        try {
+            // Validate bank payment fields
+            if (cmbBankAccount.getValue() == null) {
+                alert.showError("Please select a bank account.");
+                return;
+            }
+            
+            if (txtBankTransactionNo.getText().trim().isEmpty()) {
+                alert.showError("Please enter transaction/reference number.");
+                return;
+            }
+            
+            if (txtBankAmount.getText().trim().isEmpty()) {
+                alert.showError("Please enter the payment amount.");
+                return;
+            }
+            
+            BigDecimal bankAmount;
+            try {
+                bankAmount = new BigDecimal(txtBankAmount.getText().trim());
+                if (bankAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    alert.showError("Payment amount must be greater than zero.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                alert.showError("Please enter a valid numeric amount.");
+                return;
+            }
+            
+            // Create bill if not already created
+            if (currentBill == null) {
+                currentBill = createBillFromCurrentData();
+                if (currentBill == null) {
+                    return; // Error already shown in createBillFromCurrentData
+                }
+            }
+            
+            // Validate payment amount doesn't exceed bill total
+            if (bankAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+                alert.showError("Payment amount cannot exceed the bill total.");
+                return;
+            }
+            
+            // Update bill payment details
+            currentBill.setPaymentMethod(Bill.PaymentMethod.BANK_TRANSFER);
+            currentBill.setPaidAmount(bankAmount);
+            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(bankAmount));
+            currentBill.setStatus(bankAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
+                                 Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
+            
+            // Save the bill first
+            Bill updatedBill = billService.saveBill(currentBill);
+            
+            // Create PaymentMode entry for bank payment
+            BankAccount selectedBank = cmbBankAccount.getValue();
+            String transactionNo = txtBankTransactionNo.getText().trim();
+            
+            PaymentMode bankPayment = paymentModeService.createBankPayment(
+                updatedBill, 
+                bankAmount, 
+                selectedBank, 
+                transactionNo
+            );
+            
+            // Generate PDF
+            generateAndSavePdf(updatedBill);
+            
+            // Hide bank payment box
+            bankPaymentBox.setVisible(false);
+            bankPaymentBox.setManaged(false);
+            clearBankPaymentFields();
+            isBankPayment = false;
+            
+            // Reset button style
+            btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+            
+            // Show success message
+            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                alert.showSuccess(String.format(
+                    "Bank payment processed successfully!\n" +
+                    "Bank: %s\n" +
+                    "Transaction No: %s\n" +
+                    "Paid Amount: ₹%.2f\n" +
+                    "Pending Amount: ₹%.2f\n" +
+                    "Bill saved and PDF generated.",
+                    selectedBank.getBankName(),
+                    transactionNo,
+                    bankAmount, 
+                    updatedBill.getPendingAmount()
+                ));
+            } else {
+                alert.showSuccess(String.format(
+                    "Bank payment processed successfully!\n" +
+                    "Bank: %s\n" +
+                    "Transaction No: %s\n" +
+                    "Amount: ₹%.2f\n" +
+                    "Bill saved and PDF generated.",
+                    selectedBank.getBankName(),
+                    transactionNo,
+                    bankAmount
+                ));
+            }
+            
+            // Reset for new bill
+            newBill();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert.showError("Error processing bank payment: " + e.getMessage());
+        }
+    }
+    
+    private BigDecimal calculateGrandTotal() {
+        BigDecimal subtotal = billingItems.stream()
+            .map(item -> BigDecimal.valueOf(item.getAmount()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal exchangeTotal = exchangeItems.stream()
+            .map(item -> BigDecimal.valueOf(item.getAmount()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal discount = BigDecimal.ZERO;
+        if (!txtDiscount.getText().isEmpty()) {
+            try {
+                discount = new BigDecimal(txtDiscount.getText());
+            } catch (NumberFormatException e) {
+                // Ignore invalid discount
+            }
+        }
+        
+        BigDecimal gstRate = new BigDecimal("3.00");
+        if (!txtGSTRate.getText().isEmpty()) {
+            try {
+                gstRate = new BigDecimal(txtGSTRate.getText());
+            } catch (NumberFormatException e) {
+                // Ignore invalid GST rate
+            }
+        }
+        
+        BigDecimal netTotal = subtotal.subtract(discount);
+        BigDecimal taxableAmount = subtotal; // GST only on billing items
+        BigDecimal totalTax = taxableAmount.multiply(gstRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        
+        return netTotal.add(totalTax).subtract(exchangeTotal);
     }
 }

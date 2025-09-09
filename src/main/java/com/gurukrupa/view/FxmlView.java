@@ -274,6 +274,26 @@ public enum FxmlView {
         public String getFxmlFile() {
             return "/fxml/transaction/ViewBills.fxml";
         }
+    },
+    BANK_ACCOUNT_LIST {
+        @Override
+        String getTitle() {
+            return "Bank Accounts";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/settings/BankAccountList.fxml";
+        }
+    },
+    BANKACCOUNTFORM {
+        @Override
+        String getTitle() {
+            return "Bank Account Form";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/settings/BankAccountForm.fxml";
+        }
     }
     ;
     abstract String getTitle();

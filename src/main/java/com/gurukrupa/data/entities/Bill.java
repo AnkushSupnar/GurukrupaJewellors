@@ -2,6 +2,7 @@ package com.gurukrupa.data.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -84,6 +85,7 @@ public class Bill {
     @Enumerated(EnumType.STRING)
     private BillStatus status;
     
+    
     // Timestamps
     @Column(nullable = false)
     private LocalDateTime billDate;
@@ -100,10 +102,16 @@ public class Bill {
     @Builder.Default
     private List<BillTransaction> billTransactions = new ArrayList<>();
     
+    // Note: Exchange relationship is now managed through Exchange entity's bill_id
+    // To get exchange for a bill, query Exchange table with bill_id
+    @Transient
+    private Exchange exchange; // This is now a transient field for backward compatibility
+    
+    // Payment modes used for this bill
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     @Builder.Default
-    private List<ExchangeTransaction> exchangeTransactions = new ArrayList<>();
+    private List<PaymentMode> paymentModes = new ArrayList<>();
     
     @PrePersist
     protected void onCreate() {
@@ -138,22 +146,32 @@ public class Bill {
             .map(BillTransaction::getTotalAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        // Calculate exchange amount from exchange transactions
-        exchangeAmount = exchangeTransactions.stream()
-            .map(ExchangeTransaction::getTotalAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Calculate exchange amount from linked exchange if present
+        if (exchange != null && exchange.getTotalExchangeAmount() != null) {
+            exchangeAmount = exchange.getTotalExchangeAmount();
+            System.out.println("Bill calculateTotals - Exchange amount from exchange entity: " + exchangeAmount);
+        } else if (exchangeAmount == null) {
+            exchangeAmount = BigDecimal.ZERO;
+            System.out.println("Bill calculateTotals - No exchange linked or amount null");
+        } else {
+            System.out.println("Bill calculateTotals - Using existing exchange amount: " + exchangeAmount);
+        }
         
-        // Calculate net total after discount
+        // Calculate net total after discount (but before exchange deduction)
         netTotal = subtotal.subtract(discount);
         
-        // Calculate tax amounts (GST only on billing items, not exchange)
-        BigDecimal taxableAmount = subtotal.subtract(discount);
+        // Calculate tax amounts (GST only on billing items, not on exchange)
+        BigDecimal taxableAmount = subtotal;
         totalTaxAmount = taxableAmount.multiply(gstRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         cgstAmount = totalTaxAmount.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
         sgstAmount = totalTaxAmount.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
         
-        // Calculate grand total
+        // Calculate grand total: netTotal + GST - exchangeAmount
         grandTotal = netTotal.add(totalTaxAmount).subtract(exchangeAmount);
+        
+        System.out.println("Bill calculateTotals - Subtotal: " + subtotal + ", Discount: " + discount + 
+            ", NetTotal: " + netTotal + ", GST: " + totalTaxAmount + ", Exchange: " + exchangeAmount + 
+            ", GrandTotal: " + grandTotal);
         
         // Calculate pending amount
         if (paidAmount == null) {

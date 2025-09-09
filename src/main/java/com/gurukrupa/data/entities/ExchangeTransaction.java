@@ -2,6 +2,7 @@ package com.gurukrupa.data.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -20,11 +21,12 @@ public class ExchangeTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    // Reference to the main bill
+    // Reference to the main exchange
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bill_id", nullable = false)
+    @JoinColumn(name = "exchange_id", nullable = false)
     @ToString.Exclude
-    private Bill bill;
+    @JsonIgnoreProperties({"exchangeTransactions", "bill", "customer"})
+    private Exchange exchange;
     
     // Item Information
     @Column(nullable = false)
@@ -81,14 +83,20 @@ public class ExchangeTransaction {
             netWeight = grossWeight.subtract(deduction);
         } else if (grossWeight != null) {
             netWeight = grossWeight;
+        } else {
+            netWeight = BigDecimal.ZERO;
         }
         
         // Calculate total amount: (netWeight * ratePerTenGrams) / 10
         if (netWeight != null && ratePerTenGrams != null) {
             totalAmount = netWeight.multiply(ratePerTenGrams)
                 .divide(BigDecimal.valueOf(10), 2, RoundingMode.HALF_UP);
+            System.out.println("ExchangeTransaction calculated: netWeight=" + netWeight + 
+                ", rate=" + ratePerTenGrams + ", totalAmount=" + totalAmount);
         } else {
             totalAmount = BigDecimal.ZERO;
+            System.out.println("ExchangeTransaction calculation failed: netWeight=" + netWeight + 
+                ", rate=" + ratePerTenGrams);
         }
     }
 }

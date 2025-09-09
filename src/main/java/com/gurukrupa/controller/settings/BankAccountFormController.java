@@ -41,7 +41,8 @@ public class BankAccountFormController implements Initializable {
     
     private Stage dialogStage;
     private boolean saved = false;
-    private BankAccount bankAccount; // For editing existing accounts
+    private BankAccount editingAccount = null; // For editing existing accounts
+    private boolean isEditMode = false;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -158,26 +159,25 @@ public class BankAccountFormController implements Initializable {
             BigDecimal openingBalance = new BigDecimal(txtOpeningBalance.getText().trim());
             BankAccount.BalanceType balanceType = cmbBalanceType.getValue();
             
-            if (bankAccount == null) {
+            if (!isEditMode) {
                 // Creating new bank account
-                bankAccount = bankAccountService.createBankAccount(
+                BankAccount newAccount = bankAccountService.createBankAccount(
                     bankName, accountNumber, ifscCode, accountHolderName,
                     accountType, branchName, branchAddress, openingBalance, balanceType
                 );
                 alert.showSuccess("Bank account created successfully!");
             } else {
                 // Updating existing bank account
-                bankAccount.setBankName(bankName);
-                bankAccount.setAccountNumber(accountNumber);
-                bankAccount.setIfscCode(ifscCode);
-                bankAccount.setAccountHolderName(accountHolderName);
-                bankAccount.setAccountType(accountType);
-                bankAccount.setBranchName(branchName);
-                bankAccount.setBranchAddress(branchAddress);
-                bankAccount.setOpeningBalance(openingBalance);
-                bankAccount.setBalanceType(balanceType);
+                editingAccount.setBankName(bankName);
+                editingAccount.setIfscCode(ifscCode);
+                editingAccount.setAccountHolderName(accountHolderName);
+                editingAccount.setAccountType(accountType);
+                editingAccount.setBranchName(branchName);
+                editingAccount.setBranchAddress(branchAddress);
+                editingAccount.setBalanceType(balanceType);
+                // Note: Account number and opening balance cannot be changed
                 
-                bankAccount = bankAccountService.updateBankAccount(bankAccount);
+                BankAccount updatedAccount = bankAccountService.updateBankAccount(editingAccount);
                 alert.showSuccess("Bank account updated successfully!");
             }
             
@@ -269,24 +269,30 @@ public class BankAccountFormController implements Initializable {
         return saved;
     }
     
-    public void setBankAccount(BankAccount bankAccount) {
-        this.bankAccount = bankAccount;
-        if (bankAccount != null) {
-            populateForm();
-        }
-    }
     
-    private void populateForm() {
-        if (bankAccount != null) {
-            txtBankName.setText(bankAccount.getBankName());
-            txtAccountNumber.setText(bankAccount.getAccountNumber());
-            txtIFSCCode.setText(bankAccount.getIfscCode());
-            txtAccountHolderName.setText(bankAccount.getAccountHolderName());
-            txtBranchName.setText(bankAccount.getBranchName());
-            txtBranchAddress.setText(bankAccount.getBranchAddress());
-            txtOpeningBalance.setText(bankAccount.getOpeningBalance().toString());
-            cmbAccountType.setValue(bankAccount.getAccountType());
-            cmbBalanceType.setValue(bankAccount.getBalanceType());
-        }
+    /**
+     * Set the controller in edit mode with an existing bank account
+     */
+    public void setEditMode(BankAccount account) {
+        this.editingAccount = account;
+        this.isEditMode = true;
+        
+        // Populate form with account details
+        txtBankName.setText(account.getBankName());
+        txtAccountNumber.setText(account.getAccountNumber());
+        txtIFSCCode.setText(account.getIfscCode());
+        txtAccountHolderName.setText(account.getAccountHolderName());
+        txtBranchName.setText(account.getBranchName() != null ? account.getBranchName() : "");
+        txtBranchAddress.setText(account.getBranchAddress() != null ? account.getBranchAddress() : "");
+        txtOpeningBalance.setText(account.getCurrentBalance().toString());
+        cmbAccountType.setValue(account.getAccountType());
+        cmbBalanceType.setValue(account.getBalanceType());
+        
+        // Disable editing of account number and opening balance in edit mode
+        txtAccountNumber.setEditable(false);
+        txtOpeningBalance.setEditable(false);
+        
+        // Update button text
+        btnSave.setText("UPDATE");
     }
 }
