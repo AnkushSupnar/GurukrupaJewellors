@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.settings.SettingsMenuController">
+<BorderPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.settings.SettingsMenuController">
    <top>
       <!-- Header -->
       <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1976D2; -fx-padding: 20;" spacing="16.0">
@@ -34,6 +34,76 @@
                   <VBox spacing="16.0">
                      <children>
                         <Label text="Master Data" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" textFill="#424242" />
+                        
+                        <!-- Bank Accounts Card -->
+                        <VBox style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;" spacing="12.0">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                 <children>
+                                    <VBox style="-fx-background-color: #E3F2FD; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#2196F3" glyphName="BANK" size="2.0em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label text="Bank Accounts" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" textFill="#212121" />
+                                          <Label text="Manage your business bank accounts, add new accounts and track opening balances" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" textFill="#616161" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                    <HBox spacing="12.0">
+                                       <children>
+                                          <Button fx:id="btnAddBank" text="ADD BANK" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(33,150,243,0.3), 4, 0, 0, 2);">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Button>
+                                          <Button fx:id="btnViewBanks" text="VIEW ALL" style="-fx-background-color: transparent; -fx-text-fill: #2196F3; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-border-color: #2196F3; -fx-border-radius: 8; -fx-border-width: 1.5;">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        
+                        <!-- UPI Payment Methods Card -->
+                        <VBox style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;" spacing="12.0">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                 <children>
+                                    <VBox style="-fx-background-color: #F3E5F5; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#9C27B0" glyphName="MOBILE_PHONE" size="2.0em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label text="UPI Payment Methods" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" textFill="#212121" />
+                                          <Label text="Manage UPI payment apps like GooglePay, PhonePe and link them to bank accounts" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" textFill="#616161" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                    <HBox spacing="12.0">
+                                       <children>
+                                          <Button fx:id="btnAddUPI" text="ADD UPI" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(156,39,176,0.3), 4, 0, 0, 2);">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Button>
+                                          <Button fx:id="btnViewUPI" text="VIEW ALL" style="-fx-background-color: transparent; -fx-text-fill: #9C27B0; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-border-color: #9C27B0; -fx-border-radius: 8; -fx-border-width: 1.5;">
+                                             <font>
+                                                <Font size="12.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
                         
                         <!-- Metal Management Card -->
                         <VBox style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;" spacing="12.0">
@@ -150,6 +220,43 @@
                               </HBox>
                            </children>
                         </VBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Business Information Section -->
+                  <VBox spacing="16.0">
+                     <children>
+                        <Label text="Business Information" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" textFill="#424242" />
+                        
+                        <!-- Shop Information Card -->
+                        <VBox style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;" spacing="12.0">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                 <children>
+                                    <VBox style="-fx-background-color: #E8F5E9; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#4CAF50" glyphName="BUILDING" size="2.0em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label text="Shop Information" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" textFill="#212121" />
+                                          <Label text="Configure shop details, address, contact information and business registration details" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" textFill="#616161" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                    <Button fx:id="btnEditShopInfo" text="EDIT INFO" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(76,175,80,0.3), 4, 0, 0, 2);">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="EDIT" size="1.0em" />
+                                       </graphic>
+                                       <font>
+                                          <Font size="12.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        
                      </children>
                   </VBox>
                   

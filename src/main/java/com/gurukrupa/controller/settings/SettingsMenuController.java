@@ -48,6 +48,21 @@ public class SettingsMenuController implements Initializable {
     @FXML
     private Button btnManageUsers;
     
+    @FXML
+    private Button btnAddBank;
+    
+    @FXML
+    private Button btnViewBanks;
+    
+    @FXML
+    private Button btnEditShopInfo;
+    
+    @FXML
+    private Button btnAddUPI;
+    
+    @FXML
+    private Button btnViewUPI;
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Set up button actions
@@ -57,6 +72,15 @@ public class SettingsMenuController implements Initializable {
         btnConfigureTax.setOnAction(event -> openTaxConfiguration());
         btnBackup.setOnAction(event -> performBackup());
         btnManageUsers.setOnAction(event -> openUserManagement());
+        
+        // Business Information actions
+        btnAddBank.setOnAction(event -> openBankAccountForm());
+        btnViewBanks.setOnAction(event -> viewAllBankAccounts());
+        btnEditShopInfo.setOnAction(event -> editShopInformation());
+        
+        // UPI Payment Methods actions
+        btnAddUPI.setOnAction(event -> openAddUPIPayment());
+        btnViewUPI.setOnAction(event -> viewAllUPIPayments());
     }
     
     private void openMetalManagement() {
@@ -120,8 +144,33 @@ public class SettingsMenuController implements Initializable {
     }
     
     private void openTaxConfiguration() {
-        // TODO: Implement tax configuration
-        alert.showSuccess("Tax Configuration feature will be available soon!");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the Tax Configuration FXML
+            Map.Entry<Parent, TaxConfigurationController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController("/fxml/settings/TaxConfiguration.fxml", TaxConfigurationController.class);
+            
+            Parent root = entry.getKey();
+            TaxConfigurationController controller = entry.getValue();
+            
+            // Set up the dialog stage in controller
+            controller.setDialogStage(dialog);
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Tax Configuration");
+            dialog.setResizable(false);
+            
+            // Show the dialog and wait for it to close
+            dialog.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Failed to open Tax Configuration: " + e.getMessage());
+        }
     }
     
     private void performBackup() {
@@ -160,6 +209,144 @@ public class SettingsMenuController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
             alert.showError("Failed to open Metal Rate Management: " + e.getMessage());
+        }
+    }
+    
+    private void openBankAccountForm() {
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the Bank Account Form FXML
+            Map.Entry<Parent, BankAccountFormController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController("/fxml/settings/BankAccountForm.fxml", BankAccountFormController.class);
+            
+            Parent root = entry.getKey();
+            BankAccountFormController controller = entry.getValue();
+            
+            // Set up the dialog stage in controller
+            controller.setDialogStage(dialog);
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Add New Bank Account");
+            dialog.setResizable(false);
+            
+            // Show the dialog and wait for it to close
+            dialog.showAndWait();
+            
+            // Handle the result after dialog closes
+            if (controller.isSaved()) {
+                System.out.println("Bank account saved successfully!");
+                alert.showSuccess("Bank account added successfully!");
+            } else {
+                System.out.println("Bank account addition was cancelled");
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Error opening bank account form: " + e.getMessage());
+        }
+    }
+    
+    private void viewAllBankAccounts() {
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the Bank Account List FXML
+            Map.Entry<Parent, BankAccountListController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController("/fxml/settings/BankAccountList.fxml", BankAccountListController.class);
+            
+            Parent root = entry.getKey();
+            BankAccountListController controller = entry.getValue();
+            
+            // Set the dialog stage in controller
+            controller.setDialogStage(dialog);
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Bank Accounts Management");
+            dialog.setWidth(1200);
+            dialog.setHeight(700);
+            dialog.setResizable(true);
+            
+            // Show the dialog
+            dialog.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Error opening bank accounts list: " + e.getMessage());
+        }
+    }
+    
+    private void editShopInformation() {
+        // TODO: Implement edit shop information functionality
+        alert.showSuccess("Edit Shop Information feature will be implemented soon!");
+    }
+    
+    private void openAddUPIPayment() {
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the Add UPI Payment FXML
+            Map.Entry<Parent, UPIPaymentController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.ADD_UPI_PAYMENT.getFxmlFile(), UPIPaymentController.class);
+            
+            Parent root = entry.getKey();
+            UPIPaymentController controller = entry.getValue();
+            
+            // Set up the dialog stage in controller
+            controller.setDialogStage(dialog);
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Add UPI Payment Method");
+            dialog.setResizable(false);
+            
+            // Show the dialog and wait for it to close
+            dialog.showAndWait();
+            
+            if (controller.isSaved()) {
+                alert.showSuccess("UPI Payment Method added successfully!");
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Error opening add UPI payment form: " + e.getMessage());
+        }
+    }
+    
+    private void viewAllUPIPayments() {
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the UPI Payment List FXML
+            Map.Entry<Parent, UPIPaymentListController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.UPI_PAYMENT_LIST.getFxmlFile(), UPIPaymentListController.class);
+            
+            Parent root = entry.getKey();
+            UPIPaymentListController controller = entry.getValue();
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("UPI Payment Methods");
+            dialog.setWidth(1000);
+            dialog.setHeight(700);
+            dialog.setResizable(true);
+            
+            // Show the dialog
+            dialog.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            alert.showError("Error opening UPI payments list: " + e.getMessage());
         }
     }
 }

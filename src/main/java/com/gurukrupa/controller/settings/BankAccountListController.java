@@ -508,7 +508,7 @@ public class BankAccountListController implements Initializable {
         if (dialogStage != null) {
             dialogStage.close();
         } else {
-            stageManager.switchScene(FxmlView.BUSINESS_SETTINGS);
+            stageManager.switchScene(FxmlView.SETTINGS_MENU);
         }
     }
     

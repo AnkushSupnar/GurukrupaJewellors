@@ -51,11 +51,11 @@ public class JewelryItemMenuController implements Initializable {
     @FXML
     private Button btnViewCustomers;
     
-    // Categories Management
+    // Metal Types
     @FXML
-    private Button btnAddCategory;
+    private Button btnAddMetal;
     @FXML
-    private Button btnViewCategories;
+    private Button btnViewMetals;
     
     // Metal Rates Management
     @FXML
@@ -63,17 +63,18 @@ public class JewelryItemMenuController implements Initializable {
     @FXML
     private Button btnViewRates;
     
+    // Categories Management
+    @FXML
+    private Button btnAddCategory;
+    @FXML
+    private Button btnViewCategories;
+    
     // Suppliers Management
     @FXML
     private Button btnAddSupplier;
     @FXML
     private Button btnViewSuppliers;
     
-    // Settings & Configuration
-    @FXML
-    private Button btnBusinessSettings;
-    @FXML
-    private Button btnSystemConfig;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -134,39 +135,39 @@ public class JewelryItemMenuController implements Initializable {
         btnAddCustomer.setOnAction(event -> openAddCustomerDialog());
         btnViewCustomers.setOnAction(event -> openViewCustomersDialog());
         
-        // Categories Management
-        btnAddCategory.setOnAction(event -> showNotImplemented("Add Category"));
-        btnViewCategories.setOnAction(event -> showNotImplemented("Manage Categories"));
+        // Metal Types
+        btnAddMetal.setOnAction(event -> openMetalForm());
+        btnViewMetals.setOnAction(event -> openMetalForm());
         
         // Metal Rates Management
         btnUpdateRates.setOnAction(event -> showNotImplemented("Update Metal Rates"));
         btnViewRates.setOnAction(event -> showNotImplemented("View Rates History"));
         
+        // Categories Management
+        btnAddCategory.setOnAction(event -> showNotImplemented("Add Category"));
+        btnViewCategories.setOnAction(event -> showNotImplemented("Manage Categories"));
+        
         // Suppliers Management
         btnAddSupplier.setOnAction(event -> showNotImplemented("Add Supplier"));
         btnViewSuppliers.setOnAction(event -> showNotImplemented("View Suppliers"));
-        
-        // Settings & Configuration
-        btnBusinessSettings.setOnAction(event -> openBusinessSettingsDialog());
-        btnSystemConfig.setOnAction(event -> showNotImplemented("System Configuration"));
     }
     
     private void setupHoverEffects() {
         // Add subtle hover effects for primary buttons
         setupPrimaryButtonHover(btnAddItem);
         setupPrimaryButtonHover(btnAddCustomer);
-        setupPrimaryButtonHover(btnAddCategory);
+        setupPrimaryButtonHover(btnAddMetal);
         setupPrimaryButtonHover(btnUpdateRates);
+        setupPrimaryButtonHover(btnAddCategory);
         setupPrimaryButtonHover(btnAddSupplier);
-        setupPrimaryButtonHover(btnBusinessSettings);
         
         // Add hover effects for secondary buttons
         setupSecondaryButtonHover(btnViewItems, "#1976D2");
-        setupSecondaryButtonHover(btnViewCustomers, "#2E7D32");
-        setupSecondaryButtonHover(btnViewCategories, "#F57C00");
+        setupSecondaryButtonHover(btnViewCustomers, "#388E3C");
+        setupSecondaryButtonHover(btnViewMetals, "#F57C00");
         setupSecondaryButtonHover(btnViewRates, "#7B1FA2");
-        setupSecondaryButtonHover(btnViewSuppliers, "#D32F2F");
-        setupSecondaryButtonHover(btnSystemConfig, "#616161");
+        setupSecondaryButtonHover(btnViewCategories, "#00796B");
+        setupSecondaryButtonHover(btnViewSuppliers, "#C62828");
     }
     
     private void setupPrimaryButtonHover(Button button) {
@@ -227,24 +228,32 @@ public class JewelryItemMenuController implements Initializable {
         }
     }
     
-    private void openBusinessSettingsDialog() {
-        logger.info("Opening Business Settings in center pane");
+    private void openMetalForm() {
+        logger.info("Opening Metal Form");
         try {
-            // Find the main BorderPane from the Dashboard
-            javafx.scene.Node node = mainFlowPane.getScene().getRoot();
-            if (node instanceof javafx.scene.layout.BorderPane) {
-                javafx.scene.layout.BorderPane mainPane = (javafx.scene.layout.BorderPane) node;
-                javafx.scene.layout.Pane businessSettingsPane = springFXMLLoader.getPage("/fxml/settings/BusinessSettingsMenu.fxml");
-                mainPane.setCenter(businessSettingsPane);
-                logger.info("Business Settings loaded successfully in center pane");
-            } else {
-                logger.error("Could not find main BorderPane");
-            }
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the metal form FXML
+            Parent root = springFXMLLoader.load(FxmlView.METAL_FORM.getFxmlFile());
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Metal Management");
+            dialog.setResizable(true);
+            
+            // Show the dialog
+            dialog.show();
+            
+            logger.info("Metal form opened successfully");
+            
         } catch (Exception e) {
-            logger.error("Error opening business settings: {}", e.getMessage());
+            logger.error("Error opening metal form: {}", e.getMessage());
             e.printStackTrace();
         }
     }
+    
     
     private void showNotImplemented(String featureName) {
         logger.info("Feature '{}' is not yet implemented", featureName);

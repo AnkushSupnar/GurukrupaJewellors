@@ -3,16 +3,6 @@ package com.gurukrupa.view;
 import java.util.ResourceBundle;
 
 public enum FxmlView {
-    MAIN{
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("main.app.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/Main.fxml";
-        }
-    },
     LOGIN {
         @Override
         String getTitle() {
@@ -34,36 +24,6 @@ public enum FxmlView {
         }
     },
 
-    EMPLOYEE {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("login.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/create/AddEmployee.fxml";
-        }
-    },
-    ADDUSER {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("login.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/create/AddUser.fxml";
-        }
-    },
-    HOME {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/home/Home.fxml";
-        }
-    },
     DASHBOARD {
         @Override
         String getTitle() {
@@ -72,56 +32,6 @@ public enum FxmlView {
         @Override
         public String getFxmlFile() {
             return "/fxml/home/Dashboard.fxml";
-        }
-    },
-    PURCHASEPARTY {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/create/AddPurchaseParty.fxml";
-        }
-    },
-    ITEM {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/create/AddItem.fxml";
-        }
-    },
-    PURCHASEINVOICE {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/transaction/PurchaseInvoice.fxml";
-        }
-    },
-    BANK {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/create/AddBank.fxml";
-        }
-    },
-    ITEMSTOCK {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/report/item/ItemStock.fxml";
         }
     },
     BILLING {
@@ -134,16 +44,6 @@ public enum FxmlView {
             return "/fxml/transaction/BillingFrame.fxml";
         }
     },
-    CUSTOMER {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/create/AddCustomer.fxml";
-        }
-    },
     CUSTOMER_FORM {
         @Override
         String getTitle() {
@@ -152,47 +52,6 @@ public enum FxmlView {
         @Override
         public String getFxmlFile() {
             return "/fxml/master/customer.fxml";
-        }
-    },
-    SALEREPORT {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/report/salesreport/DailySalesReport.fxml";
-        }
-    },
-    STUDENT {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/report/salesreport/CustomerSalesReport.fxml";
-        }
-    },
-    NEWHOME {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/home/HomeNew.fxml";
-        }
-    }
-    ,
-    DEMO {
-        @Override
-        String getTitle() {
-            return getStringFromResourceBundle("dashboard.title");
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/home/pymol.fxml";
         }
     },
     JEWELRY_ITEM_MENU {
@@ -245,16 +104,6 @@ public enum FxmlView {
             return "/fxml/settings/AppSettings.fxml";
         }
     },
-    BUSINESS_SETTINGS {
-        @Override
-        String getTitle() {
-            return "Business Settings";
-        }
-        @Override
-        public String getFxmlFile() {
-            return "/fxml/settings/BusinessSettingsMenu.fxml";
-        }
-    },
     METAL_RATE_FORM {
         @Override
         String getTitle() {
@@ -293,6 +142,36 @@ public enum FxmlView {
         @Override
         public String getFxmlFile() {
             return "/fxml/settings/BankAccountForm.fxml";
+        }
+    },
+    TAX_CONFIGURATION {
+        @Override
+        String getTitle() {
+            return "Tax Configuration";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/settings/TaxConfiguration.fxml";
+        }
+    },
+    ADD_UPI_PAYMENT {
+        @Override
+        String getTitle() {
+            return "UPI Payment Method";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/settings/AddUPIPayment.fxml";
+        }
+    },
+    UPI_PAYMENT_LIST {
+        @Override
+        String getTitle() {
+            return "UPI Payment Methods";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/settings/UPIPaymentList.fxml";
         }
     }
     ;

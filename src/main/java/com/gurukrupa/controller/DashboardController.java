@@ -97,8 +97,8 @@ public class DashboardController implements Initializable {
 
         menuReport.setOnMouseClicked(e->{
             setSelectedMenu(menuReport, "Reports");
-            pane =loader.getPage("/fxml/report/ReportMenu.fxml");
-            mainPane.setCenter(pane);
+         //   pane =loader.getPage("/fxml/report/ReportMenu.fxml");
+           // mainPane.setCenter(pane);
         });
         menuMaster.setOnMouseClicked(e->{
             setSelectedMenu(menuMaster, "Master Data");
@@ -147,7 +147,12 @@ public class DashboardController implements Initializable {
     private void updateMenuTextColor(HBox menuItem, String textColor, String iconColor) {
         menuItem.getChildren().forEach(node -> {
             if (node instanceof Text) {
-                ((Text) node).setFill(javafx.scene.paint.Color.web(textColor));
+                Text text = (Text) node;
+                text.setFill(javafx.scene.paint.Color.web(textColor));
+                // Preserve the font size
+                if (!text.getStyle().contains("-fx-font-size")) {
+                    text.setStyle(text.getStyle() + "; -fx-font-size: 14px;");
+                }
             } else if (node instanceof de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon) {
                 ((de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon) node).setFill(javafx.scene.paint.Color.web(iconColor));
             }

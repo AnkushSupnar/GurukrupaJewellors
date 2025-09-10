@@ -73,7 +73,11 @@ public class TransactionMenuController implements Initializable {
     private final NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        btnPurchaseInvoice.setOnAction(e -> stageManager.switchScene(FxmlView.PURCHASEINVOICE));
+        btnPurchaseInvoice.setOnAction(e -> {
+            LOG.info("Purchase Invoice button clicked - functionality not yet implemented");
+            // TODO: Implement purchase invoice functionality
+            // stageManager.switchScene(FxmlView.PURCHASEINVOICE);
+        });
         btnBilling.setOnAction(e -> openBillingDialog());
         btnViewBills.setOnAction(e -> openViewBillsDialog());
         btnViewPurchases.setOnAction(e -> {

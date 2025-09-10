@@ -766,6 +766,32 @@
                                     </Button>
                                  </children>
                               </VBox>
+                              <!-- UPI Payment Details -->
+                              <VBox fx:id="upiPaymentBox" spacing="8.0" visible="false" managed="false">
+                                 <children>
+                                    <Label text="UPI Payment Details:" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#424242">
+                                       <font>
+                                          <Font size="14.0" />
+                                       </font>
+                                    </Label>
+                                    <ComboBox fx:id="cmbUPIPayment" promptText="Select UPI App" prefHeight="35.0" maxWidth="Infinity" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #E0E0E0; -fx-font-size: 13px;" />
+                                    <TextField fx:id="txtUPITransactionNo" promptText="UPI Transaction/Reference Number" prefHeight="35.0" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #E0E0E0;">
+                                       <font>
+                                          <Font size="13.0" />
+                                       </font>
+                                    </TextField>
+                                    <TextField fx:id="txtUPIAmount" promptText="Amount" prefHeight="35.0" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #E0E0E0;">
+                                       <font>
+                                          <Font size="13.0" />
+                                       </font>
+                                    </TextField>
+                                    <Button fx:id="btnUPIDone" text="DONE" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 6; -fx-padding: 8 20 8 20; -fx-cursor: hand; -fx-font-size: 13;" maxWidth="Infinity">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="CHECK" size="1.0em" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
                            </children>
                         </VBox>
                      </children>

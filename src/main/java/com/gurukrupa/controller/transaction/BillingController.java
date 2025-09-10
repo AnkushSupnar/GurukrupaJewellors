@@ -43,6 +43,8 @@ import com.gurukrupa.data.entities.BankAccount;
 import com.gurukrupa.data.service.BankAccountService;
 import com.gurukrupa.data.entities.PaymentMode;
 import com.gurukrupa.data.service.PaymentModeService;
+import com.gurukrupa.data.entities.UPIPaymentMethod;
+import com.gurukrupa.data.service.UPIPaymentMethodService;
 import javafx.stage.Stage;
 import java.util.List;
 import javafx.scene.input.KeyCode;
@@ -65,6 +67,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import com.gurukrupa.data.service.BillPdfService;
 import java.io.File;
@@ -97,6 +100,8 @@ public class BillingController implements Initializable {
     @Autowired
     private PaymentModeService paymentModeService;
     @Autowired
+    private UPIPaymentMethodService upiPaymentMethodService;
+    @Autowired
     private AppSettingsService appSettingsService;
     @Autowired
     private BillPdfService billPdfService;
@@ -109,23 +114,26 @@ public class BillingController implements Initializable {
                    btnSearchItem, btnSelectCustomer, btnPrintBill, 
                    btnAddExchange, btnClearExchange,
                    btnNewBill, btnClearSearch, btnRefreshCatalog,
-                   btnCash, btnUPI, btnCard, btnPartial, btnCredit, btnBank, btnBankDone;
+                   btnCash, btnUPI, btnCard, btnPartial, btnCredit, btnBank, btnBankDone, btnUPIDone;
     @FXML
     private TextField txtCustomerName, txtMobileNo, txtCustomerAddress, txtItemCode, 
                       txtItemName, txtRate, txtQuantity, txtWeight, txtLabour, txtTotalAmount,
                       txtExchangeItemName, txtExchangeRate, txtExchangeWeight, 
                       txtExchangeDeduction, txtExchangeAmount, txtPartialAmount,
-                      txtBankTransactionNo, txtBankAmount;
+                      txtBankTransactionNo, txtBankAmount,
+                      txtUPITransactionNo, txtUPIAmount;
     @FXML
     private ComboBox<Metal> cmbMetal, cmbExchangeMetal;
     @FXML
     private ComboBox<BankAccount> cmbBankAccount;
     @FXML
+    private ComboBox<UPIPaymentMethod> cmbUPIPayment;
+    @FXML
     private TableView itemsTable, exchangeTable;
     @FXML
     private Label lblBillAmount, lblExchangeAmount, lblFinalAmount, lblItemCount, lblSubtotal, lblCGST, lblSGST, lblGrandTotal;
     @FXML
-    private VBox partialPaymentBox, bankPaymentBox;
+    private VBox partialPaymentBox, bankPaymentBox, upiPaymentBox;
     @FXML
     private TextField txtItemSearch;
     @FXML
@@ -150,6 +158,7 @@ public class BillingController implements Initializable {
     private Exchange currentExchange = null; // Store the current exchange
     private boolean isPartialPayment = false; // Track if partial payment is selected
     private boolean isBankPayment = false; // Track if bank payment is selected
+    private boolean isUPIPayment = false; // Track if UPI payment is selected
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize button actions
@@ -171,12 +180,13 @@ public class BillingController implements Initializable {
         
         // Payment method buttons
         btnCash.setOnAction(e -> processCashPayment());
-        btnUPI.setOnAction(e -> processUPIPayment());
+        btnUPI.setOnAction(e -> toggleUPIPayment());
         btnCard.setOnAction(e -> processCardPayment());
         btnPartial.setOnAction(e -> togglePartialPayment());
         btnCredit.setOnAction(e -> processCreditPayment());
         btnBank.setOnAction(e -> toggleBankPayment());
         btnBankDone.setOnAction(e -> processBankPayment());
+        btnUPIDone.setOnAction(e -> processUPIPayment());
         
         // Item catalog functionality
         btnClearSearch.setOnAction(e -> clearSearch());
@@ -216,6 +226,7 @@ public class BillingController implements Initializable {
         makeNumericOnly(txtDiscount, 10);
         makeNumericOnly(txtGSTRate, 5);
         makeNumericOnly(txtBankAmount, 10);
+        makeNumericOnly(txtUPIAmount, 10);
         
         // Auto-calculate total amount for billing
         txtRate.textProperty().addListener((obs, old, newVal) -> calculateTotal());
@@ -250,6 +261,12 @@ public class BillingController implements Initializable {
         
         // Configure bank account ComboBox
         configureBankAccountComboBox();
+        
+        // Load UPI payment methods
+        loadUPIPaymentMethods();
+        
+        // Configure UPI payment ComboBox
+        configureUPIPaymentComboBox();
     }
     void searchCustomer(){
         System.out.println("searching customer");
@@ -879,6 +896,13 @@ public class BillingController implements Initializable {
         clearBankPaymentFields();
         btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
         
+        // Reset UPI payment state
+        isUPIPayment = false;
+        upiPaymentBox.setVisible(false);
+        upiPaymentBox.setManaged(false);
+        clearUPIPaymentFields();
+        btnUPI.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        
         System.out.println("Started new bill");
     }
     
@@ -1315,86 +1339,6 @@ public class BillingController implements Initializable {
         }
     }
     
-    private void processUPIPayment() {
-        try {
-            // Create bill if not already created
-            if (currentBill == null) {
-                currentBill = createBillFromCurrentData();
-                if (currentBill == null) {
-                    return; // Error already shown in createBillFromCurrentData
-                }
-            }
-            
-            // Check if partial payment is active
-            BigDecimal paidAmount = currentBill.getGrandTotal(); // Default to full payment
-            if (isPartialPayment) {
-                String amountText = txtPartialAmount.getText().trim();
-                if (amountText.isEmpty()) {
-                    alert.showError("Please enter a valid partial payment amount.");
-                    return;
-                }
-                
-                try {
-                    paidAmount = new BigDecimal(amountText);
-                    if (paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                        alert.showError("Partial payment amount must be greater than zero.");
-                        return;
-                    }
-                    if (paidAmount.compareTo(currentBill.getGrandTotal()) > 0) {
-                        alert.showError("Payment amount cannot exceed the bill total.");
-                        return;
-                    }
-                } catch (NumberFormatException e) {
-                    alert.showError("Please enter a valid numeric amount.");
-                    return;
-                }
-            }
-            
-            // Update bill payment details
-            currentBill.setPaymentMethod(Bill.PaymentMethod.UPI);
-            currentBill.setPaidAmount(paidAmount);
-            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(paidAmount));
-            currentBill.setStatus(paidAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
-                                 Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
-            
-            // Save the updated bill
-            Bill updatedBill = billService.saveBill(currentBill);
-            
-            // Create PaymentMode entry for UPI payment (TODO: need to collect UPI ID/reference)
-            PaymentMode upiPayment = paymentModeService.createUPIPayment(updatedBill, paidAmount, "UPI-REF-" + System.currentTimeMillis(), null);
-            
-            // Generate PDF
-            generateAndSavePdf(updatedBill);
-            
-            // Hide partial payment box
-            if (isPartialPayment) {
-                partialPaymentBox.setVisible(false);
-                partialPaymentBox.setManaged(false);
-                txtPartialAmount.clear();
-                isPartialPayment = false;
-            }
-            
-            // Show success message
-            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
-                alert.showSuccess(String.format(
-                    "UPI payment processed successfully!\n" +
-                    "Paid Amount: ₹%.2f\n" +
-                    "Pending Amount: ₹%.2f\n" +
-                    "Bill saved and PDF generated.",
-                    paidAmount, updatedBill.getPendingAmount()
-                ));
-            } else {
-                alert.showSuccess("UPI payment processed successfully!\nBill saved and PDF generated.");
-            }
-            
-            // Reset for new bill
-            newBill();
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            alert.showError("Error processing UPI payment: " + e.getMessage());
-        }
-    }
     
     private void processCardPayment() {
         try {
@@ -1523,11 +1467,23 @@ public class BillingController implements Initializable {
             partialPaymentBox.setVisible(true);
             partialPaymentBox.setManaged(true);
             
+            // Hide bank payment box if visible
+            if (isBankPayment) {
+                bankPaymentBox.setVisible(false);
+                bankPaymentBox.setManaged(false);
+                isBankPayment = false;
+                // Reset bank button style
+                btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+            }
+            
             // Set focus to the amount input field
             txtPartialAmount.requestFocus();
             
-            // Pre-fill with empty value
-            txtPartialAmount.clear();
+            // Don't clear if there's already a value (user might be toggling back)
+            // This preserves the amount when switching between payment methods
+            if (txtPartialAmount.getText().trim().isEmpty()) {
+                txtPartialAmount.clear();
+            }
             
             // Update button style to show it's active
             btnPartial.setStyle("-fx-background-color: #6A1B9A; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
@@ -1535,7 +1491,7 @@ public class BillingController implements Initializable {
             // Hide the partial payment input box
             partialPaymentBox.setVisible(false);
             partialPaymentBox.setManaged(false);
-            txtPartialAmount.clear();
+            // Don't clear the partial amount - preserve it for potential bank payment
             
             // Reset button style
             btnPartial.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
@@ -1730,6 +1686,9 @@ public class BillingController implements Initializable {
         isBankPayment = !isBankPayment;
         
         if (isBankPayment) {
+            // Store partial payment amount if it exists
+            String partialAmount = txtPartialAmount.getText().trim();
+            
             // Show the bank payment details box
             bankPaymentBox.setVisible(true);
             bankPaymentBox.setManaged(true);
@@ -1738,17 +1697,22 @@ public class BillingController implements Initializable {
             if (isPartialPayment) {
                 partialPaymentBox.setVisible(false);
                 partialPaymentBox.setManaged(false);
-                txtPartialAmount.clear();
+                // Don't clear the partial amount field - preserve the value
                 isPartialPayment = false;
             }
             
             // Set focus to the bank account dropdown
             cmbBankAccount.requestFocus();
             
-            // Pre-fill with grand total if bill exists
-            if (currentBill != null) {
+            // Pre-fill bank amount based on context
+            if (!partialAmount.isEmpty()) {
+                // If there was a partial payment amount, use it for bank payment
+                txtBankAmount.setText(partialAmount);
+            } else if (currentBill != null) {
+                // Otherwise use the grand total if bill exists
                 txtBankAmount.setText(currentBill.getGrandTotal().toString());
             } else if (billingItems.size() > 0 || exchangeItems.size() > 0) {
+                // Or calculate from current items
                 BigDecimal total = calculateGrandTotal();
                 txtBankAmount.setText(total.toString());
             }
@@ -1885,6 +1849,212 @@ public class BillingController implements Initializable {
         }
     }
     
+    private void loadUPIPaymentMethods() {
+        try {
+            List<UPIPaymentMethod> upiMethods = upiPaymentMethodService.getActiveUPIPaymentMethods();
+            cmbUPIPayment.getItems().clear();
+            cmbUPIPayment.getItems().addAll(upiMethods);
+        } catch (Exception e) {
+            System.err.println("Error loading UPI payment methods: " + e.getMessage());
+        }
+    }
+    
+    private void configureUPIPaymentComboBox() {
+        // Set string converter for displaying UPI payment app names
+        cmbUPIPayment.setConverter(new javafx.util.StringConverter<UPIPaymentMethod>() {
+            @Override
+            public String toString(UPIPaymentMethod upiMethod) {
+                if (upiMethod != null) {
+                    // Show app name and linked bank account
+                    return upiMethod.getAppName() + " (" + upiMethod.getBankAccount().getBankName() + ")";
+                }
+                return "";
+            }
+            
+            @Override
+            public UPIPaymentMethod fromString(String string) {
+                return cmbUPIPayment.getItems().stream()
+                        .filter(item -> {
+                            String displayString = item.getAppName() + " (" + item.getBankAccount().getBankName() + ")";
+                            return displayString.equals(string);
+                        })
+                        .findFirst()
+                        .orElse(null);
+            }
+        });
+    }
+    
+    private void toggleUPIPayment() {
+        // Toggle UPI payment mode
+        isUPIPayment = !isUPIPayment;
+        
+        if (isUPIPayment) {
+            // Store partial payment amount if it exists
+            String partialAmount = txtPartialAmount.getText().trim();
+            
+            // Show the UPI payment details box
+            upiPaymentBox.setVisible(true);
+            upiPaymentBox.setManaged(true);
+            
+            // Hide partial payment box if visible
+            if (isPartialPayment) {
+                partialPaymentBox.setVisible(false);
+                partialPaymentBox.setManaged(false);
+                isPartialPayment = false;
+                // Reset partial button style
+                btnPartial.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+            }
+            
+            // Hide bank payment box if visible
+            if (isBankPayment) {
+                bankPaymentBox.setVisible(false);
+                bankPaymentBox.setManaged(false);
+                isBankPayment = false;
+                // Reset bank button style
+                btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+            }
+            
+            // Pre-fill UPI amount based on context
+            if (!partialAmount.isEmpty()) {
+                // If there was a partial payment amount, use it for UPI payment
+                txtUPIAmount.setText(partialAmount);
+            } else if (currentBill != null) {
+                // Otherwise use the grand total if bill exists
+                txtUPIAmount.setText(currentBill.getGrandTotal().toString());
+            } else if (billingItems.size() > 0 || exchangeItems.size() > 0) {
+                // Or calculate from current items
+                BigDecimal total = calculateGrandTotal();
+                txtUPIAmount.setText(total.toString());
+            }
+            
+            // Update button style to show it's active
+            btnUPI.setStyle("-fx-background-color: #E65100; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        } else {
+            // Hide the UPI payment details box
+            upiPaymentBox.setVisible(false);
+            upiPaymentBox.setManaged(false);
+            clearUPIPaymentFields();
+            
+            // Reset button style
+            btnUPI.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        }
+    }
+    
+    private void clearUPIPaymentFields() {
+        cmbUPIPayment.getSelectionModel().clearSelection();
+        txtUPITransactionNo.clear();
+        txtUPIAmount.clear();
+    }
+    
+    private void processUPIPayment() {
+        try {
+            // Validate UPI payment fields
+            if (cmbUPIPayment.getValue() == null) {
+                alert.showError("Please select a UPI payment app.");
+                return;
+            }
+            
+            if (txtUPITransactionNo.getText().trim().isEmpty()) {
+                alert.showError("Please enter UPI transaction/reference number.");
+                return;
+            }
+            
+            if (txtUPIAmount.getText().trim().isEmpty()) {
+                alert.showError("Please enter the payment amount.");
+                return;
+            }
+            
+            BigDecimal upiAmount;
+            try {
+                upiAmount = new BigDecimal(txtUPIAmount.getText().trim());
+                if (upiAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    alert.showError("Payment amount must be greater than zero.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                alert.showError("Please enter a valid numeric amount.");
+                return;
+            }
+            
+            // Create bill if not already created
+            if (currentBill == null) {
+                currentBill = createBillFromCurrentData();
+                if (currentBill == null) {
+                    return; // Error already shown in createBillFromCurrentData
+                }
+            }
+            
+            // Validate payment amount doesn't exceed bill total
+            if (upiAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+                alert.showError("Payment amount cannot exceed the bill total.");
+                return;
+            }
+            
+            // Set payment details
+            currentBill.setPaymentMethod(Bill.PaymentMethod.UPI);
+            currentBill.setPaidAmount(upiAmount);
+            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(upiAmount));
+            
+            // Get selected UPI method's bank account
+            UPIPaymentMethod selectedUPI = cmbUPIPayment.getValue();
+            BankAccount linkedBank = selectedUPI.getBankAccount();
+            
+            // Create PaymentMode entry for UPI payment
+            PaymentMode upiPaymentMode = PaymentMode.builder()
+                .bill(currentBill)
+                .paymentType(PaymentMode.PaymentType.UPI)
+                .amount(upiAmount)
+                .referenceNumber(txtUPITransactionNo.getText().trim())
+                .bankAccount(linkedBank)
+                .upiApp(selectedUPI.getAppName())
+                .status(PaymentMode.PaymentStatus.COMPLETED)
+                .paymentDate(LocalDateTime.now())
+                .build();
+            
+            // Update bill status based on payment
+            if (currentBill.getPendingAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                currentBill.setStatus(Bill.BillStatus.PAID);
+            } else {
+                currentBill.setStatus(Bill.BillStatus.CONFIRMED);
+            }
+            
+            // Save the bill
+            Bill updatedBill = billService.saveBill(currentBill);
+            currentBill = updatedBill;
+            
+            // Update payment mode with saved bill and save it
+            upiPaymentMode.setBill(updatedBill);
+            paymentModeService.savePaymentMode(upiPaymentMode);
+            
+            // Save the exchange transaction if exists
+            if (currentExchange != null) {
+                currentExchange.setBill(updatedBill);
+                exchangeService.saveExchange(currentExchange);
+            }
+            
+            alert.showSuccess("UPI payment processed successfully!");
+            
+            // Generate PDF
+            generateAndSavePdf(updatedBill);
+            
+            // Hide UPI payment box
+            upiPaymentBox.setVisible(false);
+            upiPaymentBox.setManaged(false);
+            clearUPIPaymentFields();
+            isUPIPayment = false;
+            
+            // Reset button style
+            btnUPI.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+            
+            // Start new bill
+            newBill();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert.showError("Error processing UPI payment: " + e.getMessage());
+        }
+    }
+    
     private BigDecimal calculateGrandTotal() {
         BigDecimal subtotal = billingItems.stream()
             .map(item -> BigDecimal.valueOf(item.getAmount()))
@@ -1917,5 +2087,26 @@ public class BillingController implements Initializable {
         BigDecimal totalTax = taxableAmount.multiply(gstRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         
         return netTotal.add(totalTax).subtract(exchangeTotal);
+    }
+    
+    
+    private void hideAllPaymentBoxes() {
+        // Hide partial payment box
+        partialPaymentBox.setVisible(false);
+        partialPaymentBox.setManaged(false);
+        isPartialPayment = false;
+        btnPartial.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        
+        // Hide bank payment box
+        bankPaymentBox.setVisible(false);
+        bankPaymentBox.setManaged(false);
+        isBankPayment = false;
+        btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+        
+        // Hide UPI payment box
+        upiPaymentBox.setVisible(false);
+        upiPaymentBox.setManaged(false);
+        isUPIPayment = false;
+        btnUPI.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
     }
 }
