@@ -48,6 +48,9 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     @Query("SELECT b FROM Bill b ORDER BY b.createdDate DESC")
     List<Bill> findAllOrderByCreatedDateDesc();
     
+    @Query("SELECT b FROM Bill b ORDER BY b.billDate DESC")
+    List<Bill> findAllOrderByBillDateDesc();
+    
     List<Bill> findByCustomerIdOrderByBillDateDesc(Long customerId);
     
     List<Bill> findByCustomerIdAndBillDateBetween(Long customerId, LocalDateTime fromDate, LocalDateTime toDate);

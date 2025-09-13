@@ -34,6 +34,7 @@ import com.gurukrupa.data.service.BillService;
 import com.gurukrupa.data.service.BillTransactionService;
 import com.gurukrupa.data.service.ExchangeTransactionService;
 import com.gurukrupa.data.service.AppSettingsService;
+import com.gurukrupa.event.BillCreatedEvent;
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
 import com.gurukrupa.data.entities.ExchangeTransaction;
@@ -52,6 +53,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -106,6 +108,8 @@ public class BillingController implements Initializable {
     @Autowired
     private BillPdfService billPdfService;
     @Autowired
+    private ApplicationEventPublisher eventPublisher;
+    @Autowired
     private AlertNotification alert;
     
     private Stage dialogStage;
@@ -147,6 +151,7 @@ public class BillingController implements Initializable {
     private ObservableList<BillingItem> billingItems = FXCollections.observableArrayList();
     private ObservableList<ExchangeItem> exchangeItems = FXCollections.observableArrayList();
     private JewelryItem selectedJewelryItem;
+    private Customer selectedCustomer; // Store the selected customer
 
     private AutoCompleteTextField autoCompleteTextField;
     private final List<String> customerNameSuggestions = new ArrayList<>();
@@ -154,11 +159,16 @@ public class BillingController implements Initializable {
     private final List<String>[] filteredListHolder = new List[1]; // to hold filtered list
     private final int[] selectedIndex = {0}; // track current selected suggestion index
     private SuggestionProvider<String> customerNames;
+    private SuggestionProvider<String> itemNames; // For item name autocomplete
+    private SuggestionProvider<String> exchangeItemNames; // For exchange item name autocomplete
     private Bill currentBill = null; // Store the current bill after generation
     private Exchange currentExchange = null; // Store the current exchange
     private boolean isPartialPayment = false; // Track if partial payment is selected
     private boolean isBankPayment = false; // Track if bank payment is selected
     private boolean isUPIPayment = false; // Track if UPI payment is selected
+    private boolean isEditMode = false; // Track if in edit mode
+    private Bill billToEdit = null; // The bill being edited
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize button actions
@@ -206,6 +216,25 @@ public class BillingController implements Initializable {
             System.out.println("Action performed");
             btnSearchCustomer.fire();
         });
+        
+        // Initialize item name autocomplete
+        List<String> itemNameList = jewelryItemService.getAllJewelryItems().stream()
+            .map(JewelryItem::getItemName)
+            .collect(Collectors.toList());
+        itemNames = SuggestionProvider.create(itemNameList);
+        AutoCompletionTextFieldBinding<String> itemNameBinding = new AutoCompletionTextFieldBinding<>(txtItemName, itemNames);
+        
+        // When user selects an item from autocomplete
+        itemNameBinding.setOnAutoCompleted(e -> {
+            String selectedItemName = e.getCompletion();
+            // Find the jewelry item by name
+            jewelryItemService.searchByItemName(selectedItemName).stream()
+                .findFirst()
+                .ifPresent(this::populateItemFields);
+        });
+        
+        // Initialize exchange item name autocomplete (self-learning)
+        initializeExchangeItemAutocomplete();
         
         // Initialize metal dropdowns from database
         loadMetalTypes();
@@ -355,6 +384,52 @@ public class BillingController implements Initializable {
         new AutoCompletionTextFieldBinding<>(txtCustomerName, customerNames);
     }
     
+    private void refreshItemSuggestions() {
+        // Reload item names from database
+        List<String> itemNameList = jewelryItemService.getAllJewelryItems().stream()
+            .map(JewelryItem::getItemName)
+            .collect(Collectors.toList());
+        
+        // Update the suggestion provider with new data
+        itemNames = SuggestionProvider.create(itemNameList);
+        
+        // Recreate the auto-completion binding with updated suggestions
+        AutoCompletionTextFieldBinding<String> itemNameBinding = new AutoCompletionTextFieldBinding<>(txtItemName, itemNames);
+        
+        // Reattach the auto-complete handler
+        itemNameBinding.setOnAutoCompleted(e -> {
+            String selectedItemName = e.getCompletion();
+            jewelryItemService.searchByItemName(selectedItemName).stream()
+                .findFirst()
+                .ifPresent(this::populateItemFields);
+        });
+    }
+    
+    private void initializeExchangeItemAutocomplete() {
+        // Load exchange item names from database (self-learning from previous entries)
+        List<String> exchangeItemNameList = exchangeTransactionService.getAllDistinctItemNames();
+        
+        // Create suggestion provider
+        exchangeItemNames = SuggestionProvider.create(exchangeItemNameList);
+        
+        // Create autocomplete binding for exchange item name
+        AutoCompletionTextFieldBinding<String> exchangeItemBinding = new AutoCompletionTextFieldBinding<>(txtExchangeItemName, exchangeItemNames);
+        
+        // No need for onAutoCompleted handler as we just want to fill the name
+        // The user will manually enter other details like metal type, weight, etc.
+    }
+    
+    private void refreshExchangeItemSuggestions() {
+        // Reload exchange item names from database
+        List<String> exchangeItemNameList = exchangeTransactionService.getAllDistinctItemNames();
+        
+        // Update the suggestion provider with new data
+        exchangeItemNames = SuggestionProvider.create(exchangeItemNameList);
+        
+        // Recreate the auto-completion binding with updated suggestions
+        new AutoCompletionTextFieldBinding<>(txtExchangeItemName, exchangeItemNames);
+    }
+    
     private void closeFrame() {
         Stage stage = (Stage) btnCloseFrame.getScene().getWindow();
         stage.close();
@@ -458,6 +533,9 @@ public class BillingController implements Initializable {
     }
     
     private void populateItemFields(JewelryItem item) {
+        // Store the selected jewelry item
+        this.selectedJewelryItem = item;
+        
         txtItemCode.setText(item.getItemCode());
         txtItemName.setText(item.getItemName());
         
@@ -578,6 +656,7 @@ public class BillingController implements Initializable {
                     item.getItemCode(),
                     item.getItemName(),
                     item.getMetal(),
+                    item.getQuantity(),
                     new BigDecimal(item.getWeight()),
                     new BigDecimal(item.getRate()),
                     new BigDecimal(item.getLabour())
@@ -625,6 +704,9 @@ public class BillingController implements Initializable {
             );
             
             System.out.println("Bill generated successfully with ID: " + savedBill.getId() + ", Bill Number: " + savedBill.getBillNumber());
+            
+            // Publish event for stock reduction (will be handled asynchronously)
+            eventPublisher.publishEvent(new BillCreatedEvent(this, savedBill));
             
             // Store the current bill for payment processing
             currentBill = savedBill;
@@ -760,6 +842,10 @@ public class BillingController implements Initializable {
             clearExchangeFields();
             
             alert.showSuccess("Exchange item added successfully!");
+            
+            // Refresh exchange item suggestions to include the newly added item name
+            // This enables the self-learning feature
+            refreshExchangeItemSuggestions();
             
         } catch (NumberFormatException e) {
             alert.showError("Please enter valid numbers for rate, weight, and deductions");
@@ -932,6 +1018,9 @@ public class BillingController implements Initializable {
             allJewelryItems.addAll(jewelryItemService.getAllJewelryItems());
             System.out.println("Loaded " + allJewelryItems.size() + " jewelry items");
             updateItemCount();
+            
+            // Refresh item suggestions for autocomplete
+            refreshItemSuggestions();
         } catch (Exception e) {
             System.err.println("Error loading jewelry items: " + e.getMessage());
             alert.showError("Failed to load jewelry items: " + e.getMessage());
@@ -1999,18 +2088,6 @@ public class BillingController implements Initializable {
             UPIPaymentMethod selectedUPI = cmbUPIPayment.getValue();
             BankAccount linkedBank = selectedUPI.getBankAccount();
             
-            // Create PaymentMode entry for UPI payment
-            PaymentMode upiPaymentMode = PaymentMode.builder()
-                .bill(currentBill)
-                .paymentType(PaymentMode.PaymentType.UPI)
-                .amount(upiAmount)
-                .referenceNumber(txtUPITransactionNo.getText().trim())
-                .bankAccount(linkedBank)
-                .upiApp(selectedUPI.getAppName())
-                .status(PaymentMode.PaymentStatus.COMPLETED)
-                .paymentDate(LocalDateTime.now())
-                .build();
-            
             // Update bill status based on payment
             if (currentBill.getPendingAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 currentBill.setStatus(Bill.BillStatus.PAID);
@@ -2022,9 +2099,14 @@ public class BillingController implements Initializable {
             Bill updatedBill = billService.saveBill(currentBill);
             currentBill = updatedBill;
             
-            // Update payment mode with saved bill and save it
-            upiPaymentMode.setBill(updatedBill);
-            paymentModeService.savePaymentMode(upiPaymentMode);
+            // Create UPI payment with bank transaction
+            paymentModeService.createUPIPaymentWithBankAccount(
+                updatedBill,
+                upiAmount,
+                txtUPITransactionNo.getText().trim(),
+                selectedUPI.getUpiId(),
+                linkedBank
+            );
             
             // Save the exchange transaction if exists
             if (currentExchange != null) {
@@ -2108,5 +2190,98 @@ public class BillingController implements Initializable {
         upiPaymentBox.setManaged(false);
         isUPIPayment = false;
         btnUPI.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
+    }
+    
+    /**
+     * Set the controller to edit mode with an existing bill
+     */
+    public void setEditMode(Bill bill) {
+        this.isEditMode = true;
+        this.billToEdit = bill;
+        this.currentBill = bill;
+        
+        // Load bill data after initialization
+        javafx.application.Platform.runLater(() -> {
+            loadBillDataForEditing();
+        });
+    }
+    
+    /**
+     * Load bill data into the form for editing
+     */
+    private void loadBillDataForEditing() {
+        if (billToEdit == null) return;
+        
+        try {
+            // Set customer information
+            Customer customer = billToEdit.getCustomer();
+            if (customer != null) {
+                txtCustomerName.setText(customer.getCustomerFullName());
+                txtMobileNo.setText(customer.getMobile());
+                txtCustomerAddress.setText(customer.getCustomerAddress());
+                selectedCustomer = customer;
+            }
+            
+            // Load bill transactions into the billing table
+            List<BillTransaction> billTransactions = billTransactionService.findByBillId(billToEdit.getId());
+            billingItems.clear();
+            int sno = 1;
+            for (BillTransaction transaction : billTransactions) {
+                BillingItem item = new BillingItem(
+                    sno++,
+                    null, // jewelryItemId not stored in BillTransaction
+                    transaction.getItemCode(),
+                    transaction.getItemName(),
+                    transaction.getMetalType(),
+                    transaction.getRatePerTenGrams().doubleValue(),
+                    1, // Quantity always 1 in current implementation
+                    transaction.getWeight().doubleValue(),
+                    transaction.getLabourCharges().doubleValue(),
+                    transaction.getTotalAmount().doubleValue()
+                );
+                billingItems.add(item);
+            }
+            
+            // Load exchange transactions if any
+            if (billToEdit.getExchange() != null) {
+                Exchange exchange = billToEdit.getExchange();
+                List<ExchangeTransaction> exchangeTransactions = exchangeTransactionService.findByExchangeId(exchange.getId());
+                exchangeItems.clear();
+                sno = 1;
+                for (ExchangeTransaction transaction : exchangeTransactions) {
+                    ExchangeItem item = new ExchangeItem(
+                        sno++,
+                        transaction.getItemName(),
+                        transaction.getMetalType(),
+                        transaction.getRatePerTenGrams().doubleValue(),
+                        transaction.getGrossWeight().doubleValue(),
+                        transaction.getDeduction().doubleValue(),
+                        transaction.getTotalAmount().doubleValue()
+                    );
+                    exchangeItems.add(item);
+                }
+                currentExchange = exchange;
+            }
+            
+            // Set discount and GST
+            txtDiscount.setText(billToEdit.getDiscount() != null ? billToEdit.getDiscount().toString() : "0");
+            txtGSTRate.setText(billToEdit.getGstRate() != null ? billToEdit.getGstRate().toString() : "3");
+            
+            // Update all totals
+            updateBillTotal();
+            updateExchangeTotal();
+            updateAllTotals();
+            
+            // Show payment status
+            if (billToEdit.getStatus() == Bill.BillStatus.PAID) {
+                alert.showSuccess("This bill is fully paid. You can only view or reprint it.");
+            } else if (billToEdit.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                alert.showSuccess(String.format("This bill has pending amount: ₹%.2f", billToEdit.getPendingAmount()));
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert.showError("Error loading bill data: " + e.getMessage());
+        }
     }
 }

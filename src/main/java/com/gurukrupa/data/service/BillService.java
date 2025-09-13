@@ -11,6 +11,9 @@ import com.gurukrupa.data.repository.ExchangeTransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +25,8 @@ import java.util.Optional;
 @Service
 @Transactional
 public class BillService {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(BillService.class);
     
     @Autowired
     private BillRepository billRepository;
@@ -38,6 +43,9 @@ public class BillService {
     @Autowired
     private AppSettingsService appSettingsService;
     
+    @Autowired
+    private JewelryItemService jewelryItemService;
+    
     public Bill saveBill(Bill bill) {
         // Generate bill number if not set
         if (bill.getBillNumber() == null || bill.getBillNumber().isEmpty()) {
@@ -52,8 +60,16 @@ public class BillService {
         // Calculate totals before saving
         bill.calculateTotals();
         
+        // Check if this is a new bill (for stock reduction)
+        boolean isNewBill = bill.getId() == null;
+        
         // Save the bill (this will cascade save the transactions)
-        return billRepository.save(bill);
+        Bill savedBill = billRepository.save(bill);
+        
+        // Stock reduction will be handled separately after the transaction commits
+        // to avoid transaction rollback issues
+        
+        return savedBill;
     }
     
     public Bill createBillFromTransaction(Customer customer,
@@ -161,6 +177,14 @@ public class BillService {
     
     public List<Bill> findBillsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         return billRepository.findBillsByDateRange(startDate, endDate);
+    }
+    
+    public List<Bill> getAllBills() {
+        return billRepository.findAllOrderByBillDateDesc();
+    }
+    
+    public List<Bill> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return billRepository.findByBillDateBetween(startDate, endDate);
     }
     
     public List<Bill> findTodaysBills() {

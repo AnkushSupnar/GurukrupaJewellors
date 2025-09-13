@@ -55,4 +55,23 @@ public class ExchangeTransactionService {
         Double total = exchangeTransactionRepository.getTotalExchangeAmountByExchangeId(exchangeId);
         return total != null ? BigDecimal.valueOf(total) : BigDecimal.ZERO;
     }
+    
+    /**
+     * Get all distinct exchange item names for autocomplete suggestions
+     * This supports the self-learning feature by returning all previously entered item names
+     */
+    public List<String> getAllDistinctItemNames() {
+        return exchangeTransactionRepository.findDistinctItemNames();
+    }
+    
+    /**
+     * Get distinct exchange item names that match the search term
+     * Used for filtered autocomplete suggestions
+     */
+    public List<String> getDistinctItemNamesBySearchTerm(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return getAllDistinctItemNames();
+        }
+        return exchangeTransactionRepository.findDistinctItemNamesBySearchTerm(searchTerm.trim());
+    }
 }

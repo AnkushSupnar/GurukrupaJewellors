@@ -38,6 +38,11 @@ public class BillTransaction {
     @Column(nullable = false)
     private String metalType;
     
+    // Quantity
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer quantity = 1;
+    
     // Weight
     @Column(nullable = false, precision = 10, scale = 3)
     @Builder.Default

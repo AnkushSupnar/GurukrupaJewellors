@@ -21,4 +21,10 @@ public interface ExchangeTransactionRepository extends JpaRepository<ExchangeTra
     
     @Query("SELECT SUM(et.totalAmount) FROM ExchangeTransaction et WHERE et.exchange.id = :exchangeId")
     Double getTotalExchangeAmountByExchangeId(@Param("exchangeId") Long exchangeId);
+    
+    @Query("SELECT DISTINCT et.itemName FROM ExchangeTransaction et WHERE et.itemName IS NOT NULL ORDER BY et.itemName")
+    List<String> findDistinctItemNames();
+    
+    @Query("SELECT DISTINCT et.itemName FROM ExchangeTransaction et WHERE et.itemName IS NOT NULL AND LOWER(et.itemName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) ORDER BY et.itemName")
+    List<String> findDistinctItemNamesBySearchTerm(@Param("searchTerm") String searchTerm);
 }

@@ -57,11 +57,11 @@ public enum FxmlView {
     JEWELRY_ITEM_MENU {
         @Override
         String getTitle() {
-            return "Jewelry Item Management";
+            return "Master Data Management";
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/master/JewelryItemMenu.fxml";
+            return "/fxml/master/MasterMenu.fxml";
         }
     },
     JEWELRY_ITEM_FORM {
@@ -172,6 +172,26 @@ public enum FxmlView {
         @Override
         public String getFxmlFile() {
             return "/fxml/settings/UPIPaymentList.fxml";
+        }
+    },
+    ADD_SUPPLIER {
+        @Override
+        String getTitle() {
+            return "Add Supplier";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/master/AddSupplier.fxml";
+        }
+    },
+    PURCHASE_INVOICE {
+        @Override
+        String getTitle() {
+            return "Purchase Invoice";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/transaction/PurchaseInvoiceFrame.fxml";
         }
     }
     ;

@@ -59,6 +59,27 @@ public class BillTransactionService {
                 .itemCode(itemCode)
                 .itemName(itemName)
                 .metalType(metalType)
+                .quantity(1) // Default quantity
+                .weight(weight)
+                .ratePerTenGrams(ratePerTenGrams)
+                .labourCharges(labourCharges != null ? labourCharges : BigDecimal.ZERO)
+                .build();
+        
+        // Calculate total amount
+        transaction.calculateTotalAmount();
+        
+        return transaction;
+    }
+    
+    public BillTransaction createBillTransaction(String itemCode, String itemName, String metalType,
+                                               Integer quantity, BigDecimal weight, BigDecimal ratePerTenGrams, 
+                                               BigDecimal labourCharges) {
+        
+        BillTransaction transaction = BillTransaction.builder()
+                .itemCode(itemCode)
+                .itemName(itemName)
+                .metalType(metalType)
+                .quantity(quantity != null ? quantity : 1)
                 .weight(weight)
                 .ratePerTenGrams(ratePerTenGrams)
                 .labourCharges(labourCharges != null ? labourCharges : BigDecimal.ZERO)

@@ -102,7 +102,7 @@ public class DashboardController implements Initializable {
         });
         menuMaster.setOnMouseClicked(e->{
             setSelectedMenu(menuMaster, "Master Data");
-            pane =loader.getPage("/fxml/master/JewelryItemMenu.fxml");
+            pane =loader.getPage("/fxml/master/MasterMenu.fxml");
             mainPane.setCenter(pane);
         });
         

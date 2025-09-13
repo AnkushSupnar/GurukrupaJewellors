@@ -1,22 +1,33 @@
 package com.gurukrupa.data.service;
 
 import com.gurukrupa.data.entities.JewelryItem;
+import com.gurukrupa.data.entities.StockTransaction;
 import com.gurukrupa.data.repository.JewelryItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class JewelryItemService {
 
     private final JewelryItemRepository jewelryItemRepository;
+    
+    @Autowired
+    private StockTransactionService stockTransactionService;
 
     @Autowired
     public JewelryItemService(JewelryItemRepository jewelryItemRepository) {
         this.jewelryItemRepository = jewelryItemRepository;
+    }
+    
+    @Autowired
+    public void setStockTransactionService(StockTransactionService stockTransactionService) {
+        this.stockTransactionService = stockTransactionService;
     }
 
     // Basic CRUD operations
@@ -178,5 +189,112 @@ public class JewelryItemService {
         } while (!isItemCodeUnique(itemCode));
         
         return itemCode;
+    }
+    
+    // Stock management methods with transaction tracking
+    
+    /**
+     * Reduce stock for a sale (with stock transaction recording)
+     */
+    public JewelryItem reduceStockForSale(Long itemId, String itemCode, Integer quantity,
+                                         Long billId, String billNumber, String customerName) {
+        // Use stock transaction service which handles everything
+        stockTransactionService.recordBillSale(itemId, itemCode, quantity, billId, billNumber, customerName);
+        
+        // Return the updated item - try by itemCode first since itemId might be null
+        if (itemCode != null) {
+            return findByItemCode(itemCode)
+                    .orElseThrow(() -> new RuntimeException("Item not found with code: " + itemCode));
+        } else if (itemId != null) {
+            return getJewelryItemById(itemId)
+                    .orElseThrow(() -> new RuntimeException("Item not found with id: " + itemId));
+        } else {
+            throw new RuntimeException("Both itemId and itemCode are null");
+        }
+    }
+    
+    /**
+     * Add stock (for purchases, returns, etc.)
+     */
+    public JewelryItem addStock(Long itemId, Integer quantity, StockTransaction.TransactionSource source,
+                               String referenceType, Long referenceId, String referenceNumber,
+                               String description, String createdBy) {
+        JewelryItem item = getJewelryItemById(itemId)
+                .orElseThrow(() -> new RuntimeException("Jewelry item not found with id: " + itemId));
+        
+        stockTransactionService.recordStockIn(item, quantity, source, referenceType,
+                                            referenceId, referenceNumber, description, createdBy);
+        
+        return getJewelryItemById(itemId).orElse(item);
+    }
+    
+    /**
+     * Reduce stock (general method for non-sale reductions)
+     */
+    public JewelryItem reduceStock(Long itemId, Integer quantity, StockTransaction.TransactionSource source,
+                                  String referenceType, Long referenceId, String referenceNumber,
+                                  String description, String createdBy) {
+        JewelryItem item = getJewelryItemById(itemId)
+                .orElseThrow(() -> new RuntimeException("Jewelry item not found with id: " + itemId));
+        
+        stockTransactionService.recordStockOut(item, quantity, source, referenceType,
+                                             referenceId, referenceNumber, description, createdBy);
+        
+        return getJewelryItemById(itemId).orElse(item);
+    }
+    
+    /**
+     * Adjust stock (for corrections)
+     */
+    public JewelryItem adjustStock(Long itemId, Integer newQuantity, String reason, String createdBy) {
+        JewelryItem item = getJewelryItemById(itemId)
+                .orElseThrow(() -> new RuntimeException("Jewelry item not found with id: " + itemId));
+        
+        stockTransactionService.recordStockAdjustment(item, newQuantity, reason, createdBy);
+        
+        return getJewelryItemById(itemId).orElse(item);
+    }
+    
+    /**
+     * Get stock transaction history for an item
+     */
+    public List<StockTransaction> getStockHistory(Long itemId) {
+        return stockTransactionService.getItemTransactionHistory(itemId);
+    }
+    
+    /**
+     * Check if item has sufficient stock for sale
+     */
+    public boolean hasStock(Long itemId, Integer requiredQuantity) {
+        Optional<JewelryItem> item = getJewelryItemById(itemId);
+        return item.map(jewelryItem -> jewelryItem.getQuantity() >= requiredQuantity)
+                   .orElse(false);
+    }
+    
+    /**
+     * Check stock by item code
+     */
+    public boolean hasStockByCode(String itemCode, Integer requiredQuantity) {
+        Optional<JewelryItem> item = findByItemCode(itemCode);
+        return item.map(jewelryItem -> jewelryItem.getQuantity() >= requiredQuantity)
+                   .orElse(false);
+    }
+    
+    /**
+     * Get available stock for item
+     */
+    public Integer getAvailableStock(Long itemId) {
+        return getJewelryItemById(itemId)
+                .map(JewelryItem::getQuantity)
+                .orElse(0);
+    }
+    
+    /**
+     * Get available stock by item code
+     */
+    public Integer getAvailableStockByCode(String itemCode) {
+        return findByItemCode(itemCode)
+                .map(JewelryItem::getQuantity)
+                .orElse(0);
     }
 }

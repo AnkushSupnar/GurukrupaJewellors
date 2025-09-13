@@ -35,6 +35,10 @@ public class ExchangeTransaction {
     @Column(nullable = false)
     private String metalType;
     
+    @Column(precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal purity = new BigDecimal("0"); // 22k, 18k, etc.
+    
     // Weight
     @Column(nullable = false, precision = 10, scale = 3)
     @Builder.Default

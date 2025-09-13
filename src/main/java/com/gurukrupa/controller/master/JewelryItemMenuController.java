@@ -9,7 +9,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.FlowPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -36,8 +35,6 @@ public class JewelryItemMenuController implements Initializable {
     @Autowired
     private SpringFXMLLoader springFXMLLoader;
     
-    @FXML
-    private FlowPane mainFlowPane;
     
     // Jewelry Items
     @FXML
@@ -78,7 +75,7 @@ public class JewelryItemMenuController implements Initializable {
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        logger.info("Initializing Jewelry Item Menu Controller with FlowPane layout");
+        logger.info("Initializing Master Menu Controller");
         
         // Set up button actions
         setupButtonActions();
@@ -86,7 +83,7 @@ public class JewelryItemMenuController implements Initializable {
         // Add hover effects
         setupHoverEffects();
         
-        logger.info("FlowPane initialized with {} children", mainFlowPane.getChildren().size());
+        logger.info("Master Menu initialized successfully");
     }
     
     private void openAddItemDialog() {
@@ -148,8 +145,8 @@ public class JewelryItemMenuController implements Initializable {
         btnViewCategories.setOnAction(event -> showNotImplemented("Manage Categories"));
         
         // Suppliers Management
-        btnAddSupplier.setOnAction(event -> showNotImplemented("Add Supplier"));
-        btnViewSuppliers.setOnAction(event -> showNotImplemented("View Suppliers"));
+        btnAddSupplier.setOnAction(event -> openAddSupplierDialog());
+        btnViewSuppliers.setOnAction(event -> openAddSupplierDialog()); // For now, use same form for view
     }
     
     private void setupHoverEffects() {
@@ -254,6 +251,31 @@ public class JewelryItemMenuController implements Initializable {
         }
     }
     
+    private void openAddSupplierDialog() {
+        logger.info("Opening Add Supplier form");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the supplier form FXML
+            Parent root = springFXMLLoader.load(FxmlView.ADD_SUPPLIER.getFxmlFile());
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Supplier Management");
+            dialog.setResizable(true);
+            
+            // Show the dialog
+            dialog.show();
+            
+            logger.info("Supplier form opened successfully");
+            
+        } catch (Exception e) {
+            logger.error("Error opening supplier form: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
     
     private void showNotImplemented(String featureName) {
         logger.info("Feature '{}' is not yet implemented", featureName);
@@ -261,7 +283,4 @@ public class JewelryItemMenuController implements Initializable {
         System.out.println(featureName + " feature is not yet implemented");
     }
     
-    public FlowPane getMainFlowPane() {
-        return mainFlowPane;
-    }
 }

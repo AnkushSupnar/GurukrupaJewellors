@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import de.jensd.fx.glyphs.fontawesome.*?>
+
+<AnchorPane prefWidth="600.0" prefHeight="700.0" stylesheets="@../../styles/master.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.master.SupplierController">
+    <VBox spacing="20" AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+        <padding>
+            <Insets top="20" right="30" bottom="20" left="30"/>
+        </padding>
+        
+        <!-- Header -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="Add New Supplier" styleClass="header-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnClose" styleClass="close-button">
+                <graphic>
+                    <FontAwesomeIcon glyphName="CLOSE" size="1.2em" fill="WHITE"/>
+                </graphic>
+            </Button>
+        </HBox>
+        
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+            <VBox spacing="20">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                
+                <!-- Basic Information -->
+                <VBox spacing="15">
+                    <Label text="Basic Information" styleClass="section-header"/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
+                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
+                        </columnConstraints>
+                        
+                        <Label text="Supplier Name *" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="txtSupplierName" promptText="Enter supplier name" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Company Name" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="txtCompanyName" promptText="Enter company name" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        
+                        <Label text="GST Number" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <TextField fx:id="txtGstNumber" promptText="Enter GST number" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        
+                        <Label text="Supplier Type" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                        <ComboBox fx:id="cmbSupplierType" prefWidth="300.0" promptText="Select supplier type" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                    </GridPane>
+                </VBox>
+                
+                <Separator/>
+                
+                <!-- Contact Information -->
+                <VBox spacing="15">
+                    <Label text="Contact Information" styleClass="section-header"/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
+                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
+                        </columnConstraints>
+                        
+                        <Label text="Mobile Number *" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="txtMobile" promptText="Enter mobile number" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Alternate Mobile" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="txtAlternateMobile" promptText="Enter alternate mobile" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        
+                        <Label text="Email" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <TextField fx:id="txtEmail" promptText="Enter email address" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        
+                        <Label text="Contact Person" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                        <TextField fx:id="txtContactPerson" promptText="Enter contact person name" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                    </GridPane>
+                </VBox>
+                
+                <Separator/>
+                
+                <!-- Address Information -->
+                <VBox spacing="15">
+                    <Label text="Address Information" styleClass="section-header"/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
+                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
+                        </columnConstraints>
+                        
+                        <Label text="Address" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextArea fx:id="txtAddress" promptText="Enter complete address" prefRowCount="3" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        
+                        <Label text="City" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="txtCity" promptText="Enter city" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        
+                        <Label text="State" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <TextField fx:id="txtState" promptText="Enter state" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        
+                        <Label text="Pincode" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                        <TextField fx:id="txtPincode" promptText="Enter pincode" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                    </GridPane>
+                </VBox>
+                
+                <Separator/>
+                
+                <!-- Financial Information -->
+                <VBox spacing="15">
+                    <Label text="Financial Information" styleClass="section-header"/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
+                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
+                        </columnConstraints>
+                        
+                        <Label text="Credit Limit" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="txtCreditLimit" promptText="Enter credit limit (0 for no limit)" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Notes" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextArea fx:id="txtNotes" promptText="Any additional notes" prefRowCount="2" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    </GridPane>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+        
+        <!-- Action Buttons -->
+        <HBox alignment="CENTER" spacing="15">
+            <Button fx:id="btnSave" text="Save Supplier" prefWidth="150" styleClass="primary-button">
+                <graphic>
+                    <FontAwesomeIcon glyphName="SAVE" size="1.2em" fill="WHITE"/>
+                </graphic>
+            </Button>
+            <Button fx:id="btnReset" text="Reset" prefWidth="100" styleClass="secondary-button">
+                <graphic>
+                    <FontAwesomeIcon glyphName="REFRESH" size="1.2em"/>
+                </graphic>
+            </Button>
+        </HBox>
+    </VBox>
+</AnchorPane>
