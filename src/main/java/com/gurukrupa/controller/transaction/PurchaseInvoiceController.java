@@ -5,7 +5,7 @@ import com.gurukrupa.data.entities.PurchaseInvoice.PaymentMethod;
 import com.gurukrupa.data.entities.PurchaseInvoice.PurchaseType;
 import com.gurukrupa.data.entities.PurchaseTransaction.ItemType;
 import com.gurukrupa.data.service.*;
-import com.gurukrupa.utility.AlertNotification;
+import com.gurukrupa.view.AlertNotification;
 import com.gurukrupa.utility.CurrencyFormatter;
 import com.gurukrupa.utility.MetalTypeEnum;
 import com.gurukrupa.utility.WeightFormatter;
@@ -17,6 +17,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -24,6 +25,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -52,43 +54,109 @@ public class PurchaseInvoiceController implements Initializable {
     private static final Logger LOG = LoggerFactory.getLogger(PurchaseInvoiceController.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a");
 
+    // Stock Catalog Sidebar
+    @FXML private TextField txtStockSearch;
+    @FXML private Button btnClearSearch;
+    @FXML private Label lblStockCount;
+    @FXML private ListView<JewelryItem> listViewStock;
     @FXML private VBox metalStockContainer;
     @FXML private Button btnRefreshStock;
     
+    // Header and Supplier Info
     @FXML private Label lblInvoiceNumber;
-    @FXML private RadioButton rbNewStock, rbExchangeItems, rbRawMaterial;
-    @FXML private ToggleGroup purchaseTypeGroup;
-    
     @FXML private ComboBox<Supplier> cmbSupplier;
-    @FXML private TextField txtSupplierInvoice;
+    @FXML private TextField txtSupplierName;
+    @FXML private TextField txtGSTNumber;
+    @FXML private TextField txtSupplierContact;
     @FXML private TextField txtInvoiceDate;
+    @FXML private TextField txtSupplierInvoice;
     
+    // Chip/Toggle Controls
+    @FXML private ToggleButton chipPurchase;
+    @FXML private ToggleButton chipExchange;
+    @FXML private ToggleGroup modeToggleGroup;
+    @FXML private VBox purchasePanel;
+    @FXML private VBox exchangePanel;
+    
+    // Purchase Items Tab - Form Fields
+    @FXML private TextField txtItemCode;
+    @FXML private ComboBox<String> cmbItemName;
+    @FXML private ComboBox<String> cmbMetalType;
+    @FXML private TextField txtPurity;
+    @FXML private TextField txtQuantity;
+    @FXML private TextField txtGrossWeight;
+    @FXML private TextField txtNetWeight;
+    @FXML private TextField txtRate;
+    @FXML private TextField txtAmount;
+    @FXML private Label lblLabourCharges;
+    @FXML private TextField txtLabourCharges;
+    @FXML private Button btnAddToBill;
+    @FXML private Button btnClearForm;
+    
+    // Purchase Items Table
     @FXML private TableView<PurchaseTransaction> purchaseItemsTable;
+    @FXML private TableColumn<PurchaseTransaction, Integer> colSno;
+    @FXML private TableColumn<PurchaseTransaction, String> colItemCode;
     @FXML private TableColumn<PurchaseTransaction, String> colItemName;
     @FXML private TableColumn<PurchaseTransaction, String> colMetalType;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colPurity;
+    @FXML private TableColumn<PurchaseTransaction, Integer> colQuantity;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colGrossWeight;
-    @FXML private TableColumn<PurchaseTransaction, BigDecimal> colNetWeight;
+    @FXML private TableColumn<PurchaseTransaction, BigDecimal> colWeight;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colRate;
+    @FXML private TableColumn<PurchaseTransaction, BigDecimal> colLabour;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colAmount;
     @FXML private TableColumn<PurchaseTransaction, Void> colAction;
     
-    @FXML private Button btnAddItem;
-    @FXML private Button btnClear;
-    @FXML private Button btnSave;
+    // Exchange Items Tab - Form Fields
+    @FXML private TextField txtExchangeItemName;
+    @FXML private ComboBox<String> cmbExchangeMetalType;
+    @FXML private TextField txtExchangePurity;
+    @FXML private TextField txtExchangeGrossWeight;
+    @FXML private TextField txtExchangeDeduction;
+    @FXML private TextField txtExchangeNetWeight;
+    @FXML private TextField txtExchangeRate;
+    @FXML private TextField txtExchangeAmount;
+    @FXML private Button btnAddExchangeItem;
+    @FXML private Button btnClearExchangeForm;
     
-    @FXML private Label lblTotalItems;
-    @FXML private Label lblTotalWeight;
+    // Exchange Items Table
+    @FXML private TableView<ExchangeTransaction> exchangeItemsTable;
+    @FXML private TableColumn<ExchangeTransaction, Integer> colExSno;
+    @FXML private TableColumn<ExchangeTransaction, String> colExItemName;
+    @FXML private TableColumn<ExchangeTransaction, String> colExMetalType;
+    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExPurity;
+    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExGrossWeight;
+    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExDeduction;
+    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExNetWeight;
+    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExRate;
+    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExAmount;
+    @FXML private TableColumn<ExchangeTransaction, Void> colExAction;
     
-    @FXML private Label lblSupplierName;
-    @FXML private Label lblSupplierGST;
-    @FXML private Label lblSupplierContact;
+    // Summary Panel
+    @FXML private Label lblTotalPurchaseItems;
+    @FXML private Label lblTotalPurchaseWeight;
+    @FXML private Label lblTotalExchangeItems;
+    @FXML private Label lblTotalExchangeWeight;
     @FXML private Label lblSubtotal;
     @FXML private Label lblGST;
     @FXML private Label lblTotalAmount;
+    @FXML private TextField txtDiscount;
+    @FXML private TextField txtGstRate;
+    @FXML private Label lblNetTotal;
+    @FXML private Label lblExchangeAmount;
+    @FXML private Label lblGrandTotal;
     
+    // Payment Details
     @FXML private ComboBox<PaymentMethod> cmbPaymentMode;
     @FXML private TextField txtPaymentReference;
+    @FXML private TextField txtPaidAmount;
+    @FXML private Label lblPendingAmount;
+    
+    // Action Buttons
+    @FXML private Button btnPrint;
+    @FXML private Button btnClear;
+    @FXML private Button btnSave;
 
     @Autowired
     private PurchaseInvoiceService purchaseInvoiceService;
@@ -107,9 +175,20 @@ public class PurchaseInvoiceController implements Initializable {
     
     @Autowired
     private PaymentModeService paymentModeService;
+    
+    @Autowired
+    private JewelryItemService jewelryItemService;
+    
+    @Autowired
+    private AlertNotification alertNotification;
 
     private ObservableList<PurchaseTransaction> purchaseItems = FXCollections.observableArrayList();
+    private ObservableList<ExchangeTransaction> exchangeItems = FXCollections.observableArrayList();
+    private ObservableList<JewelryItem> stockItems = FXCollections.observableArrayList();
+    private FilteredList<JewelryItem> filteredStockItems;
     private BigDecimal gstRate = new BigDecimal("3.00");
+    private JewelryItem selectedStockItem = null;
+    private BigDecimal currentLabourPercentage = null;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -117,67 +196,54 @@ public class PurchaseInvoiceController implements Initializable {
         
         setupTableColumns();
         setupComboBoxes();
+        setupListeners();
+        setupStockCatalog();
         loadSuppliers();
         loadMetalStock();
+        loadStockItems();
         updateDateTime();
         clearForm();
         
-        // Add listeners
+        // Initialize GST rate field
+        if (txtGstRate != null) {
+            txtGstRate.setText(gstRate.toString());
+        }
+        
+        // Add listeners for collections
         purchaseItems.addListener((javafx.collections.ListChangeListener<PurchaseTransaction>) change -> updateSummary());
+        exchangeItems.addListener((javafx.collections.ListChangeListener<ExchangeTransaction>) change -> updateSummary());
         cmbSupplier.valueProperty().addListener((obs, oldVal, newVal) -> updateSupplierInfo(newVal));
-        purchaseTypeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> handlePurchaseTypeChange());
     }
     
     private void setupTableColumns() {
-        colItemName.setCellValueFactory(new PropertyValueFactory<>("itemName"));
-        colMetalType.setCellValueFactory(new PropertyValueFactory<>("metalType"));
-        colPurity.setCellValueFactory(new PropertyValueFactory<>("purity"));
-        colGrossWeight.setCellValueFactory(new PropertyValueFactory<>("grossWeight"));
-        colNetWeight.setCellValueFactory(new PropertyValueFactory<>("netWeight"));
-        // Display rate per 10 grams even though we store per gram
-        colRate.setCellValueFactory(cellData -> {
-            BigDecimal ratePerGram = cellData.getValue().getRatePerGram();
-            BigDecimal ratePerTenGrams = ratePerGram != null ? ratePerGram.multiply(BigDecimal.TEN) : BigDecimal.ZERO;
-            return new SimpleObjectProperty<>(ratePerTenGrams);
-        });
-        colAmount.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        // Purchase Items Table
+        if (colSno != null) {
+            colSno.setCellValueFactory(cellData -> {
+                int index = purchaseItemsTable.getItems().indexOf(cellData.getValue()) + 1;
+                return new SimpleObjectProperty<>(index);
+            });
+        }
+        if (colItemCode != null) colItemCode.setCellValueFactory(new PropertyValueFactory<>("itemCode"));
+        if (colItemName != null) colItemName.setCellValueFactory(new PropertyValueFactory<>("itemName"));
+        if (colMetalType != null) colMetalType.setCellValueFactory(new PropertyValueFactory<>("metalType"));
+        if (colPurity != null) colPurity.setCellValueFactory(new PropertyValueFactory<>("purity"));
+        if (colQuantity != null) colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        if (colGrossWeight != null) colGrossWeight.setCellValueFactory(new PropertyValueFactory<>("grossWeight"));
+        if (colWeight != null) colWeight.setCellValueFactory(new PropertyValueFactory<>("netWeight"));
+        // Display rate per 10 grams
+        if (colRate != null) {
+            colRate.setCellValueFactory(cellData -> {
+                BigDecimal ratePerGram = cellData.getValue().getRatePerGram();
+                BigDecimal ratePerTenGrams = ratePerGram != null ? ratePerGram.multiply(BigDecimal.TEN) : BigDecimal.ZERO;
+                return new SimpleObjectProperty<>(ratePerTenGrams);
+            });
+        }
+        if (colLabour != null) colLabour.setCellValueFactory(new PropertyValueFactory<>("makingCharges"));
+        if (colAmount != null) colAmount.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         
-        // Make columns editable
-        colItemName.setCellFactory(TextFieldTableCell.forTableColumn());
-        colItemName.setOnEditCommit(event -> {
-            event.getRowValue().setItemName(event.getNewValue());
-            updateSummary();
-        });
-        
-        colGrossWeight.setCellFactory(TextFieldTableCell.forTableColumn(new BigDecimalStringConverter()));
-        colGrossWeight.setOnEditCommit(event -> {
-            event.getRowValue().setGrossWeight(event.getNewValue());
-            event.getRowValue().calculateTotalAmount();
-            purchaseItemsTable.refresh();
-            updateSummary();
-        });
-        
-        colNetWeight.setCellFactory(TextFieldTableCell.forTableColumn(new BigDecimalStringConverter()));
-        colNetWeight.setOnEditCommit(event -> {
-            event.getRowValue().setNetWeight(event.getNewValue());
-            event.getRowValue().calculateTotalAmount();
-            purchaseItemsTable.refresh();
-            updateSummary();
-        });
-        
-        colRate.setCellFactory(TextFieldTableCell.forTableColumn(new BigDecimalStringConverter()));
-        colRate.setOnEditCommit(event -> {
-            BigDecimal ratePerTenGrams = event.getNewValue();
-            // Convert rate per 10 grams to rate per gram
-            BigDecimal ratePerGram = ratePerTenGrams.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
-            event.getRowValue().setRatePerGram(ratePerGram);
-            event.getRowValue().calculateTotalAmount();
-            purchaseItemsTable.refresh();
-            updateSummary();
-        });
-        
-        // Add action buttons
-        colAction.setCellFactory(column -> new TableCell<>() {
+        // Add action buttons for purchase items
+        if (colAction != null) {
+            colAction.setCellFactory(column -> new TableCell<>() {
             private final Button deleteButton = new Button();
             
             {
@@ -199,10 +265,67 @@ public class PurchaseInvoiceController implements Initializable {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : deleteButton);
             }
-        });
+            });
+        }
         
-        purchaseItemsTable.setItems(purchaseItems);
-        purchaseItemsTable.setEditable(true);
+        if (purchaseItemsTable != null) {
+            purchaseItemsTable.setItems(purchaseItems);
+            purchaseItemsTable.setEditable(false);
+        }
+        
+        // Exchange Items Table
+        if (colExSno != null) {
+            colExSno.setCellValueFactory(cellData -> {
+                int index = exchangeItemsTable != null ? exchangeItemsTable.getItems().indexOf(cellData.getValue()) + 1 : 1;
+                return new SimpleObjectProperty<>(index);
+            });
+        }
+        if (colExItemName != null) colExItemName.setCellValueFactory(new PropertyValueFactory<>("itemName"));
+        if (colExMetalType != null) colExMetalType.setCellValueFactory(new PropertyValueFactory<>("metalType"));
+        if (colExPurity != null) colExPurity.setCellValueFactory(new PropertyValueFactory<>("purity"));
+        if (colExGrossWeight != null) colExGrossWeight.setCellValueFactory(new PropertyValueFactory<>("grossWeight"));
+        if (colExDeduction != null) colExDeduction.setCellValueFactory(new PropertyValueFactory<>("deduction"));
+        if (colExNetWeight != null) colExNetWeight.setCellValueFactory(new PropertyValueFactory<>("netWeight"));
+        // Display rate per 10 grams
+        if (colExRate != null) {
+            colExRate.setCellValueFactory(cellData -> {
+                BigDecimal ratePerTenGrams = cellData.getValue().getRatePerTenGrams();
+                return new SimpleObjectProperty<>(ratePerTenGrams != null ? ratePerTenGrams : BigDecimal.ZERO);
+            });
+        }
+        if (colExAmount != null) colExAmount.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        
+        // Add action buttons for exchange items
+        if (colExAction != null) {
+            colExAction.setCellFactory(column -> new TableCell<>() {
+            private final Button deleteButton = new Button();
+            
+            {
+                FontAwesomeIcon deleteIcon = new FontAwesomeIcon();
+                deleteIcon.setGlyphName("TRASH");
+                deleteIcon.setSize("1.2em");
+                deleteIcon.setFill(Color.WHITE);
+                deleteButton.setGraphic(deleteIcon);
+                deleteButton.setStyle("-fx-background-color: #F44336; -fx-cursor: hand;");
+                deleteButton.setOnAction(event -> {
+                    ExchangeTransaction item = getTableView().getItems().get(getIndex());
+                    exchangeItems.remove(item);
+                    updateSummary();
+                });
+            }
+            
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : deleteButton);
+            }
+            });
+        }
+        
+        if (exchangeItemsTable != null) {
+            exchangeItemsTable.setItems(exchangeItems);
+            exchangeItemsTable.setEditable(false);
+        }
     }
     
     private void setupComboBoxes() {
@@ -222,6 +345,22 @@ public class PurchaseInvoiceController implements Initializable {
                 return null;
             }
         });
+        
+        // Metal type combos
+        ObservableList<String> metalTypes = FXCollections.observableArrayList("GOLD", "SILVER", "PLATINUM");
+        if (cmbMetalType != null) {
+            cmbMetalType.setItems(metalTypes);
+            cmbMetalType.setValue("GOLD");
+        }
+        if (cmbExchangeMetalType != null) {
+            cmbExchangeMetalType.setItems(metalTypes);
+            cmbExchangeMetalType.setValue("GOLD");
+        }
+        
+        // Item name combo
+        if (cmbItemName != null) {
+            cmbItemName.setEditable(true);
+        }
     }
     
     private void loadSuppliers() {
@@ -230,7 +369,7 @@ public class PurchaseInvoiceController implements Initializable {
             cmbSupplier.setItems(FXCollections.observableArrayList(suppliers));
         } catch (Exception e) {
             LOG.error("Error loading suppliers", e);
-            AlertNotification.showError("Error", "Failed to load suppliers: " + e.getMessage());
+            alertNotification.showError("Failed to load suppliers: " + e.getMessage());
         }
     }
     
@@ -295,54 +434,258 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void updateSupplierInfo(Supplier supplier) {
         if (supplier != null) {
-            lblSupplierName.setText(supplier.getSupplierFullName());
-            lblSupplierGST.setText(supplier.getGstNumber() != null ? "GST: " + supplier.getGstNumber() : "");
-            lblSupplierContact.setText(supplier.getMobile() != null ? "Ph: " + supplier.getMobile() : "");
+            if (txtSupplierName != null) txtSupplierName.setText(supplier.getSupplierFullName());
+            if (txtGSTNumber != null) txtGSTNumber.setText(supplier.getGstNumber() != null ? supplier.getGstNumber() : "");
+            if (txtSupplierContact != null) txtSupplierContact.setText(supplier.getMobile() != null ? supplier.getMobile() : "");
         } else {
-            lblSupplierName.setText("Not Selected");
-            lblSupplierGST.setText("");
-            lblSupplierContact.setText("");
+            if (txtSupplierName != null) txtSupplierName.clear();
+            if (txtGSTNumber != null) txtGSTNumber.clear();
+            if (txtSupplierContact != null) txtSupplierContact.clear();
         }
     }
     
-    private void handlePurchaseTypeChange() {
-        // Logic can be added here if needed based on purchase type
-        if (rbExchangeItems.isSelected()) {
-            // Show only exchange metal stock items
-            loadMetalStock();
+    private void setupListeners() {
+        // Calculate totals when fields change
+        if (txtQuantity != null) {
+            txtQuantity.textProperty().addListener((obs, oldVal, newVal) -> calculateItemTotal());
+        }
+        if (txtNetWeight != null) {
+            txtNetWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateItemTotal());
+        }
+        if (txtRate != null) {
+            txtRate.textProperty().addListener((obs, oldVal, newVal) -> calculateItemTotal());
+        }
+        if (txtLabourCharges != null) {
+            txtLabourCharges.textProperty().addListener((obs, oldVal, newVal) -> calculateItemTotal());
+        }
+        
+        // Exchange item calculations
+        if (txtExchangeGrossWeight != null && txtExchangeDeduction != null && txtExchangeNetWeight != null) {
+            txtExchangeGrossWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeNetWeight());
+            txtExchangeDeduction.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeNetWeight());
+        }
+        if (txtExchangeNetWeight != null && txtExchangeRate != null) {
+            txtExchangeNetWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeTotal());
+            txtExchangeRate.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeTotal());
+        }
+        
+        // Discount and GST rate listeners
+        if (txtDiscount != null) {
+            txtDiscount.textProperty().addListener((obs, oldVal, newVal) -> updateSummary());
+        }
+        if (txtGstRate != null) {
+            txtGstRate.textProperty().addListener((obs, oldVal, newVal) -> {
+                try {
+                    gstRate = new BigDecimal(newVal);
+                    updateSummary();
+                } catch (NumberFormatException e) {
+                    // Ignore invalid input
+                }
+            });
+        }
+        
+        // Paid amount listener
+        if (txtPaidAmount != null) {
+            txtPaidAmount.textProperty().addListener((obs, oldVal, newVal) -> updatePendingAmount());
+        }
+        
+        // Clear search on button click
+        if (btnClearSearch != null) {
+            btnClearSearch.setOnAction(e -> {
+                if (txtStockSearch != null) txtStockSearch.clear();
+            });
+        }
+        
+        // Chip selection handling
+        if (modeToggleGroup != null) {
+            modeToggleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal == chipPurchase) {
+                    showPurchasePanel();
+                } else if (newVal == chipExchange) {
+                    showExchangePanel();
+                }
+            });
+        }
+        
+        // Style chips on hover and selection
+        setupChipStyles();
+    }
+    
+    private void setupStockCatalog() {
+        if (listViewStock != null && stockItems != null) {
+            filteredStockItems = new FilteredList<>(stockItems, p -> true);
+            listViewStock.setItems(filteredStockItems);
+            
+            // Custom cell factory for stock items
+            listViewStock.setCellFactory(listView -> new ListCell<JewelryItem>() {
+                @Override
+                protected void updateItem(JewelryItem item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        VBox itemBox = createStockItemDisplay(item);
+                        setGraphic(itemBox);
+                    }
+                }
+            });
+            
+            // Handle item selection
+            listViewStock.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && chipExchange != null && chipExchange.isSelected()) {
+                    populateExchangeItemFields(newVal);
+                }
+            });
+            
+            // Search functionality
+            if (txtStockSearch != null) {
+                txtStockSearch.textProperty().addListener((obs, oldVal, newVal) -> {
+                    filteredStockItems.setPredicate(item -> {
+                        if (newVal == null || newVal.isEmpty()) {
+                            return true;
+                        }
+                        String lowerCaseFilter = newVal.toLowerCase();
+                        return item.getItemName().toLowerCase().contains(lowerCaseFilter) ||
+                               item.getItemCode().toLowerCase().contains(lowerCaseFilter) ||
+                               item.getCategory().toLowerCase().contains(lowerCaseFilter);
+                    });
+                    updateStockCount();
+                });
+            }
+        }
+    }
+    
+    private VBox createStockItemDisplay(JewelryItem item) {
+        VBox box = new VBox(4);
+        box.setPadding(new Insets(8));
+        box.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 6; " +
+                     "-fx-border-color: #E0E0E0; -fx-border-radius: 6; -fx-border-width: 1;");
+        
+        // Item name and code
+        Label nameLabel = new Label(item.getItemName());
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        
+        Label codeLabel = new Label(item.getItemCode());
+        codeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
+        
+        // Metal info
+        String metalInfo = item.getMetalType() + " " + item.getPurity() + "k";
+        Label metalLabel = new Label(metalInfo);
+        metalLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #424242;");
+        
+        // Stock info
+        Label stockLabel = new Label("Stock: " + item.getQuantity() + " pcs");
+        stockLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #4CAF50;");
+        
+        box.getChildren().addAll(nameLabel, codeLabel, metalLabel, stockLabel);
+        
+        return box;
+    }
+    
+    private void loadStockItems() {
+        try {
+            List<JewelryItem> items = jewelryItemService.getAllActiveItems();
+            stockItems.clear();
+            stockItems.addAll(items);
+            updateStockCount();
+        } catch (Exception e) {
+            LOG.error("Error loading stock items", e);
+        }
+    }
+    
+    private void updateStockCount() {
+        if (lblStockCount != null && filteredStockItems != null) {
+            int count = filteredStockItems.size();
+            lblStockCount.setText(count + " items found");
         }
     }
     
     @FXML
-    private void handleAddItem() {
+    private void handleAddToBill() {
         try {
             PurchaseTransaction newItem = new PurchaseTransaction();
-            newItem.setItemCode("ITEM-" + System.currentTimeMillis());
-            newItem.setItemName("New Item");
-            newItem.setMetalType("GOLD");
-            newItem.setPurity(new BigDecimal("22"));
-            newItem.setGrossWeight(BigDecimal.ZERO);
-            newItem.setNetWeight(BigDecimal.ZERO);
+            
+            // Get values from form fields
+            newItem.setItemCode(txtItemCode != null ? txtItemCode.getText() : "ITEM-" + System.currentTimeMillis());
+            newItem.setItemName(cmbItemName != null ? cmbItemName.getValue() : "New Item");
+            newItem.setMetalType(cmbMetalType != null ? cmbMetalType.getValue() : "GOLD");
+            
+            // Parse numeric values
+            newItem.setPurity(parseBigDecimal(txtPurity));
+            newItem.setQuantity(parseInt(txtQuantity, 1));
+            newItem.setGrossWeight(parseBigDecimal(txtGrossWeight));
+            newItem.setNetWeight(parseBigDecimal(txtNetWeight));
             
             // Get rate per 10 grams and convert to per gram
-            BigDecimal ratePerTenGrams = getCurrentMetalRate("GOLD", new BigDecimal("22"));
+            BigDecimal ratePerTenGrams = parseBigDecimal(txtRate);
+            if (ratePerTenGrams.compareTo(BigDecimal.ZERO) == 0) {
+                ratePerTenGrams = getCurrentMetalRate(newItem.getMetalType(), newItem.getPurity());
+            }
             BigDecimal ratePerGram = ratePerTenGrams.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
             newItem.setRatePerGram(ratePerGram);
             
-            newItem.setQuantity(1);
-            newItem.setItemType(rbExchangeItems.isSelected() ? ItemType.EXCHANGE_ITEM : ItemType.NEW_ITEM);
+            // Set making charges
+            newItem.setMakingCharges(parseBigDecimal(txtLabourCharges));
+            
+            newItem.setItemType(ItemType.NEW_ITEM);
             newItem.calculateTotalAmount();
             
             purchaseItems.add(newItem);
             updateSummary();
+            clearPurchaseForm();
             
             // Focus on the new item
             purchaseItemsTable.scrollTo(newItem);
             purchaseItemsTable.getSelectionModel().select(newItem);
         } catch (Exception e) {
             LOG.error("Error adding item", e);
-            AlertNotification.showError("Error", "Failed to add item: " + e.getMessage());
+            alertNotification.showError("Failed to add item: " + e.getMessage());
         }
+    }
+    
+    @FXML
+    private void handleAddExchangeItem() {
+        try {
+            ExchangeTransaction newItem = new ExchangeTransaction();
+            
+            // Get values from form fields
+            newItem.setItemName(txtExchangeItemName != null ? txtExchangeItemName.getText() : "Exchange Item");
+            newItem.setMetalType(cmbExchangeMetalType != null ? cmbExchangeMetalType.getValue() : "GOLD");
+            newItem.setPurity(parseBigDecimal(txtExchangePurity));
+            newItem.setGrossWeight(parseBigDecimal(txtExchangeGrossWeight));
+            newItem.setDeduction(parseBigDecimal(txtExchangeDeduction));
+            newItem.setNetWeight(parseBigDecimal(txtExchangeNetWeight));
+            
+            // Get rate per 10 grams
+            BigDecimal ratePerTenGrams = parseBigDecimal(txtExchangeRate);
+            if (ratePerTenGrams.compareTo(BigDecimal.ZERO) == 0) {
+                ratePerTenGrams = getCurrentMetalRate(newItem.getMetalType(), newItem.getPurity());
+            }
+            newItem.setRatePerTenGrams(ratePerTenGrams);
+            
+            newItem.calculateNetWeightAndAmount();
+            
+            exchangeItems.add(newItem);
+            updateSummary();
+            clearExchangeForm();
+            
+            // Focus on the new item
+            exchangeItemsTable.scrollTo(newItem);
+            exchangeItemsTable.getSelectionModel().select(newItem);
+        } catch (Exception e) {
+            LOG.error("Error adding exchange item", e);
+            alertNotification.showError("Failed to add exchange item: " + e.getMessage());
+        }
+    }
+    
+    @FXML
+    private void handleClearForm() {
+        clearPurchaseForm();
+    }
+    
+    @FXML
+    private void handleClearExchangeForm() {
+        clearExchangeForm();
     }
     
     private BigDecimal getCurrentMetalRate(String metalType, BigDecimal purity) {
@@ -404,24 +747,48 @@ public class PurchaseInvoiceController implements Initializable {
             
             Supplier supplier = cmbSupplier.getValue();
             PurchaseType purchaseType = PurchaseType.NEW_STOCK;
-            if (rbExchangeItems.isSelected()) {
+            
+            // Determine purchase type based on items
+            if (!exchangeItems.isEmpty() && purchaseItems.isEmpty()) {
                 purchaseType = PurchaseType.EXCHANGE_ITEMS;
-            } else if (rbRawMaterial.isSelected()) {
-                purchaseType = PurchaseType.RAW_MATERIAL;
+            } else if (!exchangeItems.isEmpty() && !purchaseItems.isEmpty()) {
+                purchaseType = PurchaseType.NEW_STOCK; // Mixed type
+            }
+            
+            // Combine all transactions
+            List<PurchaseTransaction> allTransactions = new ArrayList<>(purchaseItems);
+            
+            // Convert exchange items to purchase transactions
+            for (ExchangeTransaction exItem : exchangeItems) {
+                PurchaseTransaction pTrans = new PurchaseTransaction();
+                pTrans.setItemCode("EX-" + System.currentTimeMillis());
+                pTrans.setItemName(exItem.getItemName());
+                pTrans.setMetalType(exItem.getMetalType());
+                pTrans.setPurity(exItem.getPurity());
+                pTrans.setGrossWeight(exItem.getGrossWeight());
+                pTrans.setNetWeight(exItem.getNetWeight());
+                // Convert rate per 10 grams to rate per gram for PurchaseTransaction
+                BigDecimal ratePerGram = exItem.getRatePerTenGrams() != null ? 
+                    exItem.getRatePerTenGrams().divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+                pTrans.setRatePerGram(ratePerGram);
+                pTrans.setQuantity(1);
+                pTrans.setItemType(ItemType.EXCHANGE_ITEM);
+                pTrans.setTotalAmount(exItem.getTotalAmount());
+                allTransactions.add(pTrans);
             }
             
             // Create invoice
             PurchaseInvoice invoice = purchaseInvoiceService.createPurchaseInvoice(
                 supplier,
-                new ArrayList<>(purchaseItems),
-                txtSupplierInvoice.getText().trim(),
+                allTransactions,
+                txtSupplierInvoice != null ? txtSupplierInvoice.getText().trim() : "",
                 purchaseType,
-                BigDecimal.ZERO,  // discount
+                parseBigDecimal(txtDiscount),
                 gstRate,
                 BigDecimal.ZERO,  // transport charges
                 BigDecimal.ZERO,  // other charges
                 cmbPaymentMode.getValue(),
-                txtPaymentReference.getText().trim(),
+                txtPaymentReference != null ? txtPaymentReference.getText().trim() : "",
                 null  // notes
             );
             
@@ -430,34 +797,34 @@ public class PurchaseInvoiceController implements Initializable {
                 processPayment(invoice);
             }
             
-            AlertNotification.showSuccess("Success", "Purchase invoice saved successfully!");
+            alertNotification.showSuccess("Purchase invoice saved successfully!");
             clearForm();
             
         } catch (Exception e) {
             LOG.error("Error saving invoice", e);
-            AlertNotification.showError("Error", "Failed to save invoice: " + e.getMessage());
+            alertNotification.showError("Failed to save invoice: " + e.getMessage());
         }
     }
     
     private boolean validateForm() {
         if (cmbSupplier.getValue() == null) {
-            AlertNotification.showWarning("Validation", "Please select a supplier");
+            alertNotification.showError("Please select a supplier");
             return false;
         }
         
-        if (purchaseItems.isEmpty()) {
-            AlertNotification.showWarning("Validation", "Please add at least one item");
+        if (purchaseItems.isEmpty() && exchangeItems.isEmpty()) {
+            alertNotification.showError("Please add at least one purchase or exchange item");
             return false;
         }
         
         // Validate items
         for (PurchaseTransaction item : purchaseItems) {
             if (item.getItemName() == null || item.getItemName().trim().isEmpty()) {
-                AlertNotification.showWarning("Validation", "Item name cannot be empty");
+                alertNotification.showError("Item name cannot be empty");
                 return false;
             }
             if (item.getNetWeight() == null || item.getNetWeight().compareTo(BigDecimal.ZERO) <= 0) {
-                AlertNotification.showWarning("Validation", "Net weight must be greater than zero");
+                alertNotification.showError("Net weight must be greater than zero");
                 return false;
             }
         }
@@ -480,37 +847,277 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void updateSummary() {
         Platform.runLater(() -> {
-            int totalItems = purchaseItems.size();
-            BigDecimal totalWeight = purchaseItems.stream()
+            // Purchase items summary
+            int totalPurchaseItems = purchaseItems.size();
+            BigDecimal totalPurchaseWeight = purchaseItems.stream()
                 .map(PurchaseTransaction::getNetWeight)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            BigDecimal subtotal = purchaseItems.stream()
+            BigDecimal purchaseTotal = purchaseItems.stream()
                 .map(PurchaseTransaction::getTotalAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            BigDecimal gstAmount = subtotal.multiply(gstRate).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-            BigDecimal total = subtotal.add(gstAmount);
+            // Exchange items summary
+            int totalExchangeItems = exchangeItems.size();
+            BigDecimal totalExchangeWeight = exchangeItems.stream()
+                .map(ExchangeTransaction::getNetWeight)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            lblTotalItems.setText(String.valueOf(totalItems));
-            lblTotalWeight.setText(WeightFormatter.format(totalWeight));
-            lblSubtotal.setText(CurrencyFormatter.format(subtotal));
-            lblGST.setText(CurrencyFormatter.format(gstAmount));
-            lblTotalAmount.setText(CurrencyFormatter.format(total));
+            BigDecimal exchangeTotal = exchangeItems.stream()
+                .map(ExchangeTransaction::getTotalAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // Calculate totals
+            BigDecimal subtotal = purchaseTotal;
+            BigDecimal discount = parseBigDecimal(txtDiscount);
+            BigDecimal netTotal = subtotal.subtract(discount);
+            BigDecimal gstAmount = netTotal.multiply(gstRate).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            BigDecimal totalAmount = netTotal.add(gstAmount);
+            BigDecimal grandTotal = totalAmount.subtract(exchangeTotal);
+            
+            // Update labels
+            if (lblTotalPurchaseItems != null) lblTotalPurchaseItems.setText(String.valueOf(totalPurchaseItems));
+            if (lblTotalPurchaseWeight != null) lblTotalPurchaseWeight.setText(WeightFormatter.format(totalPurchaseWeight) + " g");
+            if (lblTotalExchangeItems != null) lblTotalExchangeItems.setText(String.valueOf(totalExchangeItems));
+            if (lblTotalExchangeWeight != null) lblTotalExchangeWeight.setText(WeightFormatter.format(totalExchangeWeight) + " g");
+            if (lblSubtotal != null) lblSubtotal.setText(CurrencyFormatter.format(subtotal));
+            if (lblNetTotal != null) lblNetTotal.setText(CurrencyFormatter.format(netTotal));
+            if (lblGST != null) lblGST.setText(CurrencyFormatter.format(gstAmount));
+            if (lblTotalAmount != null) lblTotalAmount.setText(CurrencyFormatter.format(totalAmount));
+            if (lblExchangeAmount != null) lblExchangeAmount.setText(CurrencyFormatter.format(exchangeTotal));
+            if (lblGrandTotal != null) lblGrandTotal.setText(CurrencyFormatter.format(grandTotal));
+            
+            updatePendingAmount();
         });
     }
     
     private void clearForm() {
         purchaseItems.clear();
+        exchangeItems.clear();
         cmbSupplier.setValue(null);
-        txtSupplierInvoice.clear();
-        txtPaymentReference.clear();
+        if (txtSupplierInvoice != null) txtSupplierInvoice.clear();
+        if (txtPaymentReference != null) txtPaymentReference.clear();
+        if (txtPaidAmount != null) txtPaidAmount.clear();
+        if (txtDiscount != null) txtDiscount.setText("0");
         cmbPaymentMode.setValue(PaymentMethod.CASH);
-        rbNewStock.setSelected(true);
+        clearPurchaseForm();
+        clearExchangeForm();
         updateDateTime();
         updateSummary();
         updateSupplierInfo(null);
+    }
+    
+    private void clearPurchaseForm() {
+        if (txtItemCode != null) txtItemCode.clear();
+        if (cmbItemName != null) cmbItemName.setValue(null);
+        if (cmbMetalType != null) cmbMetalType.setValue("GOLD");
+        if (txtPurity != null) txtPurity.setText("22");
+        if (txtQuantity != null) txtQuantity.setText("1");
+        if (txtGrossWeight != null) txtGrossWeight.clear();
+        if (txtNetWeight != null) txtNetWeight.clear();
+        if (txtRate != null) txtRate.clear();
+        if (txtLabourCharges != null) txtLabourCharges.clear();
+        if (txtAmount != null) txtAmount.clear();
+    }
+    
+    private void clearExchangeForm() {
+        if (txtExchangeItemName != null) txtExchangeItemName.clear();
+        if (cmbExchangeMetalType != null) cmbExchangeMetalType.setValue("GOLD");
+        if (txtExchangePurity != null) txtExchangePurity.setText("22");
+        if (txtExchangeGrossWeight != null) txtExchangeGrossWeight.clear();
+        if (txtExchangeDeduction != null) txtExchangeDeduction.clear();
+        if (txtExchangeNetWeight != null) txtExchangeNetWeight.clear();
+        if (txtExchangeRate != null) txtExchangeRate.clear();
+        if (txtExchangeAmount != null) txtExchangeAmount.clear();
+    }
+    
+    private void calculateItemTotal() {
+        try {
+            int quantity = parseInt(txtQuantity, 1);
+            BigDecimal weight = parseBigDecimal(txtNetWeight);
+            BigDecimal ratePerTenGrams = parseBigDecimal(txtRate);
+            BigDecimal makingCharges = parseBigDecimal(txtLabourCharges);
+            
+            // Calculate gold value
+            BigDecimal goldValue = weight.multiply(ratePerTenGrams).divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
+            
+            // Total = (gold value + making charges) * quantity
+            BigDecimal total = goldValue.add(makingCharges).multiply(new BigDecimal(quantity));
+            
+            if (txtAmount != null) {
+                txtAmount.setText(CurrencyFormatter.format(total));
+            }
+        } catch (Exception e) {
+            // Ignore calculation errors
+        }
+    }
+    
+    private void calculateExchangeNetWeight() {
+        try {
+            BigDecimal grossWeight = parseBigDecimal(txtExchangeGrossWeight);
+            BigDecimal deduction = parseBigDecimal(txtExchangeDeduction);
+            BigDecimal netWeight = grossWeight.subtract(deduction);
+            
+            if (txtExchangeNetWeight != null) {
+                txtExchangeNetWeight.setText(WeightFormatter.format(netWeight));
+            }
+        } catch (Exception e) {
+            // Ignore calculation errors
+        }
+    }
+    
+    private void calculateExchangeTotal() {
+        try {
+            BigDecimal netWeight = parseBigDecimal(txtExchangeNetWeight);
+            BigDecimal ratePerTenGrams = parseBigDecimal(txtExchangeRate);
+            
+            // Calculate value
+            BigDecimal total = netWeight.multiply(ratePerTenGrams).divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
+            
+            if (txtExchangeAmount != null) {
+                txtExchangeAmount.setText(CurrencyFormatter.format(total));
+            }
+        } catch (Exception e) {
+            // Ignore calculation errors
+        }
+    }
+    
+    private void updatePendingAmount() {
+        try {
+            BigDecimal grandTotal = parseBigDecimal(lblGrandTotal != null ? lblGrandTotal.getText().replace("₹", "").replace(",", "").trim() : "0");
+            BigDecimal paidAmount = parseBigDecimal(txtPaidAmount);
+            BigDecimal pending = grandTotal.subtract(paidAmount);
+            
+            if (lblPendingAmount != null) {
+                lblPendingAmount.setText(CurrencyFormatter.format(pending));
+                if (pending.compareTo(BigDecimal.ZERO) > 0) {
+                    lblPendingAmount.setStyle("-fx-text-fill: #F44336; -fx-font-weight: bold;");
+                } else {
+                    lblPendingAmount.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold;");
+                }
+            }
+        } catch (Exception e) {
+            // Ignore calculation errors
+        }
+    }
+    
+    private void populateExchangeItemFields(JewelryItem item) {
+        if (txtExchangeItemName != null) txtExchangeItemName.setText(item.getItemName());
+        if (cmbExchangeMetalType != null) cmbExchangeMetalType.setValue(item.getMetalType());
+        if (txtExchangePurity != null) txtExchangePurity.setText(item.getPurity().toString());
+        
+        // Get current metal rate
+        BigDecimal rate = getCurrentMetalRate(item.getMetalType(), item.getPurity());
+        if (txtExchangeRate != null) {
+            txtExchangeRate.setText(rate.toString());
+        }
+    }
+    
+    private BigDecimal parseBigDecimal(TextField field) {
+        if (field == null) return BigDecimal.ZERO;
+        return parseBigDecimal(field.getText());
+    }
+    
+    private BigDecimal parseBigDecimal(String text) {
+        if (text == null || text.trim().isEmpty()) return BigDecimal.ZERO;
+        try {
+            // Remove currency symbols and commas
+            text = text.replace("₹", "").replace(",", "").trim();
+            return new BigDecimal(text);
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
+    }
+    
+    private int parseInt(TextField field, int defaultValue) {
+        if (field == null || field.getText().trim().isEmpty()) return defaultValue;
+        try {
+            return Integer.parseInt(field.getText().trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+    
+    private void showPurchasePanel() {
+        if (purchasePanel != null) {
+            purchasePanel.setVisible(true);
+            purchasePanel.setManaged(true);
+        }
+        if (exchangePanel != null) {
+            exchangePanel.setVisible(false);
+            exchangePanel.setManaged(false);
+        }
+        updateChipStyles();
+    }
+    
+    private void showExchangePanel() {
+        if (purchasePanel != null) {
+            purchasePanel.setVisible(false);
+            purchasePanel.setManaged(false);
+        }
+        if (exchangePanel != null) {
+            exchangePanel.setVisible(true);
+            exchangePanel.setManaged(true);
+        }
+        updateChipStyles();
+    }
+    
+    private void setupChipStyles() {
+        String activeStyle = "-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 8 20 8 20; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(156,39,176,0.3), 4, 0, 0, 2);";
+        String inactiveStyle = "-fx-background-color: transparent; -fx-text-fill: #757575; -fx-background-radius: 20; -fx-padding: 8 20 8 20; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12; -fx-cursor: hand;";
+        String hoverStyle = "-fx-background-color: rgba(156,39,176,0.1); -fx-text-fill: #9C27B0; -fx-background-radius: 20; -fx-padding: 8 20 8 20; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12; -fx-cursor: hand;";
+        
+        if (chipPurchase != null) {
+            chipPurchase.setOnMouseEntered(e -> {
+                if (!chipPurchase.isSelected()) {
+                    chipPurchase.setStyle(hoverStyle);
+                }
+            });
+            chipPurchase.setOnMouseExited(e -> {
+                if (!chipPurchase.isSelected()) {
+                    chipPurchase.setStyle(inactiveStyle);
+                }
+            });
+        }
+        
+        if (chipExchange != null) {
+            chipExchange.setOnMouseEntered(e -> {
+                if (!chipExchange.isSelected()) {
+                    chipExchange.setStyle(hoverStyle);
+                }
+            });
+            chipExchange.setOnMouseExited(e -> {
+                if (!chipExchange.isSelected()) {
+                    chipExchange.setStyle(inactiveStyle);
+                }
+            });
+        }
+    }
+    
+    private void updateChipStyles() {
+        String activeStyle = "-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 8 20 8 20; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(156,39,176,0.3), 4, 0, 0, 2);";
+        String inactiveStyle = "-fx-background-color: transparent; -fx-text-fill: #757575; -fx-background-radius: 20; -fx-padding: 8 20 8 20; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12; -fx-cursor: hand;";
+        
+        if (chipPurchase != null) {
+            chipPurchase.setStyle(chipPurchase.isSelected() ? activeStyle : inactiveStyle);
+            // Update icon color
+            if (chipPurchase.getGraphic() instanceof FontAwesomeIcon) {
+                FontAwesomeIcon icon = (FontAwesomeIcon) chipPurchase.getGraphic();
+                icon.setFill(chipPurchase.isSelected() ? Color.WHITE : Color.valueOf("#757575"));
+            }
+        }
+        
+        if (chipExchange != null) {
+            chipExchange.setStyle(chipExchange.isSelected() ? activeStyle : inactiveStyle);
+            // Update icon color
+            if (chipExchange.getGraphic() instanceof FontAwesomeIcon) {
+                FontAwesomeIcon icon = (FontAwesomeIcon) chipExchange.getGraphic();
+                icon.setFill(chipExchange.isSelected() ? Color.WHITE : Color.valueOf("#757575"));
+            }
+        }
     }
 }

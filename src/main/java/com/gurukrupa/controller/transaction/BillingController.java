@@ -28,6 +28,7 @@ import javafx.scene.layout.VBox;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import java.math.BigDecimal;
 import com.gurukrupa.data.entities.JewelryItem;
 import com.gurukrupa.data.service.JewelryItemService;
 import com.gurukrupa.data.service.BillService;
@@ -135,7 +136,7 @@ public class BillingController implements Initializable {
     @FXML
     private TableView itemsTable, exchangeTable;
     @FXML
-    private Label lblBillAmount, lblExchangeAmount, lblFinalAmount, lblItemCount, lblSubtotal, lblCGST, lblSGST, lblGrandTotal;
+    private Label lblBillAmount, lblExchangeAmount, lblFinalAmount, lblItemCount, lblSubtotal, lblCGST, lblSGST, lblGrandTotal, lblLabourCharges;
     @FXML
     private VBox partialPaymentBox, bankPaymentBox, upiPaymentBox;
     @FXML
@@ -151,6 +152,7 @@ public class BillingController implements Initializable {
     private ObservableList<BillingItem> billingItems = FXCollections.observableArrayList();
     private ObservableList<ExchangeItem> exchangeItems = FXCollections.observableArrayList();
     private JewelryItem selectedJewelryItem;
+    private BigDecimal currentLabourPercentage = null;
     private Customer selectedCustomer; // Store the selected customer
 
     private AutoCompleteTextField autoCompleteTextField;
@@ -496,8 +498,14 @@ public class BillingController implements Initializable {
         txtQuantity.setText("1");
         txtWeight.clear();
         txtLabour.clear();
+        txtLabour.setEditable(true); // Make labour field editable again
+        txtLabour.setStyle(""); // Reset style
         txtTotalAmount.clear();
         selectedJewelryItem = null;
+        currentLabourPercentage = null; // Clear labour percentage
+        if (lblLabourCharges != null) {
+            lblLabourCharges.setText("Labour Charges"); // Reset label
+        }
     }
     
     private void searchItem() {
@@ -596,9 +604,26 @@ public class BillingController implements Initializable {
             txtWeight.setText(item.getGrossWeight().toString());
         }
         
-        // Set labour charges
+        // Store labour percentage from the item
         if (item.getLabourCharges() != null) {
-            txtLabour.setText(item.getLabourCharges().toString());
+            currentLabourPercentage = item.getLabourCharges();
+            txtLabour.setEditable(false); // Make labour field read-only when item is selected
+            txtLabour.setStyle("-fx-background-color: #E8F5E8; -fx-opacity: 1;"); // Visual indication
+            
+            // Update label to show percentage
+            if (lblLabourCharges != null) {
+                lblLabourCharges.setText("Labour (" + currentLabourPercentage + "%)");
+            }
+            
+            // Calculate initial labour amount (will be recalculated when rate/weight changes)
+            calculateTotal();
+        } else {
+            currentLabourPercentage = null;
+            txtLabour.setEditable(true);
+            txtLabour.setStyle("");
+            if (lblLabourCharges != null) {
+                lblLabourCharges.setText("Labour Charges");
+            }
         }
         
         System.out.println("Item details populated: " + item.getItemName() + ", Metal selected: " + cmbMetal.getValue() + ", Weight: " + txtWeight.getText());
@@ -788,11 +813,24 @@ public class BillingController implements Initializable {
             double rate = txtRate.getText().isEmpty() ? 0 : Double.parseDouble(txtRate.getText());
             int quantity = txtQuantity.getText().isEmpty() ? 1 : Integer.parseInt(txtQuantity.getText());
             double weight = txtWeight.getText().isEmpty() ? 0 : Double.parseDouble(txtWeight.getText());
-            double labour = txtLabour.getText().isEmpty() ? 0 : Double.parseDouble(txtLabour.getText());
             
-            // Calculate total: ((rate * (weight * quantity)) / 10) + labour
+            // Calculate total weight and gold value
             double totalWeight = weight * quantity;
             double goldValue = (rate * totalWeight) / 10;
+            
+            double labour = 0;
+            
+            // If we have a selected item with labour percentage, calculate labour from percentage
+            if (currentLabourPercentage != null && currentLabourPercentage.compareTo(BigDecimal.ZERO) > 0) {
+                // Calculate labour as percentage of gold value
+                labour = goldValue * currentLabourPercentage.doubleValue() / 100;
+                // Update the labour field to show calculated amount
+                txtLabour.setText(String.format("%.2f", labour));
+            } else {
+                // Otherwise, use manual labour entry
+                labour = txtLabour.getText().isEmpty() ? 0 : Double.parseDouble(txtLabour.getText());
+            }
+            
             double total = goldValue + labour;
             txtTotalAmount.setText(String.format("%.2f", total));
         } catch (NumberFormatException e) {
@@ -1121,7 +1159,7 @@ public class BillingController implements Initializable {
         TableColumn<BillingItem, Double> rateCol = (TableColumn<BillingItem, Double>) itemsTable.getColumns().get(4);
         TableColumn<BillingItem, Integer> quantityCol = (TableColumn<BillingItem, Integer>) itemsTable.getColumns().get(5);
         TableColumn<BillingItem, Double> weightCol = (TableColumn<BillingItem, Double>) itemsTable.getColumns().get(6);
-        TableColumn<BillingItem, Double> labourCol = (TableColumn<BillingItem, Double>) itemsTable.getColumns().get(7);
+        TableColumn<BillingItem, String> labourCol = (TableColumn<BillingItem, String>) itemsTable.getColumns().get(7);
         TableColumn<BillingItem, Double> amountCol = (TableColumn<BillingItem, Double>) itemsTable.getColumns().get(8);
         
         snoCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSno()).asObject());
@@ -1131,7 +1169,7 @@ public class BillingController implements Initializable {
         rateCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getRate()).asObject());
         quantityCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantity()).asObject());
         weightCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getWeight()).asObject());
-        labourCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getLabour()).asObject());
+        labourCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.format("%.1f%%", cellData.getValue().getLabourPercentage())));
         amountCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAmount()).asObject());
         
         itemsTable.setItems(billingItems);
@@ -1169,6 +1207,7 @@ public class BillingController implements Initializable {
         private int quantity;
         private double weight;
         private double labour;
+        private double labourPercentage;
         private double amount;
         
         public BillingItem(int sno, Long jewelryItemId, String itemCode, String itemName, String metal, 
@@ -1182,6 +1221,9 @@ public class BillingController implements Initializable {
             this.quantity = quantity;
             this.weight = weight;
             this.labour = labour;
+            // Calculate labour percentage based on gold value
+            double goldValue = (weight * rate) / 10;
+            this.labourPercentage = goldValue > 0 ? (labour / goldValue) * 100 : 0;
             this.amount = amount;
         }
         
@@ -1195,6 +1237,7 @@ public class BillingController implements Initializable {
         public int getQuantity() { return quantity; }
         public double getWeight() { return weight; }
         public double getLabour() { return labour; }
+        public double getLabourPercentage() { return labourPercentage; }
         public double getAmount() { return amount; }
     }
     

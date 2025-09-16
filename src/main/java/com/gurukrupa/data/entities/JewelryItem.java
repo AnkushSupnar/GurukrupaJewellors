@@ -44,7 +44,7 @@ public class JewelryItem {
     private BigDecimal netWeight; // Net gold weight (grossWeight - stoneWeight)
     
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal labourCharges; // Making charges
+    private BigDecimal labourCharges; // Labour charges as percentage (e.g., 10.00 for 10%)
     
     @Column(precision = 12, scale = 2)
     private BigDecimal stoneCharges; // Charges for stones/gems
@@ -91,8 +91,12 @@ public class JewelryItem {
             // Calculate gold value: (netWeight * goldRate) / 10
             BigDecimal goldValue = netWeight.multiply(goldRate).divide(BigDecimal.valueOf(10));
             
-            // Add labour charges
-            BigDecimal total = goldValue.add(labourCharges);
+            // Calculate labour charges as percentage of gold value
+            // Note: labourCharges field now stores percentage value (e.g., 10 for 10%)
+            BigDecimal labourChargesAmount = goldValue.multiply(labourCharges).divide(BigDecimal.valueOf(100));
+            
+            // Add labour charges amount
+            BigDecimal total = goldValue.add(labourChargesAmount);
             
             // Add stone charges if present
             if (stoneCharges != null) {

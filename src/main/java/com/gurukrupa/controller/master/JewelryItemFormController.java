@@ -4,6 +4,7 @@ import com.gurukrupa.data.entities.JewelryItem;
 import com.gurukrupa.data.service.JewelryItemService;
 import com.gurukrupa.data.service.MetalService;
 import com.gurukrupa.view.AlertNotification;
+import com.gurukrupa.config.SpringFXMLLoader;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,6 +14,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
+import javafx.scene.Parent;
+import javafx.scene.layout.BorderPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +42,12 @@ public class JewelryItemFormController implements Initializable {
     @Autowired
     private AlertNotification alert;
     
+    @Autowired
+    private SpringFXMLLoader springFXMLLoader;
+    
     // Form Header
     @FXML private Text txtFormTitle;
+    @FXML private Button btnBack;
     
     // Basic Information
     @FXML private TextField txtItemCode;
@@ -83,6 +90,7 @@ public class JewelryItemFormController implements Initializable {
     @FXML private TableColumn<JewelryItem, String> colMetalType;
     @FXML private TableColumn<JewelryItem, String> colPurity;
     @FXML private TableColumn<JewelryItem, String> colNetWeight;
+    @FXML private TableColumn<JewelryItem, String> colLabourCharges;
     @FXML private TableColumn<JewelryItem, String> colTotalAmount;
     @FXML private TableColumn<JewelryItem, String> colQuantity;
     
@@ -134,6 +142,8 @@ public class JewelryItemFormController implements Initializable {
             new SimpleStringProperty(cellData.getValue().getPurity() + "K"));
         colNetWeight.setCellValueFactory(cellData -> 
             new SimpleStringProperty(String.format("%.2f g", cellData.getValue().getNetWeight())));
+        colLabourCharges.setCellValueFactory(cellData -> 
+            new SimpleStringProperty(cellData.getValue().getLabourCharges() + "%"));
         colTotalAmount.setCellValueFactory(cellData -> 
             new SimpleStringProperty(String.format("₹%.2f", cellData.getValue().getTotalAmount())));
         colQuantity.setCellValueFactory(cellData -> 
@@ -146,6 +156,9 @@ public class JewelryItemFormController implements Initializable {
     }
     
     private void setupEventHandlers() {
+        // Back button
+        btnBack.setOnAction(e -> navigateBackToMasterMenu());
+        
         // Action buttons
         btnSave.setOnAction(e -> saveJewelryItem());
         btnUpdate.setOnAction(e -> updateJewelryItem());
@@ -241,16 +254,19 @@ public class JewelryItemFormController implements Initializable {
         try {
             BigDecimal netWeight = parseDecimal(txtNetWeight.getText());
             BigDecimal goldRate = parseDecimal(txtGoldRate.getText());
-            BigDecimal labourCharges = parseDecimal(txtLabourCharges.getText());
+            BigDecimal labourChargesPercent = parseDecimal(txtLabourCharges.getText());
             BigDecimal stoneCharges = parseDecimal(txtStoneCharges.getText());
             BigDecimal otherCharges = parseDecimal(txtOtherCharges.getText());
             
-            if (netWeight != null && goldRate != null && labourCharges != null) {
+            if (netWeight != null && goldRate != null && labourChargesPercent != null) {
                 // Calculate gold value: (netWeight * goldRate) / 10
                 BigDecimal goldValue = netWeight.multiply(goldRate).divide(BigDecimal.valueOf(10));
                 
+                // Calculate labour charges as percentage of gold value
+                BigDecimal labourChargesAmount = goldValue.multiply(labourChargesPercent).divide(BigDecimal.valueOf(100));
+                
                 // Add all charges
-                BigDecimal total = goldValue.add(labourCharges);
+                BigDecimal total = goldValue.add(labourChargesAmount);
                 if (stoneCharges != null) total = total.add(stoneCharges);
                 if (otherCharges != null) total = total.add(otherCharges);
                 
@@ -368,7 +384,7 @@ public class JewelryItemFormController implements Initializable {
         }
         
         if (parseDecimal(txtLabourCharges.getText()) == null) {
-            alert.showError("Valid labour charges is required");
+            alert.showError("Valid labour charges percentage is required (e.g., 10, 15)");
             txtLabourCharges.requestFocus();
             return false;
         }
@@ -546,5 +562,24 @@ public class JewelryItemFormController implements Initializable {
         cmbFilterCategory.setValue(null);
         cmbFilterMetalType.setValue(null);
         filteredItems.setPredicate(p -> true);
+    }
+    
+    private void navigateBackToMasterMenu() {
+        try {
+            // Get the dashboard's center panel
+            BorderPane dashboard = (BorderPane) btnBack.getScene().getRoot();
+            
+            // Load the Master Menu FXML
+            Parent masterMenu = springFXMLLoader.load("/fxml/master/MasterMenu.fxml");
+            
+            // Set the master menu in the center of the dashboard
+            dashboard.setCenter(masterMenu);
+            
+            logger.info("Navigated back to Master Menu");
+            
+        } catch (Exception e) {
+            logger.error("Error navigating back to Master Menu: {}", e.getMessage());
+            alert.showError("Error navigating back: " + e.getMessage());
+        }
     }
 }

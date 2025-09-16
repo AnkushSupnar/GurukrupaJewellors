@@ -9,6 +9,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -89,23 +90,16 @@ public class JewelryItemMenuController implements Initializable {
     private void openAddItemDialog() {
         logger.info("Opening Add Jewelry Item form");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddItem.getScene().getRoot();
             
             // Load the FXML
-            Parent root = springFXMLLoader.load(FxmlView.JEWELRY_ITEM_FORM.getFxmlFile());
+            Parent jewelryItemForm = springFXMLLoader.load(FxmlView.JEWELRY_ITEM_FORM.getFxmlFile());
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Jewelry Item Management");
-            dialog.setResizable(true);
-            dialog.setMaximized(true); // Open maximized for better form visibility
+            // Set the jewelry item form in the center of the dashboard
+            dashboard.setCenter(jewelryItemForm);
             
-            // Show the dialog
-            dialog.show();
-            
-            logger.info("Jewelry Item form opened successfully");
+            logger.info("Jewelry Item form loaded in dashboard successfully");
             
         } catch (Exception e) {
             logger.error("Error opening jewelry item form: {}", e.getMessage());

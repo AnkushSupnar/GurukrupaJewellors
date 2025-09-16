@@ -233,7 +233,10 @@
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <TextField fx:id="txtItemCode" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
+                                                      <TextField fx:id="txtItemCode" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;">
+                                                   <font>
+                                                      <Font size="14.0" />
+                                                   </font></TextField>
                                                    </children>
                                                 </VBox>
                                                 <VBox minWidth="200.0" prefWidth="200.0" spacing="2.0" HBox.hgrow="ALWAYS">
@@ -243,7 +246,7 @@
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <TextField fx:id="txtItemName" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
+                                                      <TextField fx:id="txtItemName" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
                                                    </children>
                                                 </VBox>
                                                 <VBox maxWidth="100.0" minWidth="100.0" prefWidth="100.0" spacing="2.0">
@@ -253,7 +256,7 @@
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <ComboBox fx:id="cmbMetal" prefWidth="100.0" promptText="Select" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 3; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
+                                                      <ComboBox fx:id="cmbMetal" prefWidth="100.0" promptText="Select" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 3; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
                                                    </children>
                                                 </VBox>
                                                 <VBox maxWidth="90.0" minWidth="90.0" prefWidth="90.0" spacing="2.0">
@@ -263,7 +266,7 @@
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <TextField fx:id="txtRate" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
+                                                      <TextField fx:id="txtRate" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
                                                    </children>
                                                 </VBox>
                                                 <VBox maxWidth="80.0" minWidth="80.0" prefWidth="80.0" spacing="2.0">
@@ -273,7 +276,7 @@
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <TextField fx:id="txtQuantity" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" text="1" />
+                                                      <TextField fx:id="txtQuantity" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" text="1" />
                                                    </children>
                                                 </VBox>
                                              </children>
@@ -289,17 +292,17 @@
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <TextField fx:id="txtWeight" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
+                                                      <TextField fx:id="txtWeight" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
                                                    </children>
                                                 </VBox>
                                                 <VBox maxWidth="90.0" minWidth="90.0" prefWidth="90.0" spacing="2.0">
                                                    <children>
-                                                      <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" text="Labour Charges" textFill="#757575">
+                                                      <Label fx:id="lblLabourCharges" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" text="Labour Charges" textFill="#757575">
                                                          <font>
                                                             <Font size="10.0" />
                                                          </font>
                                                       </Label>
-                                                      <TextField fx:id="txtLabour" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
+                                                      <TextField fx:id="txtLabour" style="-fx-background-color: #F8F9FA; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1;" />
                                                    </children>
                                                 </VBox>
                                                 <VBox maxWidth="120.0" minWidth="120.0" prefWidth="120.0" spacing="2.0">
@@ -361,7 +364,7 @@
                                                 <TableColumn prefWidth="80.0" style="-fx-alignment: CENTER-RIGHT;" text="Rate" />
                                                 <TableColumn prefWidth="50.0" style="-fx-alignment: CENTER;" text="Qty" />
                                                 <TableColumn prefWidth="80.0" style="-fx-alignment: CENTER-RIGHT;" text="Weight" />
-                                                <TableColumn prefWidth="80.0" style="-fx-alignment: CENTER-RIGHT;" text="Labour" />
+                                                <TableColumn prefWidth="80.0" style="-fx-alignment: CENTER-RIGHT;" text="Labour %" />
                                                 <TableColumn prefWidth="120.0" style="-fx-alignment: CENTER-RIGHT;" text="Amount" />
                                              </columns>
                                           </TableView>

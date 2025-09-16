@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -137,13 +138,13 @@ public class BillPdfService {
             Paragraph saleHeader = new Paragraph("Sale Items", subHeaderFont);
             document.add(saleHeader);
 
-            PdfPTable saleTable = new PdfPTable(8);
+            PdfPTable saleTable = new PdfPTable(9);
             saleTable.setWidthPercentage(100);
             saleTable.setSpacingBefore(5f);
-            saleTable.setWidths(new float[]{0.5f, 1f, 2f, 1f, 0.8f, 0.8f, 0.8f, 1.2f});
+            saleTable.setWidths(new float[]{0.5f, 0.8f, 2f, 0.8f, 0.5f, 0.8f, 0.8f, 0.8f, 1.2f});
 
             // Headers
-            addTableHeader(saleTable, new String[]{"S.No", "Code", "Item Name", "Metal", "Weight", "Rate/10g", "Labour", "Amount"}, smallFont);
+            addTableHeader(saleTable, new String[]{"S.No", "Code", "Item Name", "Metal", "Qty", "Weight", "Rate/10g", "Labour %", "Amount"}, smallFont);
 
             // Data rows
             int sno = 1;
@@ -152,9 +153,16 @@ public class BillPdfService {
                 saleTable.addCell(createCell(transaction.getItemCode(), smallFont, Element.ALIGN_LEFT));
                 saleTable.addCell(createCell(transaction.getItemName(), smallFont, Element.ALIGN_LEFT));
                 saleTable.addCell(createCell(transaction.getMetalType(), smallFont, Element.ALIGN_CENTER));
+                saleTable.addCell(createCell(String.valueOf(transaction.getQuantity()), smallFont, Element.ALIGN_CENTER));
                 saleTable.addCell(createCell(formatDecimal(transaction.getWeight()) + "g", smallFont, Element.ALIGN_RIGHT));
                 saleTable.addCell(createCell(formatDecimal(transaction.getRatePerTenGrams()), smallFont, Element.ALIGN_RIGHT));
-                saleTable.addCell(createCell(formatDecimal(transaction.getLabourCharges()), smallFont, Element.ALIGN_RIGHT));
+                // Calculate labour percentage
+                BigDecimal goldValue = transaction.getWeight().multiply(transaction.getRatePerTenGrams()).divide(BigDecimal.valueOf(10), 2, RoundingMode.HALF_UP);
+                BigDecimal labourPercentage = BigDecimal.ZERO;
+                if (goldValue.compareTo(BigDecimal.ZERO) > 0 && transaction.getLabourCharges() != null) {
+                    labourPercentage = transaction.getLabourCharges().multiply(BigDecimal.valueOf(100)).divide(goldValue, 1, RoundingMode.HALF_UP);
+                }
+                saleTable.addCell(createCell(labourPercentage + "%", smallFont, Element.ALIGN_RIGHT));
                 saleTable.addCell(createCell("₹ " + formatDecimal(transaction.getTotalAmount()), smallFont, Element.ALIGN_RIGHT));
             }
 

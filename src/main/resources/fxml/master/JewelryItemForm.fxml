@@ -28,9 +28,16 @@
             <VBox spacing="20.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 4);" HBox.hgrow="ALWAYS">
                <children>
                   
-                  <!-- Form Header -->
+                  <!-- Form Header with Back Button -->
                   <HBox alignment="CENTER_LEFT" spacing="15.0">
                      <children>
+                        <!-- Back Button -->
+                        <Button fx:id="btnBack" mnemonicParsing="false" style="-fx-background-color: #E0E0E0; -fx-background-radius: 20; -fx-padding: 10; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 0, 0, 1);">
+                           <graphic>
+                              <FontAwesomeIcon fill="#424242" glyphName="ARROW_LEFT" size="1.5em" />
+                           </graphic>
+                        </Button>
+                        
                         <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: linear-gradient(135deg, #1976D2 0%, #1565C0 100%); -fx-background-radius: 30;">
                            <children>
                               <FontAwesomeIcon fill="WHITE" glyphName="DIAMOND" size="1.8em" />
@@ -61,13 +68,13 @@
                                        <children>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Item Code *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Item Code *" />
                                                 <TextField fx:id="txtItemCode" promptText="Auto-generated or enter manually" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Item Name *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Item Name *" />
                                                 <TextField fx:id="txtItemName" promptText="Enter jewelry item name" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
@@ -79,13 +86,13 @@
                                        <children>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Category *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Category *" />
                                                 <ComboBox fx:id="cmbCategory" editable="true" promptText="Select or enter category" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 8; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Metal Type *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Metal Type *" />
                                                 <ComboBox fx:id="cmbMetalType" promptText="Select metal type" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 8; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
                                              </children>
                                           </VBox>
@@ -97,13 +104,13 @@
                                        <children>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Purity (Karat) *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Purity (Karat) *" />
                                                 <TextField fx:id="txtPurity" promptText="e.g., 22.00, 18.00, 14.00" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Quantity *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Quantity *" />
                                                 <TextField fx:id="txtQuantity" promptText="Available quantity" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
@@ -122,13 +129,13 @@
                                        <children>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Gross Weight (grams) *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Gross Weight (grams) *" />
                                                 <TextField fx:id="txtGrossWeight" promptText="Total weight including stones" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Stone Weight (grams)" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Stone Weight (grams)" />
                                                 <TextField fx:id="txtStoneWeight" promptText="Weight of stones/gems" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
@@ -138,7 +145,7 @@
                                     <!-- Row 2: Net Weight (Auto-calculated) -->
                                     <VBox spacing="8.0">
                                        <children>
-                                          <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Net Weight (grams) - Auto Calculated" />
+                                          <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Net Weight (grams) - Auto Calculated" />
                                           <TextField fx:id="txtNetWeight" editable="false" promptText="Will be calculated automatically" style="-fx-background-color: #E8F5E9; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #81C784; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-weight: 600; -fx-font-family: 'Segoe UI';" />
                                        </children>
                                     </VBox>
@@ -155,14 +162,14 @@
                                        <children>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Gold Rate (per 10 grams) *" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Gold Rate (per 10 grams) *" />
                                                 <TextField fx:id="txtGoldRate" promptText="Current gold rate" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Labour Charges *" />
-                                                <TextField fx:id="txtLabourCharges" promptText="Making charges" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Labour Charges (%) *" />
+                                                <TextField fx:id="txtLabourCharges" promptText="Enter percentage (e.g., 10, 15)" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                        </children>
@@ -173,13 +180,13 @@
                                        <children>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Stone Charges" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Stone Charges" />
                                                 <TextField fx:id="txtStoneCharges" promptText="Charges for stones/gems" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Other Charges" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Other Charges" />
                                                 <TextField fx:id="txtOtherCharges" promptText="Any additional charges" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
@@ -189,7 +196,7 @@
                                     <!-- Row 3: Total Amount (Auto-calculated) -->
                                     <VBox spacing="8.0">
                                        <children>
-                                          <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Total Amount - Auto Calculated" />
+                                          <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Total Amount - Auto Calculated" />
                                           <TextField fx:id="txtTotalAmount" editable="false" promptText="Will be calculated automatically" style="-fx-background-color: #E3F2FD; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 16px; -fx-border-color: #1976D2; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-weight: bold; -fx-font-family: 'Segoe UI';" />
                                        </children>
                                     </VBox>
@@ -204,7 +211,7 @@
                                     <!-- Description -->
                                     <VBox spacing="8.0">
                                        <children>
-                                          <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Description" />
+                                          <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Description" />
                                           <TextArea fx:id="txtDescription" prefRowCount="3" promptText="Enter detailed description of the jewelry item..." style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" wrapText="true" />
                                        </children>
                                     </VBox>
@@ -309,6 +316,7 @@
                         <TableColumn fx:id="colMetalType" prefWidth="70.0" style="-fx-alignment: CENTER;" text="Metal" />
                         <TableColumn fx:id="colPurity" prefWidth="60.0" style="-fx-alignment: CENTER;" text="Purity" />
                         <TableColumn fx:id="colNetWeight" prefWidth="80.0" style="-fx-alignment: CENTER;" text="Net Wt." />
+                        <TableColumn fx:id="colLabourCharges" prefWidth="70.0" style="-fx-alignment: CENTER;" text="Labour %" />
                         <TableColumn fx:id="colTotalAmount" prefWidth="100.0" style="-fx-alignment: CENTER;" text="Amount" />
                         <TableColumn fx:id="colQuantity" prefWidth="60.0" style="-fx-alignment: CENTER;" text="Qty" />
                      </columns>
