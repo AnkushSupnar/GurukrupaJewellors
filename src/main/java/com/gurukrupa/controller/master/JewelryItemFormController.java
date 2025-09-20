@@ -389,18 +389,15 @@ public class JewelryItemFormController implements Initializable {
             return false;
         }
         
-        if (txtQuantity.getText().trim().isEmpty()) {
-            alert.showError("Quantity is required");
-            txtQuantity.requestFocus();
-            return false;
-        }
-        
-        try {
-            Integer.parseInt(txtQuantity.getText().trim());
-        } catch (NumberFormatException e) {
-            alert.showError("Valid quantity is required");
-            txtQuantity.requestFocus();
-            return false;
+        // Quantity is now optional - validate only if provided
+        if (!txtQuantity.getText().trim().isEmpty()) {
+            try {
+                Integer.parseInt(txtQuantity.getText().trim());
+            } catch (NumberFormatException e) {
+                alert.showError("Valid quantity is required");
+                txtQuantity.requestFocus();
+                return false;
+            }
         }
         
         // Check if item code is unique (only for new items)
@@ -428,7 +425,7 @@ public class JewelryItemFormController implements Initializable {
             .stoneCharges(parseDecimal(txtStoneCharges.getText()))
             .otherCharges(parseDecimal(txtOtherCharges.getText()))
             .totalAmount(parseDecimal(txtTotalAmount.getText()))
-            .quantity(Integer.parseInt(txtQuantity.getText().trim()))
+            .quantity(txtQuantity.getText().trim().isEmpty() ? 0 : Integer.parseInt(txtQuantity.getText().trim()))
             .description(txtDescription.getText().trim())
             .isActive(true)
             .build();

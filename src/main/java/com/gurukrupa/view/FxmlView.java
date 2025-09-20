@@ -67,11 +67,11 @@ public enum FxmlView {
     JEWELRY_ITEM_FORM {
         @Override
         String getTitle() {
-            return "Jewelry Item Form";
+            return "Add New Item";
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/master/JewelryItemForm.fxml";
+            return "/fxml/master/AddNewItem.fxml";
         }
     },
     SETTINGS_MENU {

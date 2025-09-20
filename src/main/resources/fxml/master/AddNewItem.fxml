@@ -110,8 +110,8 @@
                                           </VBox>
                                           <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Quantity *" />
-                                                <TextField fx:id="txtQuantity" promptText="Available quantity" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Quantity" />
+                                                <TextField fx:id="txtQuantity" promptText="Default: 0" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                                              </children>
                                           </VBox>
                                        </children>

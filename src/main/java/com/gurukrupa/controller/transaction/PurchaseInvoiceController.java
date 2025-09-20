@@ -1,5 +1,6 @@
 package com.gurukrupa.controller.transaction;
 
+import com.gurukrupa.customUI.AutoCompleteTextField;
 import com.gurukrupa.data.entities.*;
 import com.gurukrupa.data.entities.PurchaseInvoice.PaymentMethod;
 import com.gurukrupa.data.entities.PurchaseInvoice.PurchaseType;
@@ -9,6 +10,10 @@ import com.gurukrupa.view.AlertNotification;
 import com.gurukrupa.utility.CurrencyFormatter;
 import com.gurukrupa.utility.MetalTypeEnum;
 import com.gurukrupa.utility.WeightFormatter;
+import com.gurukrupa.data.entities.Metal;
+import com.gurukrupa.controller.master.JewelryItemFormController;
+import com.gurukrupa.config.SpringFXMLLoader;
+import com.gurukrupa.view.FxmlView;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 
 
@@ -19,6 +24,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -31,6 +37,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.util.StringConverter;
 import javafx.util.converter.BigDecimalStringConverter;
 import javafx.util.converter.IntegerStringConverter;
@@ -80,18 +90,21 @@ public class PurchaseInvoiceController implements Initializable {
     
     // Purchase Items Tab - Form Fields
     @FXML private TextField txtItemCode;
-    @FXML private ComboBox<String> cmbItemName;
-    @FXML private ComboBox<String> cmbMetalType;
+    @FXML private TextField txtItemName;
+    @FXML private ComboBox<Metal> cmbMetalType;
     @FXML private TextField txtPurity;
     @FXML private TextField txtQuantity;
     @FXML private TextField txtGrossWeight;
+    @FXML private TextField txtStoneWeight;
     @FXML private TextField txtNetWeight;
     @FXML private TextField txtRate;
     @FXML private TextField txtAmount;
     @FXML private Label lblLabourCharges;
     @FXML private TextField txtLabourCharges;
     @FXML private Button btnAddToBill;
+    @FXML private Button btnUpdateItem;
     @FXML private Button btnClearForm;
+    @FXML private Button btnAddNewItem;
     
     // Purchase Items Table
     @FXML private TableView<PurchaseTransaction> purchaseItemsTable;
@@ -102,6 +115,7 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colPurity;
     @FXML private TableColumn<PurchaseTransaction, Integer> colQuantity;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colGrossWeight;
+    @FXML private TableColumn<PurchaseTransaction, BigDecimal> colStoneWeight;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colWeight;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colRate;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colLabour;
@@ -110,7 +124,7 @@ public class PurchaseInvoiceController implements Initializable {
     
     // Exchange Items Tab - Form Fields
     @FXML private TextField txtExchangeItemName;
-    @FXML private ComboBox<String> cmbExchangeMetalType;
+    @FXML private ComboBox<Metal> cmbExchangeMetalType;
     @FXML private TextField txtExchangePurity;
     @FXML private TextField txtExchangeGrossWeight;
     @FXML private TextField txtExchangeDeduction;
@@ -181,6 +195,9 @@ public class PurchaseInvoiceController implements Initializable {
     
     @Autowired
     private AlertNotification alertNotification;
+    
+    @Autowired
+    private SpringFXMLLoader springFXMLLoader;
 
     private ObservableList<PurchaseTransaction> purchaseItems = FXCollections.observableArrayList();
     private ObservableList<ExchangeTransaction> exchangeItems = FXCollections.observableArrayList();
@@ -189,6 +206,9 @@ public class PurchaseInvoiceController implements Initializable {
     private BigDecimal gstRate = new BigDecimal("3.00");
     private JewelryItem selectedStockItem = null;
     private BigDecimal currentLabourPercentage = null;
+    private AutoCompleteTextField itemNameAutoComplete;
+    private boolean isProgrammaticallySettingFields = false;
+    private PurchaseTransaction editingItem = null;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -197,6 +217,7 @@ public class PurchaseInvoiceController implements Initializable {
         setupTableColumns();
         setupComboBoxes();
         setupListeners();
+        setupItemNameAutoComplete();
         setupStockCatalog();
         loadSuppliers();
         loadMetalStock();
@@ -229,6 +250,7 @@ public class PurchaseInvoiceController implements Initializable {
         if (colPurity != null) colPurity.setCellValueFactory(new PropertyValueFactory<>("purity"));
         if (colQuantity != null) colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         if (colGrossWeight != null) colGrossWeight.setCellValueFactory(new PropertyValueFactory<>("grossWeight"));
+        if (colStoneWeight != null) colStoneWeight.setCellValueFactory(new PropertyValueFactory<>("stoneWeight"));
         if (colWeight != null) colWeight.setCellValueFactory(new PropertyValueFactory<>("netWeight"));
         // Display rate per 10 grams
         if (colRate != null) {
@@ -244,26 +266,44 @@ public class PurchaseInvoiceController implements Initializable {
         // Add action buttons for purchase items
         if (colAction != null) {
             colAction.setCellFactory(column -> new TableCell<>() {
+            private final Button editButton = new Button();
             private final Button deleteButton = new Button();
+            private final HBox actionBox = new HBox(5);
             
             {
+                // Edit button
+                FontAwesomeIcon editIcon = new FontAwesomeIcon();
+                editIcon.setGlyphName("EDIT");
+                editIcon.setSize("1.0em");
+                editIcon.setFill(Color.WHITE);
+                editButton.setGraphic(editIcon);
+                editButton.setStyle("-fx-background-color: #2196F3; -fx-cursor: hand; -fx-padding: 4 8 4 8;");
+                editButton.setOnAction(event -> {
+                    PurchaseTransaction item = getTableView().getItems().get(getIndex());
+                    populateFormForEdit(item);
+                });
+                
+                // Delete button
                 FontAwesomeIcon deleteIcon = new FontAwesomeIcon();
                 deleteIcon.setGlyphName("TRASH");
-                deleteIcon.setSize("1.2em");
+                deleteIcon.setSize("1.0em");
                 deleteIcon.setFill(Color.WHITE);
                 deleteButton.setGraphic(deleteIcon);
-                deleteButton.setStyle("-fx-background-color: #F44336; -fx-cursor: hand;");
+                deleteButton.setStyle("-fx-background-color: #F44336; -fx-cursor: hand; -fx-padding: 4 8 4 8;");
                 deleteButton.setOnAction(event -> {
                     PurchaseTransaction item = getTableView().getItems().get(getIndex());
                     purchaseItems.remove(item);
                     updateSummary();
                 });
+                
+                actionBox.setAlignment(Pos.CENTER);
+                actionBox.getChildren().addAll(editButton, deleteButton);
             }
             
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : deleteButton);
+                setGraphic(empty ? null : actionBox);
             }
             });
         }
@@ -346,21 +386,65 @@ public class PurchaseInvoiceController implements Initializable {
             }
         });
         
-        // Metal type combos
-        ObservableList<String> metalTypes = FXCollections.observableArrayList("GOLD", "SILVER", "PLATINUM");
-        if (cmbMetalType != null) {
-            cmbMetalType.setItems(metalTypes);
-            cmbMetalType.setValue("GOLD");
-        }
-        if (cmbExchangeMetalType != null) {
-            cmbExchangeMetalType.setItems(metalTypes);
-            cmbExchangeMetalType.setValue("GOLD");
+        // Metal type combos - Load from database like in BillingController
+        try {
+            List<Metal> metals = metalService.getAllActiveMetals();
+            ObservableList<Metal> metalList = FXCollections.observableArrayList(metals);
+            
+            if (cmbMetalType != null) {
+                cmbMetalType.setItems(metalList);
+                cmbMetalType.setConverter(new StringConverter<Metal>() {
+                    @Override
+                    public String toString(Metal metal) {
+                        return metal != null ? metal.getMetalName() : "";
+                    }
+                    
+                    @Override
+                    public Metal fromString(String string) {
+                        return null;
+                    }
+                });
+                
+                // Select first metal if available
+                if (!metalList.isEmpty()) {
+                    cmbMetalType.setValue(metalList.get(0));
+                }
+                
+                // Add listener to update rate when metal is selected
+                cmbMetalType.valueProperty().addListener((obs, oldMetal, newMetal) -> {
+                    if (newMetal != null) {
+                        updateMetalRate(newMetal);
+                    }
+                });
+            }
+            
+            if (cmbExchangeMetalType != null) {
+                cmbExchangeMetalType.setItems(metalList);
+                cmbExchangeMetalType.setConverter(new StringConverter<Metal>() {
+                    @Override
+                    public String toString(Metal metal) {
+                        return metal != null ? metal.getMetalName() : "";
+                    }
+                    
+                    @Override
+                    public Metal fromString(String string) {
+                        return null;
+                    }
+                });
+                
+                // Select first metal if available
+                if (!metalList.isEmpty()) {
+                    cmbExchangeMetalType.setValue(metalList.get(0));
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Error loading metals", e);
+            // Fallback to hardcoded values if database fetch fails
+            ObservableList<String> metalTypes = FXCollections.observableArrayList("GOLD", "SILVER", "PLATINUM");
+            alertNotification.showError("Failed to load metals from database. Using default values.");
         }
         
-        // Item name combo
-        if (cmbItemName != null) {
-            cmbItemName.setEditable(true);
-        }
+
     }
     
     private void loadSuppliers() {
@@ -445,9 +529,38 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private void setupListeners() {
+        // Item code listener to populate fields when item code is entered
+        if (txtItemCode != null) {
+            txtItemCode.textProperty().addListener((obs, oldVal, newVal) -> {
+                // Skip if we're programmatically setting fields
+                if (isProgrammaticallySettingFields) {
+                    return;
+                }
+                
+                if (newVal != null && !newVal.isEmpty() && !newVal.equals(oldVal)) {
+                    // Find matching item by code
+                    JewelryItem matchedItem = stockItems.stream()
+                        .filter(item -> item.getItemCode().equalsIgnoreCase(newVal))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    if (matchedItem != null) {
+                        // Use the same method to populate all fields consistently
+                        populatePurchaseItemFields(matchedItem);
+                    }
+                }
+            });
+        }
+        
         // Calculate totals when fields change
         if (txtQuantity != null) {
             txtQuantity.textProperty().addListener((obs, oldVal, newVal) -> calculateItemTotal());
+        }
+        if (txtGrossWeight != null) {
+            txtGrossWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateNetWeight());
+        }
+        if (txtStoneWeight != null) {
+            txtStoneWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateNetWeight());
         }
         if (txtNetWeight != null) {
             txtNetWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateItemTotal());
@@ -496,6 +609,14 @@ public class PurchaseInvoiceController implements Initializable {
             });
         }
         
+        // Refresh stock button
+        if (btnRefreshStock != null) {
+            btnRefreshStock.setOnAction(e -> {
+                loadStockItems();
+                loadMetalStock();
+            });
+        }
+        
         // Chip selection handling
         if (modeToggleGroup != null) {
             modeToggleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
@@ -511,29 +632,87 @@ public class PurchaseInvoiceController implements Initializable {
         setupChipStyles();
     }
     
+    private void setupItemNameAutoComplete() {
+        if (txtItemName != null) {
+            // Create AutoCompleteTextField for item name search
+            itemNameAutoComplete = new AutoCompleteTextField(txtItemName);
+            
+            // Load item names from jewelry items
+            updateItemNameSuggestions();
+            
+            // When an item is selected, populate other fields
+            txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
+                // Skip if we're programmatically setting fields
+                if (isProgrammaticallySettingFields) {
+                    return;
+                }
+                
+                if (newVal != null && !newVal.isEmpty()) {
+                    // Find matching item in stock
+                    JewelryItem matchedItem = stockItems.stream()
+                        .filter(item -> item.getItemName().equalsIgnoreCase(newVal))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    if (matchedItem != null) {
+                        // Use the same method to populate all fields consistently
+                        populatePurchaseItemFields(matchedItem);
+                    }
+                }
+            });
+        }
+    }
+    
+    private void updateItemNameSuggestions() {
+        if (itemNameAutoComplete != null && stockItems != null) {
+            List<String> itemNames = stockItems.stream()
+                .map(JewelryItem::getItemName)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+            itemNameAutoComplete.setSuggestions(itemNames);
+        }
+    }
+    
     private void setupStockCatalog() {
         if (listViewStock != null && stockItems != null) {
             filteredStockItems = new FilteredList<>(stockItems, p -> true);
             listViewStock.setItems(filteredStockItems);
             
-            // Custom cell factory for stock items
+            // Custom cell factory for stock items - simple list view
             listViewStock.setCellFactory(listView -> new ListCell<JewelryItem>() {
                 @Override
                 protected void updateItem(JewelryItem item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
-                        setGraphic(null);
+                        setText(null);
+                        setStyle("");
                     } else {
-                        VBox itemBox = createStockItemDisplay(item);
-                        setGraphic(itemBox);
+                        // Display format: ItemName - MetalType Purity
+                        String displayText = String.format("%s - %s %sk", 
+                            item.getItemName(), 
+                            item.getMetalType(), 
+                            item.getPurity()
+                        );
+                        setText(displayText);
+                        setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-padding: 8 12 8 12;");
+                        
+                        // Add hover effect
+                        setOnMouseEntered(e -> setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F5F5;"));
+                        setOnMouseExited(e -> setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-padding: 8 12 8 12;"));
                     }
                 }
             });
             
             // Handle item selection
             listViewStock.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal != null && chipExchange != null && chipExchange.isSelected()) {
-                    populateExchangeItemFields(newVal);
+                if (newVal != null) {
+                    if (chipExchange != null && chipExchange.isSelected()) {
+                        populateExchangeItemFields(newVal);
+                    } else {
+                        // Default to purchase mode or when purchase chip is selected
+                        populatePurchaseItemFields(newVal);
+                    }
                 }
             });
             
@@ -555,32 +734,7 @@ public class PurchaseInvoiceController implements Initializable {
         }
     }
     
-    private VBox createStockItemDisplay(JewelryItem item) {
-        VBox box = new VBox(4);
-        box.setPadding(new Insets(8));
-        box.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 6; " +
-                     "-fx-border-color: #E0E0E0; -fx-border-radius: 6; -fx-border-width: 1;");
-        
-        // Item name and code
-        Label nameLabel = new Label(item.getItemName());
-        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-        
-        Label codeLabel = new Label(item.getItemCode());
-        codeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
-        
-        // Metal info
-        String metalInfo = item.getMetalType() + " " + item.getPurity() + "k";
-        Label metalLabel = new Label(metalInfo);
-        metalLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #424242;");
-        
-        // Stock info
-        Label stockLabel = new Label("Stock: " + item.getQuantity() + " pcs");
-        stockLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #4CAF50;");
-        
-        box.getChildren().addAll(nameLabel, codeLabel, metalLabel, stockLabel);
-        
-        return box;
-    }
+    // Removed createStockItemDisplay method - now using simple list display
     
     private void loadStockItems() {
         try {
@@ -588,6 +742,7 @@ public class PurchaseInvoiceController implements Initializable {
             stockItems.clear();
             stockItems.addAll(items);
             updateStockCount();
+            updateItemNameSuggestions(); // Update autocomplete suggestions
         } catch (Exception e) {
             LOG.error("Error loading stock items", e);
         }
@@ -607,8 +762,9 @@ public class PurchaseInvoiceController implements Initializable {
             
             // Get values from form fields
             newItem.setItemCode(txtItemCode != null ? txtItemCode.getText() : "ITEM-" + System.currentTimeMillis());
-            newItem.setItemName(cmbItemName != null ? cmbItemName.getValue() : "New Item");
-            newItem.setMetalType(cmbMetalType != null ? cmbMetalType.getValue() : "GOLD");
+            newItem.setItemName(txtItemName != null ? txtItemName.getText() : "New Item");
+            Metal selectedMetal = cmbMetalType != null ? cmbMetalType.getValue() : null;
+            newItem.setMetalType(selectedMetal != null ? selectedMetal.getMetalName() : "GOLD");
             
             // Parse numeric values
             newItem.setPurity(parseBigDecimal(txtPurity));
@@ -650,7 +806,8 @@ public class PurchaseInvoiceController implements Initializable {
             
             // Get values from form fields
             newItem.setItemName(txtExchangeItemName != null ? txtExchangeItemName.getText() : "Exchange Item");
-            newItem.setMetalType(cmbExchangeMetalType != null ? cmbExchangeMetalType.getValue() : "GOLD");
+            Metal selectedExchangeMetal = cmbExchangeMetalType != null ? cmbExchangeMetalType.getValue() : null;
+            newItem.setMetalType(selectedExchangeMetal != null ? selectedExchangeMetal.getMetalName() : "GOLD");
             newItem.setPurity(parseBigDecimal(txtExchangePurity));
             newItem.setGrossWeight(parseBigDecimal(txtExchangeGrossWeight));
             newItem.setDeduction(parseBigDecimal(txtExchangeDeduction));
@@ -681,11 +838,102 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML
     private void handleClearForm() {
         clearPurchaseForm();
+        editingItem = null;
+        btnAddToBill.setVisible(true);
+        btnUpdateItem.setVisible(false);
+    }
+    
+    @FXML
+    private void handleUpdateItem() {
+        if (editingItem != null) {
+            // Update the item with new values
+            editingItem.setItemCode(txtItemCode != null ? txtItemCode.getText() : "");
+            editingItem.setItemName(txtItemName != null ? txtItemName.getText() : "");
+            Metal selectedMetal = cmbMetalType != null ? cmbMetalType.getValue() : null;
+            editingItem.setMetalType(selectedMetal != null ? selectedMetal.getMetalName() : "GOLD");
+            editingItem.setPurity(parseBigDecimal(txtPurity));
+            editingItem.setQuantity(parseInt(txtQuantity, 1));
+            editingItem.setGrossWeight(parseBigDecimal(txtGrossWeight));
+            editingItem.setNetWeight(parseBigDecimal(txtNetWeight));
+            
+            // Get rate per 10 grams and convert to per gram
+            BigDecimal ratePerTenGrams = parseBigDecimal(txtRate);
+            if (ratePerTenGrams.compareTo(BigDecimal.ZERO) == 0) {
+                ratePerTenGrams = getCurrentMetalRate(editingItem.getMetalType(), editingItem.getPurity());
+            }
+            BigDecimal ratePerGram = ratePerTenGrams.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
+            editingItem.setRatePerGram(ratePerGram);
+            editingItem.setMakingCharges(parseBigDecimal(txtLabourCharges));
+            editingItem.calculateTotalAmount();
+            
+            // Refresh table
+            purchaseItemsTable.refresh();
+            updateSummary();
+            
+            // Clear form and reset buttons
+            clearPurchaseForm();
+            editingItem = null;
+            btnAddToBill.setVisible(true);
+            btnUpdateItem.setVisible(false);
+        }
+    }
+    
+    @FXML
+    private void handleAddNewItem() {
+        try {
+            // Load the JewelryItemForm dialog using SpringFXMLLoader
+            Map.Entry<Parent, JewelryItemFormController> entry = springFXMLLoader.loadWithController(
+                FxmlView.JEWELRY_ITEM_FORM.getFxmlFile(), 
+                JewelryItemFormController.class
+            );
+            Parent root = entry.getKey();
+            JewelryItemFormController controller = entry.getValue();
+            
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Add New Item");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(btnAddNewItem.getScene().getWindow());
+            dialogStage.setScene(new Scene(root));
+            dialogStage.setResizable(false);
+            
+            // Show dialog and wait for it to close
+            dialogStage.showAndWait();
+            
+            // Refresh stock items and autocomplete
+            loadStockItems();
+            updateItemNameSuggestions();
+        } catch (Exception e) {
+            LOG.error("Error opening jewelry item form", e);
+            alertNotification.showError("Failed to open jewelry item form: " + e.getMessage());
+        }
     }
     
     @FXML
     private void handleClearExchangeForm() {
         clearExchangeForm();
+    }
+    
+    private void updateMetalRate(Metal metal) {
+        if (metal != null && txtRate != null) {
+            try {
+                // Get the purity value from the purity text field
+                BigDecimal purity = parseBigDecimal(txtPurity);
+                if (purity.compareTo(BigDecimal.ZERO) == 0) {
+                    // Default purity based on metal type
+                    purity = metal.getMetalName().toUpperCase().contains("GOLD") ? new BigDecimal("916") : new BigDecimal("925");
+                    txtPurity.setText(purity.toString());
+                }
+                
+                // Get the current rate for this metal
+                BigDecimal rate = getCurrentMetalRate(metal.getMetalName(), purity);
+                txtRate.setText(rate.toString());
+                
+                // Recalculate total if all fields are filled
+                calculateItemTotal();
+            } catch (Exception e) {
+                LOG.error("Error updating metal rate", e);
+            }
+        }
     }
     
     private BigDecimal getCurrentMetalRate(String metalType, BigDecimal purity) {
@@ -872,12 +1120,19 @@ public class PurchaseInvoiceController implements Initializable {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             // Calculate totals
+            // Step 1: Purchase Total (subtotal)
             BigDecimal subtotal = purchaseTotal;
+            
+            // Step 2: Add GST on purchase total (before discount)
+            BigDecimal gstAmount = subtotal.multiply(gstRate).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            BigDecimal totalWithGst = subtotal.add(gstAmount);
+            
+            // Step 3: Apply discount
             BigDecimal discount = parseBigDecimal(txtDiscount);
-            BigDecimal netTotal = subtotal.subtract(discount);
-            BigDecimal gstAmount = netTotal.multiply(gstRate).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-            BigDecimal totalAmount = netTotal.add(gstAmount);
-            BigDecimal grandTotal = totalAmount.subtract(exchangeTotal);
+            BigDecimal totalAfterDiscount = totalWithGst.subtract(discount);
+            
+            // Step 4: Subtract exchange amount
+            BigDecimal grandTotal = totalAfterDiscount.subtract(exchangeTotal);
             
             // Update labels
             if (lblTotalPurchaseItems != null) lblTotalPurchaseItems.setText(String.valueOf(totalPurchaseItems));
@@ -885,9 +1140,9 @@ public class PurchaseInvoiceController implements Initializable {
             if (lblTotalExchangeItems != null) lblTotalExchangeItems.setText(String.valueOf(totalExchangeItems));
             if (lblTotalExchangeWeight != null) lblTotalExchangeWeight.setText(WeightFormatter.format(totalExchangeWeight) + " g");
             if (lblSubtotal != null) lblSubtotal.setText(CurrencyFormatter.format(subtotal));
-            if (lblNetTotal != null) lblNetTotal.setText(CurrencyFormatter.format(netTotal));
             if (lblGST != null) lblGST.setText(CurrencyFormatter.format(gstAmount));
-            if (lblTotalAmount != null) lblTotalAmount.setText(CurrencyFormatter.format(totalAmount));
+            if (lblNetTotal != null) lblNetTotal.setText(CurrencyFormatter.format(totalWithGst));
+            if (lblTotalAmount != null) lblTotalAmount.setText(CurrencyFormatter.format(totalAfterDiscount));
             if (lblExchangeAmount != null) lblExchangeAmount.setText(CurrencyFormatter.format(exchangeTotal));
             if (lblGrandTotal != null) lblGrandTotal.setText(CurrencyFormatter.format(grandTotal));
             
@@ -913,11 +1168,21 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void clearPurchaseForm() {
         if (txtItemCode != null) txtItemCode.clear();
-        if (cmbItemName != null) cmbItemName.setValue(null);
-        if (cmbMetalType != null) cmbMetalType.setValue("GOLD");
-        if (txtPurity != null) txtPurity.setText("22");
+        if (txtItemName != null) txtItemName.clear();
+        if (cmbMetalType != null) {
+            // Set to first metal (usually GOLD) or find GOLD metal
+            if (!cmbMetalType.getItems().isEmpty()) {
+                Metal goldMetal = cmbMetalType.getItems().stream()
+                    .filter(m -> m.getMetalName().toUpperCase().contains("GOLD"))
+                    .findFirst()
+                    .orElse(cmbMetalType.getItems().get(0));
+                cmbMetalType.setValue(goldMetal);
+            }
+        }
+        if (txtPurity != null) txtPurity.setText("916");
         if (txtQuantity != null) txtQuantity.setText("1");
         if (txtGrossWeight != null) txtGrossWeight.clear();
+        if (txtStoneWeight != null) txtStoneWeight.setText("0");
         if (txtNetWeight != null) txtNetWeight.clear();
         if (txtRate != null) txtRate.clear();
         if (txtLabourCharges != null) txtLabourCharges.clear();
@@ -926,8 +1191,17 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void clearExchangeForm() {
         if (txtExchangeItemName != null) txtExchangeItemName.clear();
-        if (cmbExchangeMetalType != null) cmbExchangeMetalType.setValue("GOLD");
-        if (txtExchangePurity != null) txtExchangePurity.setText("22");
+        if (cmbExchangeMetalType != null) {
+            // Set to first metal (usually GOLD) or find GOLD metal
+            if (!cmbExchangeMetalType.getItems().isEmpty()) {
+                Metal goldMetal = cmbExchangeMetalType.getItems().stream()
+                    .filter(m -> m.getMetalName().toUpperCase().contains("GOLD"))
+                    .findFirst()
+                    .orElse(cmbExchangeMetalType.getItems().get(0));
+                cmbExchangeMetalType.setValue(goldMetal);
+            }
+        }
+        if (txtExchangePurity != null) txtExchangePurity.setText("916");
         if (txtExchangeGrossWeight != null) txtExchangeGrossWeight.clear();
         if (txtExchangeDeduction != null) txtExchangeDeduction.clear();
         if (txtExchangeNetWeight != null) txtExchangeNetWeight.clear();
@@ -935,18 +1209,37 @@ public class PurchaseInvoiceController implements Initializable {
         if (txtExchangeAmount != null) txtExchangeAmount.clear();
     }
     
+    private void calculateNetWeight() {
+        try {
+            BigDecimal grossWeight = new BigDecimal(txtGrossWeight.getText().isEmpty() ? "0" : txtGrossWeight.getText());
+            BigDecimal stoneWeight = new BigDecimal(txtStoneWeight.getText().isEmpty() ? "0" : txtStoneWeight.getText());
+            BigDecimal netWeight = grossWeight.subtract(stoneWeight);
+            
+            if (netWeight.compareTo(BigDecimal.ZERO) < 0) {
+                netWeight = BigDecimal.ZERO;
+            }
+            
+            txtNetWeight.setText(netWeight.toPlainString());
+        } catch (NumberFormatException e) {
+            // Invalid input, ignore
+        }
+    }
+    
     private void calculateItemTotal() {
         try {
             int quantity = parseInt(txtQuantity, 1);
             BigDecimal weight = parseBigDecimal(txtNetWeight);
             BigDecimal ratePerTenGrams = parseBigDecimal(txtRate);
-            BigDecimal makingCharges = parseBigDecimal(txtLabourCharges);
+            BigDecimal labourPercentage = parseBigDecimal(txtLabourCharges);
             
             // Calculate gold value
             BigDecimal goldValue = weight.multiply(ratePerTenGrams).divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
             
-            // Total = (gold value + making charges) * quantity
-            BigDecimal total = goldValue.add(makingCharges).multiply(new BigDecimal(quantity));
+            // Calculate labour charges as percentage of gold value
+            BigDecimal labourAmount = goldValue.multiply(labourPercentage).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            
+            // Total = (gold value + labour charges) * quantity
+            BigDecimal total = goldValue.add(labourAmount).multiply(new BigDecimal(quantity));
             
             if (txtAmount != null) {
                 txtAmount.setText(CurrencyFormatter.format(total));
@@ -1005,9 +1298,129 @@ public class PurchaseInvoiceController implements Initializable {
         }
     }
     
+    private void populatePurchaseItemFields(JewelryItem item) {
+        // Set flag to prevent autocomplete popup
+        isProgrammaticallySettingFields = true;
+        
+        if (txtItemCode != null) txtItemCode.setText(item.getItemCode());
+        if (txtItemName != null) txtItemName.setText(item.getItemName());
+        if (cmbMetalType != null) {
+            // Find the Metal object that matches the item's metal type string
+            for (Metal metal : cmbMetalType.getItems()) {
+                if (metal.getMetalName().equalsIgnoreCase(item.getMetalType())) {
+                    cmbMetalType.setValue(metal);
+                    break;
+                }
+            }
+        }
+        if (txtPurity != null) txtPurity.setText(item.getPurity().toString());
+        
+        // Get current metal rate
+        BigDecimal rate = getCurrentMetalRate(item.getMetalType(), item.getPurity());
+        if (txtRate != null) {
+            txtRate.setText(rate.toString());
+        }
+        
+        // Set quantity from item
+        if (txtQuantity != null) {
+            txtQuantity.setText(item.getQuantity() != null ? item.getQuantity().toString() : "1");
+        }
+        
+        // Set weight fields from item
+        if (txtGrossWeight != null && item.getGrossWeight() != null) {
+            txtGrossWeight.setText(item.getGrossWeight().toPlainString());
+        }
+        if (txtStoneWeight != null && item.getStoneWeight() != null) {
+            txtStoneWeight.setText(item.getStoneWeight().toPlainString());
+        } else if (txtStoneWeight != null) {
+            txtStoneWeight.setText("0");
+        }
+        if (txtNetWeight != null && item.getNetWeight() != null) {
+            txtNetWeight.setText(item.getNetWeight().toPlainString());
+        }
+        
+        // If net weight is not set but gross and stone weights are available, calculate it
+        if (txtNetWeight != null && (txtNetWeight.getText() == null || txtNetWeight.getText().isEmpty())) {
+            calculateNetWeight();
+        }
+        
+        // Set labour charges if available
+        if (txtLabourCharges != null && item.getLabourCharges() != null) {
+            txtLabourCharges.setText(item.getLabourCharges().toString());
+        }
+        
+        // Store current labour percentage for calculations
+        currentLabourPercentage = item.getLabourCharges();
+        
+        // Reset flag after all fields are set
+        isProgrammaticallySettingFields = false;
+        
+        // Calculate total amount with populated values
+        calculateItemTotal();
+        
+        // Move focus to quantity field to ensure autocomplete popup is hidden
+        if (txtQuantity != null) {
+            txtQuantity.requestFocus();
+        }
+    }
+    
+    private void populateFormForEdit(PurchaseTransaction item) {
+        isProgrammaticallySettingFields = true;
+        
+        // Store reference to editing item
+        editingItem = item;
+        
+        // Populate all fields with item data
+        if (txtItemCode != null) txtItemCode.setText(item.getItemCode());
+        if (txtItemName != null) txtItemName.setText(item.getItemName());
+        if (cmbMetalType != null) {
+            // Find the Metal object that matches the item's metal type string
+            for (Metal metal : cmbMetalType.getItems()) {
+                if (metal.getMetalName().equalsIgnoreCase(item.getMetalType())) {
+                    cmbMetalType.setValue(metal);
+                    break;
+                }
+            }
+        }
+        if (txtPurity != null) txtPurity.setText(item.getPurity().toString());
+        if (txtQuantity != null) txtQuantity.setText(item.getQuantity().toString());
+        if (txtGrossWeight != null) txtGrossWeight.setText(item.getGrossWeight().toPlainString());
+        // Calculate stone weight as difference between gross and net weight
+        if (txtStoneWeight != null) {
+            BigDecimal stoneWeight = item.getGrossWeight().subtract(item.getNetWeight());
+            txtStoneWeight.setText(stoneWeight.toPlainString());
+        }
+        if (txtNetWeight != null) txtNetWeight.setText(item.getNetWeight().toPlainString());
+        
+        // Convert rate per gram to rate per 10 grams for display
+        if (txtRate != null && item.getRatePerGram() != null) {
+            BigDecimal ratePerTenGrams = item.getRatePerGram().multiply(BigDecimal.TEN);
+            txtRate.setText(ratePerTenGrams.toPlainString());
+        }
+        
+        if (txtLabourCharges != null) txtLabourCharges.setText(item.getMakingCharges().toString());
+        
+        // Show update button and hide add button
+        btnAddToBill.setVisible(false);
+        btnUpdateItem.setVisible(true);
+        
+        isProgrammaticallySettingFields = false;
+        
+        // Calculate total to show amount
+        calculateItemTotal();
+    }
+    
     private void populateExchangeItemFields(JewelryItem item) {
         if (txtExchangeItemName != null) txtExchangeItemName.setText(item.getItemName());
-        if (cmbExchangeMetalType != null) cmbExchangeMetalType.setValue(item.getMetalType());
+        if (cmbExchangeMetalType != null) {
+            // Find the Metal object that matches the item's metal type string
+            for (Metal metal : cmbExchangeMetalType.getItems()) {
+                if (metal.getMetalName().equalsIgnoreCase(item.getMetalType())) {
+                    cmbExchangeMetalType.setValue(metal);
+                    break;
+                }
+            }
+        }
         if (txtExchangePurity != null) txtExchangePurity.setText(item.getPurity().toString());
         
         // Get current metal rate

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(xmllint:*)",
+      "Bash(true)",
+      "Bash(mvn clean:*)",
+      "Bash(cp:*)",
+      "Bash(awk:*)",
+      "Bash(python3:*)",
+      "Bash(export:*)",
+      "Bash(java:*)",
+      "Bash(rm:*)",
+      "Bash(echo:*)",
+      "Bash(printenv)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}

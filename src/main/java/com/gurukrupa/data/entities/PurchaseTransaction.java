@@ -120,13 +120,22 @@ public class PurchaseTransaction {
             metalValue = netWeight.multiply(ratePerGram);
         }
         
-        // Calculate total amount = metalValue + makingCharges + otherCharges
-        totalAmount = metalValue;
-        if (makingCharges != null) {
-            totalAmount = totalAmount.add(makingCharges);
+        // Calculate making charges as percentage of metal value
+        BigDecimal makingChargesAmount = BigDecimal.ZERO;
+        if (makingCharges != null && metalValue.compareTo(BigDecimal.ZERO) > 0) {
+            // makingCharges is stored as percentage (e.g., 10 for 10%)
+            makingChargesAmount = metalValue.multiply(makingCharges).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         }
+        
+        // Calculate total amount = metalValue + makingChargesAmount + otherCharges
+        totalAmount = metalValue.add(makingChargesAmount);
         if (otherCharges != null) {
             totalAmount = totalAmount.add(otherCharges);
+        }
+        
+        // Multiply by quantity
+        if (quantity != null && quantity > 0) {
+            totalAmount = totalAmount.multiply(new BigDecimal(quantity));
         }
         
         // Round to 2 decimal places
