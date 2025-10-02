@@ -62,6 +62,12 @@ public class PurchaseInvoice {
     @Builder.Default
     private List<PurchaseTransaction> purchaseTransactions = new ArrayList<>();
     
+    // Exchange transactions
+    @OneToMany(mappedBy = "purchaseInvoice", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"purchaseInvoice"})
+    @Builder.Default
+    private List<PurchaseExchangeTransaction> purchaseExchangeTransactions = new ArrayList<>();
+    
     // Financial details
     @Column(nullable = false, precision = 15, scale = 2)
     @Builder.Default
@@ -86,6 +92,10 @@ public class PurchaseInvoice {
     @Column(nullable = false, precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal grandTotal = BigDecimal.ZERO;
+    
+    @Column(nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal exchangeAmount = BigDecimal.ZERO;
     
     @Column(nullable = false, precision = 15, scale = 2)
     @Builder.Default
@@ -159,7 +169,18 @@ public class PurchaseInvoice {
         // Calculate subtotal from transactions
         subtotal = purchaseTransactions.stream()
                 .map(PurchaseTransaction::getTotalAmount)
+                .filter(amount -> amount != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Calculate exchange amount from exchange transactions
+        if (purchaseExchangeTransactions != null && !purchaseExchangeTransactions.isEmpty()) {
+            exchangeAmount = purchaseExchangeTransactions.stream()
+                    .map(PurchaseExchangeTransaction::getTotalAmount)
+                    .filter(amount -> amount != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+            exchangeAmount = BigDecimal.ZERO;
+        }
         
         // Calculate net total (subtotal - discount + additional charges)
         netTotal = subtotal.subtract(discount != null ? discount : BigDecimal.ZERO)
@@ -173,8 +194,8 @@ public class PurchaseInvoice {
             gstAmount = BigDecimal.ZERO;
         }
         
-        // Calculate grand total
-        grandTotal = netTotal.add(gstAmount);
+        // Calculate grand total (including GST but subtracting exchange amount)
+        grandTotal = netTotal.add(gstAmount).subtract(exchangeAmount);
         
         // Calculate pending amount
         pendingAmount = grandTotal.subtract(paidAmount != null ? paidAmount : BigDecimal.ZERO);

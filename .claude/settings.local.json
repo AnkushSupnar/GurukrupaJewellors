@@ -13,7 +13,10 @@
       "Bash(rm:*)",
       "Bash(echo:*)",
       "Bash(printenv)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(./gradlew:*)",
+      "Bash(./mvnw:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

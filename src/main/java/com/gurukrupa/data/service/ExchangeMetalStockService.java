@@ -112,6 +112,8 @@ public class ExchangeMetalStockService {
         
         // Check available weight
         if (metalStock.getAvailableWeight().compareTo(weight) < 0) {
+            LOG.error("Insufficient stock for {} {}. Available: {}, Requested: {}", 
+                    metalType, purity, metalStock.getAvailableWeight(), weight);
             throw new IllegalArgumentException(String.format(
                 "Insufficient stock for %s %s. Available: %s, Requested: %s",
                 metalType, purity, metalStock.getAvailableWeight(), weight));

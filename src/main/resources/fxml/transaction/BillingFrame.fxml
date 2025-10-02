@@ -6,8 +6,9 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
@@ -207,13 +208,34 @@
                </VBox.margin>
             </VBox>
             
-            <!-- Billing Tabs -->
-            <TabPane style="-fx-background-color: transparent;" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
-               <tabs>
-                  <Tab style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" text="BILLING">
-                     <content>
-                        <VBox spacing="10.0" style="-fx-padding: 8; -fx-background-color: transparent;">
-                           <children>
+            <!-- Tab Bar Toggle Buttons -->
+            <HBox alignment="CENTER" style="-fx-padding: 0 16 0 16;">
+               <children>
+                  <fx:define>
+                     <ToggleGroup fx:id="modeToggleGroup" />
+                  </fx:define>
+                  <ToggleButton fx:id="chipBilling" selected="true" style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 14px; -fx-padding: 10 24 10 24; -fx-background-radius: 8 0 0 8; -fx-cursor: hand;" text="BILLING ITEMS" toggleGroup="$modeToggleGroup">
+                     <graphic>
+                        <FontAwesomeIcon fill="#FFFFFF" glyphName="SHOPPING_CART" size="1.2em" />
+                     </graphic>
+                  </ToggleButton>
+                  <ToggleButton fx:id="chipExchange" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 14px; -fx-padding: 10 24 10 24; -fx-background-radius: 0 8 8 0; -fx-cursor: hand;" text="EXCHANGE ITEMS" toggleGroup="$modeToggleGroup">
+                     <graphic>
+                        <FontAwesomeIcon fill="#757575" glyphName="REFRESH" size="1.2em" />
+                     </graphic>
+                  </ToggleButton>
+               </children>
+               <VBox.margin>
+                  <Insets bottom="12.0" top="6.0" />
+               </VBox.margin>
+            </HBox>
+            
+            <!-- Content Area - Stack Pane for switching panels -->
+            <StackPane VBox.vgrow="ALWAYS" style="-fx-padding: 0 16 16 16;">
+               <children>
+                  <!-- Billing Panel -->
+                  <VBox fx:id="billingPanel" spacing="10.0" style="-fx-background-color: transparent;">
+                     <children>
                                     <!-- Item Entry Form -->
                                     <VBox spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 8;">
                                        <children>
@@ -372,13 +394,10 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                     </content>
-                  </Tab>
                   
-                  <Tab style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" text="EXCHANGE">
-                     <content>
-                        <VBox spacing="10.0" style="-fx-padding: 16; -fx-background-color: transparent;">
-                                 <children>
+                  <!-- Exchange Panel -->
+                  <VBox fx:id="exchangePanel" spacing="10.0" style="-fx-background-color: transparent;" visible="false" managed="false">
+                     <children>
                                     <!-- Exchange Entry Form -->
                                     <VBox spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 8;">
                                        <children>
@@ -502,13 +521,8 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                     </content>
-                  </Tab>
-               </tabs>
-               <VBox.margin>
-                  <Insets left="16.0" right="16.0" />
-               </VBox.margin>
-            </TabPane>
+               </children>
+            </StackPane>
             
             <!-- Bottom Summary and Navigation -->
             <VBox spacing="12.0" style="-fx-padding: 16;">

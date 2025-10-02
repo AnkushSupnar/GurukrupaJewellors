@@ -2,7 +2,12 @@ package com.gurukrupa.data.service;
 
 import com.gurukrupa.data.entities.PurchaseInvoice;
 import com.gurukrupa.data.entities.PurchaseTransaction;
+import com.gurukrupa.data.entities.PurchaseExchangeTransaction;
 import com.gurukrupa.data.entities.Supplier;
+import com.gurukrupa.data.entities.JewelryItem;
+import com.gurukrupa.data.entities.StockTransaction;
+import com.gurukrupa.data.entities.BankAccount;
+import com.gurukrupa.data.entities.ExchangeMetalStock;
 import com.gurukrupa.data.repository.PurchaseInvoiceRepository;
 import com.gurukrupa.data.repository.PurchaseTransactionRepository;
 import org.slf4j.Logger;
@@ -42,6 +47,15 @@ public class PurchaseInvoiceService {
     @Autowired
     private StockTransactionService stockTransactionService;
     
+    @Autowired
+    private ExchangeMetalStockService exchangeMetalStockService;
+    
+    @Autowired
+    private BankAccountService bankAccountService;
+    
+    @Autowired
+    private BankTransactionService bankTransactionService;
+    
     public PurchaseInvoice savePurchaseInvoice(PurchaseInvoice invoice) {
         // Generate invoice number if not set
         if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty()) {
@@ -68,6 +82,88 @@ public class PurchaseInvoiceService {
         }
         
         return savedInvoice;
+    }
+    
+    public PurchaseInvoice savePurchaseInvoiceWithStockUpdate(PurchaseInvoice invoice) {
+        try {
+            LOG.info("Starting to save purchase invoice with stock update");
+            
+            // Generate invoice number if not set
+            if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty()) {
+                invoice.setInvoiceNumber(generateInvoiceNumber());
+            }
+            LOG.info("Invoice number: {}", invoice.getInvoiceNumber());
+            
+            // Set invoice reference in all transactions before saving
+            for (PurchaseTransaction transaction : invoice.getPurchaseTransactions()) {
+                transaction.setPurchaseInvoice(invoice);
+            }
+            LOG.info("Set invoice reference for {} purchase transactions", invoice.getPurchaseTransactions().size());
+            
+            // Set invoice reference in all exchange transactions before saving
+            if (invoice.getPurchaseExchangeTransactions() != null) {
+                for (PurchaseExchangeTransaction exchangeTransaction : invoice.getPurchaseExchangeTransactions()) {
+                    exchangeTransaction.setPurchaseInvoice(invoice);
+                }
+                LOG.info("Set invoice reference for {} exchange transactions", invoice.getPurchaseExchangeTransactions().size());
+            }
+            
+            // Calculate totals before saving
+            invoice.calculateTotals();
+            LOG.info("Calculated totals - Grand Total: {}", invoice.getGrandTotal());
+            
+            // Check if this is a new invoice
+            boolean isNewInvoice = invoice.getId() == null;
+            
+            // Save the invoice (this will cascade save the transactions)
+            LOG.info("Saving invoice to database");
+            PurchaseInvoice savedInvoice = purchaseInvoiceRepository.save(invoice);
+            LOG.info("Invoice saved successfully with ID: {}", savedInvoice.getId());
+            
+            // Process stock updates for new invoices only (not for updates)
+            if (isNewInvoice && savedInvoice.getStatus() != PurchaseInvoice.InvoiceStatus.CANCELLED) {
+                try {
+                    // Process jewelry item stock addition
+                    LOG.info("Processing stock addition");
+                    processStockAddition(savedInvoice);
+                } catch (Exception e) {
+                    LOG.error("Error in processStockAddition", e);
+                    throw new RuntimeException("Failed to process stock addition: " + e.getMessage(), e);
+                }
+                
+                try {
+                    // Process exchange metal stock reduction
+                    if (savedInvoice.getPurchaseExchangeTransactions() != null && !savedInvoice.getPurchaseExchangeTransactions().isEmpty()) {
+                        LOG.info("Processing exchange metal stock reduction");
+                        processExchangeMetalStockReduction(savedInvoice);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error in processExchangeMetalStockReduction", e);
+                    throw new RuntimeException("Failed to process exchange metal stock: " + e.getMessage(), e);
+                }
+                
+                try {
+                    // Process bank transaction if payment method is not CASH
+                    if (savedInvoice.getPaymentMethod() != PurchaseInvoice.PaymentMethod.CASH && 
+                        savedInvoice.getPaidAmount() != null && 
+                        savedInvoice.getPaidAmount().compareTo(BigDecimal.ZERO) > 0) {
+                        LOG.info("Processing bank transaction");
+                        processBankTransaction(savedInvoice);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error in processBankTransaction", e);
+                    // Bank transaction failure should not rollback the entire transaction
+                    // Just log the error
+                }
+            }
+            
+            LOG.info("Purchase invoice saved successfully");
+            return savedInvoice;
+            
+        } catch (Exception e) {
+            LOG.error("Error saving purchase invoice with stock update", e);
+            throw new RuntimeException("Failed to save purchase invoice: " + e.getMessage(), e);
+        }
     }
     
     public PurchaseInvoice createPurchaseInvoice(Supplier supplier,
@@ -262,19 +358,178 @@ public class PurchaseInvoiceService {
                     }
                     
                     // Find or create jewelry item
-                    // TODO: Implement logic to find existing item or create new one
-                    // For now, we'll just log the action
-                    LOG.info("Need to add stock for item {} quantity {} from invoice {}", 
-                            transaction.getItemCode(), quantity, invoice.getInvoiceNumber());
+                    Optional<JewelryItem> existingItem = jewelryItemService.findByItemCode(transaction.getItemCode());
+                    
+                    if (existingItem.isPresent()) {
+                        // Update existing item stock
+                        jewelryItemService.addStock(
+                            existingItem.get().getId(),
+                            quantity,
+                            StockTransaction.TransactionSource.PURCHASE,
+                            "PURCHASE_INVOICE",
+                            invoice.getId(),
+                            invoice.getInvoiceNumber(),
+                            "Purchase from " + supplierName,
+                            "System"
+                        );
+                        LOG.info("Added stock for existing item {} quantity {} from invoice {}", 
+                                transaction.getItemCode(), quantity, invoice.getInvoiceNumber());
+                    } else {
+                        // Create new jewelry item
+                        BigDecimal grossWeight = transaction.getGrossWeight() != null ? transaction.getGrossWeight() : BigDecimal.ZERO;
+                        BigDecimal netWeight = transaction.getNetWeight() != null ? transaction.getNetWeight() : BigDecimal.ZERO;
+                        BigDecimal stoneWeight = grossWeight.subtract(netWeight);
+                        if (stoneWeight.compareTo(BigDecimal.ZERO) < 0) {
+                            stoneWeight = BigDecimal.ZERO;
+                        }
+                        
+                        BigDecimal ratePerGram = transaction.getRatePerGram() != null ? transaction.getRatePerGram() : BigDecimal.ZERO;
+                        BigDecimal labourCharges = transaction.getMakingCharges() != null ? transaction.getMakingCharges() : BigDecimal.ZERO;
+                        
+                        JewelryItem newItem = JewelryItem.builder()
+                            .itemCode(transaction.getItemCode())
+                            .itemName(transaction.getItemName())
+                            .category("General") // You might want to determine this from the item name
+                            .metalType(transaction.getMetalType())
+                            .purity(transaction.getPurity() != null ? transaction.getPurity() : new BigDecimal("916"))
+                            .grossWeight(grossWeight)
+                            .netWeight(netWeight)
+                            .stoneWeight(stoneWeight)
+                            .quantity(quantity)
+                            .goldRate(ratePerGram.multiply(BigDecimal.TEN))
+                            .labourCharges(labourCharges)
+                            .totalAmount(transaction.getTotalAmount() != null ? transaction.getTotalAmount() : BigDecimal.ZERO)
+                            .isActive(true)
+                            .createdDate(LocalDateTime.now())
+                            .build();
+                        
+                        JewelryItem savedItem = jewelryItemService.saveJewelryItem(newItem);
+                        
+                        // Record stock transaction
+                        stockTransactionService.recordStockIn(
+                            savedItem,
+                            quantity,
+                            StockTransaction.TransactionSource.PURCHASE,
+                            "PURCHASE_INVOICE",
+                            invoice.getId(),
+                            invoice.getInvoiceNumber(),
+                            "Initial purchase from " + supplierName,
+                            "System"
+                        );
+                        
+                        LOG.info("Created new item {} with quantity {} from invoice {}", 
+                                transaction.getItemCode(), quantity, invoice.getInvoiceNumber());
+                    }
                 }
                 
             } catch (Exception e) {
                 // Log the error but continue with other items
                 LOG.error("Error adding stock for item {} in invoice {}: {}", 
-                         transaction.getItemCode(), invoice.getInvoiceNumber(), e.getMessage());
+                         transaction.getItemCode(), invoice.getInvoiceNumber(), e.getMessage(), e);
             }
         }
         
         LOG.info("Completed stock addition processing for invoice {}", invoice.getInvoiceNumber());
+    }
+    
+    /**
+     * Process exchange metal stock reduction for purchase invoice exchange items
+     */
+    private void processExchangeMetalStockReduction(PurchaseInvoice invoice) {
+        String supplierName = invoice.getSupplier() != null ? 
+                            invoice.getSupplier().getSupplierFullName() : "Supplier";
+        
+        LOG.info("Processing exchange metal stock reduction for purchase invoice {}", invoice.getInvoiceNumber());
+        
+        // Process each exchange transaction to reduce metal stock
+        for (PurchaseExchangeTransaction exchangeTransaction : invoice.getPurchaseExchangeTransactions()) {
+            try {
+                BigDecimal netWeight = exchangeTransaction.getNetWeight();
+                
+                // Skip if net weight is 0 or negative
+                if (netWeight == null || netWeight.compareTo(BigDecimal.ZERO) <= 0) {
+                    LOG.warn("Skipping exchange metal reduction for {} with weight {} in invoice {}", 
+                            exchangeTransaction.getItemName(), netWeight, invoice.getInvoiceNumber());
+                    continue;
+                }
+                
+                // Reduce exchange metal stock
+                // Use purity 0 to match how billing system stores exchange metal
+                BigDecimal stockPurity = new BigDecimal("0");
+                exchangeMetalStockService.sellExchangeMetalWeight(
+                    exchangeTransaction.getMetalType(),
+                    stockPurity,
+                    netWeight,
+                    "PURCHASE_INVOICE",
+                    invoice.getId(),
+                    invoice.getInvoiceNumber(),
+                    supplierName
+                );
+                
+                LOG.info("Reduced exchange metal stock: {} {} weight {} for invoice {}", 
+                        exchangeTransaction.getMetalType(), exchangeTransaction.getPurity(), 
+                        netWeight, invoice.getInvoiceNumber());
+                
+            } catch (Exception e) {
+                // Log the error but continue with other items
+                LOG.error("Error reducing exchange metal stock for {} in invoice {}: {}", 
+                         exchangeTransaction.getItemName(), invoice.getInvoiceNumber(), e.getMessage(), e);
+            }
+        }
+        
+        LOG.info("Completed exchange metal stock reduction for invoice {}", invoice.getInvoiceNumber());
+    }
+    
+    /**
+     * Process bank transaction for purchase invoice payment
+     */
+    private void processBankTransaction(PurchaseInvoice invoice) {
+        String supplierName = invoice.getSupplier() != null ? 
+                            invoice.getSupplier().getSupplierFullName() : "Supplier";
+        
+        LOG.info("Processing bank transaction for purchase invoice {}", invoice.getInvoiceNumber());
+        
+        try {
+            // Get the first active bank account (you might want to make this configurable)
+            List<BankAccount> activeBankAccounts = bankAccountService.getAllActiveBankAccounts();
+            if (activeBankAccounts.isEmpty()) {
+                LOG.warn("No active bank accounts found for recording purchase payment transaction");
+                return;
+            }
+            
+            // Use the first active bank account
+            // In a real implementation, you might want to:
+            // 1. Allow user to select which bank account to use
+            // 2. Have a default bank account in app settings
+            // 3. Store bank account ID in the invoice
+            BankAccount bankAccount = activeBankAccounts.get(0);
+            
+            // Check if bank account has sufficient balance
+            if (bankAccount.getCurrentBalance().compareTo(invoice.getPaidAmount()) < 0) {
+                LOG.warn("Insufficient bank balance for purchase payment. Available: {}, Required: {}", 
+                        bankAccount.getCurrentBalance(), invoice.getPaidAmount());
+                // You might want to throw an exception here in production
+                // For now, we'll continue to record the transaction (allowing negative balance)
+            }
+            
+            // Record the bank transaction
+            bankTransactionService.recordPurchasePayment(
+                bankAccount,
+                invoice.getPaidAmount(),
+                invoice.getId(),
+                invoice.getInvoiceNumber(),
+                invoice.getPaymentReference(),
+                supplierName
+            );
+            
+            LOG.info("Recorded bank transaction for purchase invoice {} - Amount: {}", 
+                    invoice.getInvoiceNumber(), invoice.getPaidAmount());
+            
+        } catch (Exception e) {
+            LOG.error("Error recording bank transaction for purchase invoice {}: {}", 
+                     invoice.getInvoiceNumber(), e.getMessage(), e);
+            // Depending on business requirements, you might want to throw the exception
+            // to rollback the entire transaction, or just log it and continue
+        }
     }
 }

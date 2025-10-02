@@ -12,6 +12,7 @@ import com.gurukrupa.data.entities.MetalRate;
 import com.gurukrupa.view.AlertNotification;
 import com.gurukrupa.view.FxmlView;
 import com.gurukrupa.view.StageManager;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import impl.org.controlsfx.autocompletion.AutoCompletionTextFieldBinding;
 import impl.org.controlsfx.autocompletion.SuggestionProvider;
 import javafx.beans.value.ChangeListener;
@@ -23,6 +24,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.collections.FXCollections;
@@ -145,6 +147,10 @@ public class BillingController implements Initializable {
     private ListView<String> listViewItems;
     @FXML
     private TextField txtDiscount, txtGSTRate;
+    @FXML
+    private ToggleButton chipBilling, chipExchange;
+    @FXML
+    private VBox billingPanel, exchangePanel;
 
     
     private ObservableList<JewelryItem> allJewelryItems = FXCollections.observableArrayList();
@@ -189,6 +195,9 @@ public class BillingController implements Initializable {
         
         // Navigation buttons
         btnNewBill.setOnAction(e -> newBill());
+        
+        // Setup toggle buttons for switching between billing and exchange panels
+        setupToggleButtons();
         
         // Payment method buttons
         btnCash.setOnAction(e -> processCashPayment());
@@ -1194,6 +1203,55 @@ public class BillingController implements Initializable {
         exchangeTable.setItems(exchangeItems);
         
         System.out.println("Tables initialized with proper columns and data binding");
+    }
+    
+    private void setupToggleButtons() {
+        // Style constants
+        String activeStyle = "-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 14px; -fx-padding: 10 24 10 24; -fx-cursor: hand;";
+        String inactiveStyle = "-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 14px; -fx-padding: 10 24 10 24; -fx-cursor: hand;";
+        String leftRoundStyle = "-fx-background-radius: 8 0 0 8;";
+        String rightRoundStyle = "-fx-background-radius: 0 8 8 0;";
+        
+        // Set initial styles
+        chipBilling.setStyle(activeStyle + leftRoundStyle);
+        chipExchange.setStyle(inactiveStyle + rightRoundStyle);
+        
+        // Add toggle listeners
+        chipBilling.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            if (isSelected) {
+                // Show billing panel, hide exchange panel
+                billingPanel.setVisible(true);
+                billingPanel.setManaged(true);
+                exchangePanel.setVisible(false);
+                exchangePanel.setManaged(false);
+                
+                // Update styles
+                chipBilling.setStyle(activeStyle + leftRoundStyle);
+                chipExchange.setStyle(inactiveStyle + rightRoundStyle);
+                
+                // Update icons
+                ((FontAwesomeIcon) chipBilling.getGraphic()).setFill(javafx.scene.paint.Color.WHITE);
+                ((FontAwesomeIcon) chipExchange.getGraphic()).setFill(javafx.scene.paint.Color.web("#757575"));
+            }
+        });
+        
+        chipExchange.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            if (isSelected) {
+                // Show exchange panel, hide billing panel
+                exchangePanel.setVisible(true);
+                exchangePanel.setManaged(true);
+                billingPanel.setVisible(false);
+                billingPanel.setManaged(false);
+                
+                // Update styles
+                chipExchange.setStyle(activeStyle + rightRoundStyle);
+                chipBilling.setStyle(inactiveStyle + leftRoundStyle);
+                
+                // Update icons
+                ((FontAwesomeIcon) chipExchange.getGraphic()).setFill(javafx.scene.paint.Color.WHITE);
+                ((FontAwesomeIcon) chipBilling.getGraphic()).setFill(javafx.scene.paint.Color.web("#757575"));
+            }
+        });
     }
     
     // Inner classes for table data models

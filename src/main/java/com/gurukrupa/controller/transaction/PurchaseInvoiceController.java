@@ -5,6 +5,8 @@ import com.gurukrupa.data.entities.*;
 import com.gurukrupa.data.entities.PurchaseInvoice.PaymentMethod;
 import com.gurukrupa.data.entities.PurchaseInvoice.PurchaseType;
 import com.gurukrupa.data.entities.PurchaseTransaction.ItemType;
+import com.gurukrupa.data.entities.PurchaseExchangeTransaction;
+import com.gurukrupa.data.entities.ExchangeMetalStock;
 import com.gurukrupa.data.service.*;
 import com.gurukrupa.view.AlertNotification;
 import com.gurukrupa.utility.CurrencyFormatter;
@@ -29,6 +31,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.StackPane;
@@ -42,6 +45,7 @@ import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.util.StringConverter;
+import java.util.function.Function;
 import javafx.util.converter.BigDecimalStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import org.slf4j.Logger;
@@ -74,12 +78,15 @@ public class PurchaseInvoiceController implements Initializable {
     
     // Header and Supplier Info
     @FXML private Label lblInvoiceNumber;
-    @FXML private ComboBox<Supplier> cmbSupplier;
+    @FXML private HBox supplierSearchBox;
     @FXML private TextField txtSupplierName;
     @FXML private TextField txtGSTNumber;
     @FXML private TextField txtSupplierContact;
     @FXML private TextField txtInvoiceDate;
     @FXML private TextField txtSupplierInvoice;
+    
+    // AutoComplete supplier search
+    private AutoCompleteTextField<Supplier> supplierSearchField;
     
     // Chip/Toggle Controls
     @FXML private ToggleButton chipPurchase;
@@ -102,7 +109,8 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private Label lblLabourCharges;
     @FXML private TextField txtLabourCharges;
     @FXML private Button btnAddToBill;
-    @FXML private Button btnUpdateItem;
+    @FXML private Button btnEditPurchaseItem;
+    @FXML private Button btnDeletePurchaseItem;
     @FXML private Button btnClearForm;
     @FXML private Button btnAddNewItem;
     
@@ -120,7 +128,6 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colRate;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colLabour;
     @FXML private TableColumn<PurchaseTransaction, BigDecimal> colAmount;
-    @FXML private TableColumn<PurchaseTransaction, Void> colAction;
     
     // Exchange Items Tab - Form Fields
     @FXML private TextField txtExchangeItemName;
@@ -132,26 +139,27 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private TextField txtExchangeRate;
     @FXML private TextField txtExchangeAmount;
     @FXML private Button btnAddExchangeItem;
+    @FXML private Button btnEditExchangeItem;
+    @FXML private Button btnDeleteExchangeItem;
     @FXML private Button btnClearExchangeForm;
     
     // Exchange Items Table
-    @FXML private TableView<ExchangeTransaction> exchangeItemsTable;
-    @FXML private TableColumn<ExchangeTransaction, Integer> colExSno;
-    @FXML private TableColumn<ExchangeTransaction, String> colExItemName;
-    @FXML private TableColumn<ExchangeTransaction, String> colExMetalType;
-    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExPurity;
-    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExGrossWeight;
-    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExDeduction;
-    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExNetWeight;
-    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExRate;
-    @FXML private TableColumn<ExchangeTransaction, BigDecimal> colExAmount;
-    @FXML private TableColumn<ExchangeTransaction, Void> colExAction;
+    @FXML private TableView<PurchaseExchangeTransaction> exchangeItemsTable;
+    @FXML private TableColumn<PurchaseExchangeTransaction, Integer> colExSno;
+    @FXML private TableColumn<PurchaseExchangeTransaction, String> colExItemName;
+    @FXML private TableColumn<PurchaseExchangeTransaction, String> colExMetalType;
+    @FXML private TableColumn<PurchaseExchangeTransaction, BigDecimal> colExPurity;
+    @FXML private TableColumn<PurchaseExchangeTransaction, BigDecimal> colExGrossWeight;
+    @FXML private TableColumn<PurchaseExchangeTransaction, BigDecimal> colExDeduction;
+    @FXML private TableColumn<PurchaseExchangeTransaction, BigDecimal> colExNetWeight;
+    @FXML private TableColumn<PurchaseExchangeTransaction, BigDecimal> colExRate;
+    @FXML private TableColumn<PurchaseExchangeTransaction, BigDecimal> colExAmount;
     
     // Summary Panel
     @FXML private Label lblTotalPurchaseItems;
-    @FXML private Label lblTotalPurchaseWeight;
+    @FXML private Label lblPurchaseAmount;
     @FXML private Label lblTotalExchangeItems;
-    @FXML private Label lblTotalExchangeWeight;
+    @FXML private Label lblExchangeDeduction;
     @FXML private Label lblSubtotal;
     @FXML private Label lblGST;
     @FXML private Label lblTotalAmount;
@@ -200,15 +208,16 @@ public class PurchaseInvoiceController implements Initializable {
     private SpringFXMLLoader springFXMLLoader;
 
     private ObservableList<PurchaseTransaction> purchaseItems = FXCollections.observableArrayList();
-    private ObservableList<ExchangeTransaction> exchangeItems = FXCollections.observableArrayList();
+    private ObservableList<PurchaseExchangeTransaction> exchangeItems = FXCollections.observableArrayList();
     private ObservableList<JewelryItem> stockItems = FXCollections.observableArrayList();
     private FilteredList<JewelryItem> filteredStockItems;
     private BigDecimal gstRate = new BigDecimal("3.00");
     private JewelryItem selectedStockItem = null;
     private BigDecimal currentLabourPercentage = null;
-    private AutoCompleteTextField itemNameAutoComplete;
+    private List<String> itemNameSuggestions = new ArrayList<>();
     private boolean isProgrammaticallySettingFields = false;
     private PurchaseTransaction editingItem = null;
+    private PurchaseExchangeTransaction editingExchangeItem = null;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -232,8 +241,7 @@ public class PurchaseInvoiceController implements Initializable {
         
         // Add listeners for collections
         purchaseItems.addListener((javafx.collections.ListChangeListener<PurchaseTransaction>) change -> updateSummary());
-        exchangeItems.addListener((javafx.collections.ListChangeListener<ExchangeTransaction>) change -> updateSummary());
-        cmbSupplier.valueProperty().addListener((obs, oldVal, newVal) -> updateSupplierInfo(newVal));
+        exchangeItems.addListener((javafx.collections.ListChangeListener<PurchaseExchangeTransaction>) change -> updateSummary());
     }
     
     private void setupTableColumns() {
@@ -250,7 +258,15 @@ public class PurchaseInvoiceController implements Initializable {
         if (colPurity != null) colPurity.setCellValueFactory(new PropertyValueFactory<>("purity"));
         if (colQuantity != null) colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         if (colGrossWeight != null) colGrossWeight.setCellValueFactory(new PropertyValueFactory<>("grossWeight"));
-        if (colStoneWeight != null) colStoneWeight.setCellValueFactory(new PropertyValueFactory<>("stoneWeight"));
+        if (colStoneWeight != null) {
+            colStoneWeight.setCellValueFactory(cellData -> {
+                PurchaseTransaction item = cellData.getValue();
+                BigDecimal grossWeight = item.getGrossWeight() != null ? item.getGrossWeight() : BigDecimal.ZERO;
+                BigDecimal netWeight = item.getNetWeight() != null ? item.getNetWeight() : BigDecimal.ZERO;
+                BigDecimal stoneWeight = grossWeight.subtract(netWeight);
+                return new SimpleObjectProperty<>(stoneWeight);
+            });
+        }
         if (colWeight != null) colWeight.setCellValueFactory(new PropertyValueFactory<>("netWeight"));
         // Display rate per 10 grams
         if (colRate != null) {
@@ -262,51 +278,6 @@ public class PurchaseInvoiceController implements Initializable {
         }
         if (colLabour != null) colLabour.setCellValueFactory(new PropertyValueFactory<>("makingCharges"));
         if (colAmount != null) colAmount.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-        
-        // Add action buttons for purchase items
-        if (colAction != null) {
-            colAction.setCellFactory(column -> new TableCell<>() {
-            private final Button editButton = new Button();
-            private final Button deleteButton = new Button();
-            private final HBox actionBox = new HBox(5);
-            
-            {
-                // Edit button
-                FontAwesomeIcon editIcon = new FontAwesomeIcon();
-                editIcon.setGlyphName("EDIT");
-                editIcon.setSize("1.0em");
-                editIcon.setFill(Color.WHITE);
-                editButton.setGraphic(editIcon);
-                editButton.setStyle("-fx-background-color: #2196F3; -fx-cursor: hand; -fx-padding: 4 8 4 8;");
-                editButton.setOnAction(event -> {
-                    PurchaseTransaction item = getTableView().getItems().get(getIndex());
-                    populateFormForEdit(item);
-                });
-                
-                // Delete button
-                FontAwesomeIcon deleteIcon = new FontAwesomeIcon();
-                deleteIcon.setGlyphName("TRASH");
-                deleteIcon.setSize("1.0em");
-                deleteIcon.setFill(Color.WHITE);
-                deleteButton.setGraphic(deleteIcon);
-                deleteButton.setStyle("-fx-background-color: #F44336; -fx-cursor: hand; -fx-padding: 4 8 4 8;");
-                deleteButton.setOnAction(event -> {
-                    PurchaseTransaction item = getTableView().getItems().get(getIndex());
-                    purchaseItems.remove(item);
-                    updateSummary();
-                });
-                
-                actionBox.setAlignment(Pos.CENTER);
-                actionBox.getChildren().addAll(editButton, deleteButton);
-            }
-            
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : actionBox);
-            }
-            });
-        }
         
         if (purchaseItemsTable != null) {
             purchaseItemsTable.setItems(purchaseItems);
@@ -335,33 +306,6 @@ public class PurchaseInvoiceController implements Initializable {
         }
         if (colExAmount != null) colExAmount.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         
-        // Add action buttons for exchange items
-        if (colExAction != null) {
-            colExAction.setCellFactory(column -> new TableCell<>() {
-            private final Button deleteButton = new Button();
-            
-            {
-                FontAwesomeIcon deleteIcon = new FontAwesomeIcon();
-                deleteIcon.setGlyphName("TRASH");
-                deleteIcon.setSize("1.2em");
-                deleteIcon.setFill(Color.WHITE);
-                deleteButton.setGraphic(deleteIcon);
-                deleteButton.setStyle("-fx-background-color: #F44336; -fx-cursor: hand;");
-                deleteButton.setOnAction(event -> {
-                    ExchangeTransaction item = getTableView().getItems().get(getIndex());
-                    exchangeItems.remove(item);
-                    updateSummary();
-                });
-            }
-            
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : deleteButton);
-            }
-            });
-        }
-        
         if (exchangeItemsTable != null) {
             exchangeItemsTable.setItems(exchangeItems);
             exchangeItemsTable.setEditable(false);
@@ -373,18 +317,6 @@ public class PurchaseInvoiceController implements Initializable {
         cmbPaymentMode.setItems(FXCollections.observableArrayList(PaymentMethod.values()));
         cmbPaymentMode.setValue(PaymentMethod.CASH);
         
-        // Supplier combo
-        cmbSupplier.setConverter(new StringConverter<Supplier>() {
-            @Override
-            public String toString(Supplier supplier) {
-                return supplier != null ? supplier.getSupplierFullName() : "";
-            }
-            
-            @Override
-            public Supplier fromString(String string) {
-                return null;
-            }
-        });
         
         // Metal type combos - Load from database like in BillingController
         try {
@@ -450,7 +382,79 @@ public class PurchaseInvoiceController implements Initializable {
     private void loadSuppliers() {
         try {
             List<Supplier> suppliers = supplierService.getAllActiveSuppliers();
-            cmbSupplier.setItems(FXCollections.observableArrayList(suppliers));
+            
+            // Create AutoCompleteTextField for supplier search
+            StringConverter<Supplier> supplierConverter = new StringConverter<Supplier>() {
+                @Override
+                public String toString(Supplier supplier) {
+                    if (supplier != null) {
+                        return supplier.getSupplierFullName() + 
+                               (supplier.getGstNumber() != null ? " (GST: " + supplier.getGstNumber() + ")" : "");
+                    }
+                    return "";
+                }
+                
+                @Override
+                public Supplier fromString(String string) {
+                    return null;
+                }
+            };
+            
+            // Filter function for searching suppliers
+            Function<String, List<Supplier>> filterFunction = searchText -> {
+                if (searchText == null || searchText.isEmpty()) {
+                    return suppliers;
+                }
+                String lowerSearch = searchText.toLowerCase();
+                return suppliers.stream()
+                    .filter(s -> s.getSupplierFullName().toLowerCase().contains(lowerSearch) ||
+                                (s.getGstNumber() != null && s.getGstNumber().toLowerCase().contains(lowerSearch)) ||
+                                (s.getMobile() != null && s.getMobile().contains(searchText)))
+                    .collect(Collectors.toList());
+            };
+            
+            // Create the AutoCompleteTextField
+            supplierSearchField = new AutoCompleteTextField<>(suppliers, supplierConverter, filterFunction);
+            supplierSearchField.setPromptText("Search supplier by name, GST or mobile...");
+            
+            // Custom cell factory to show more supplier info
+            supplierSearchField.setCellFactory(supplier -> {
+                Label label = new Label();
+                if (supplier != null) {
+                    VBox content = new VBox(2);
+                    content.setPadding(new Insets(4, 8, 4, 8));
+                    
+                    Label nameLabel = new Label(supplier.getSupplierFullName());
+                    nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+                    
+                    HBox detailsBox = new HBox(10);
+                    if (supplier.getGstNumber() != null && !supplier.getGstNumber().isEmpty()) {
+                        Label gstLabel = new Label("GST: " + supplier.getGstNumber());
+                        gstLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
+                        detailsBox.getChildren().add(gstLabel);
+                    }
+                    if (supplier.getMobile() != null && !supplier.getMobile().isEmpty()) {
+                        Label mobileLabel = new Label("Mobile: " + supplier.getMobile());
+                        mobileLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
+                        detailsBox.getChildren().add(mobileLabel);
+                    }
+                    
+                    content.getChildren().addAll(nameLabel, detailsBox);
+                    label.setGraphic(content);
+                }
+                return label;
+            });
+            
+            // Add to the UI
+            supplierSearchBox.getChildren().clear();
+            supplierSearchBox.getChildren().add(supplierSearchField.getNode());
+            HBox.setHgrow(supplierSearchField.getNode(), Priority.ALWAYS);
+            
+            // Handle supplier selection
+            supplierSearchField.selectedItemProperty().addListener((obs, oldSupplier, newSupplier) -> {
+                updateSupplierInfo(newSupplier);
+            });
+            
         } catch (Exception e) {
             LOG.error("Error loading suppliers", e);
             alertNotification.showError("Failed to load suppliers: " + e.getMessage());
@@ -511,9 +515,73 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void updateDateTime() {
         Platform.runLater(() -> {
-            txtInvoiceDate.setText(LocalDateTime.now().format(DATE_FORMATTER));
-            lblInvoiceNumber.setText(purchaseInvoiceService.generateInvoiceNumber());
+            if (txtInvoiceDate != null) {
+                txtInvoiceDate.setText(LocalDateTime.now().format(DATE_FORMATTER));
+            }
+            if (lblInvoiceNumber != null) {
+                lblInvoiceNumber.setText("Invoice #: " + purchaseInvoiceService.generateInvoiceNumber());
+            }
         });
+    }
+    
+    private void updateExchangeStockDisplay() {
+        if (cmbExchangeMetalType == null || cmbExchangeMetalType.getValue() == null || txtExchangePurity == null) {
+            return;
+        }
+        
+        try {
+            Metal selectedMetal = cmbExchangeMetalType.getValue();
+            String metalType = selectedMetal.getMetalName();
+            BigDecimal purity = parseBigDecimal(txtExchangePurity);
+            
+            // Get available stock
+            // Use purity 0 to match how billing system stores exchange metal
+            BigDecimal stockPurity = new BigDecimal("0");
+            Optional<ExchangeMetalStock> stockOpt = metalStockService.getMetalStock(metalType, stockPurity);
+            BigDecimal availableWeight = BigDecimal.ZERO;
+            if (stockOpt.isPresent()) {
+                availableWeight = stockOpt.get().getAvailableWeight();
+            }
+            
+            // Calculate already added weight (ignore purity for stock calculation)
+            BigDecimal alreadyAddedWeight = BigDecimal.ZERO;
+            for (PurchaseExchangeTransaction item : exchangeItems) {
+                if (item.getMetalType().equals(metalType) &&
+                    item != editingExchangeItem) {
+                    alreadyAddedWeight = alreadyAddedWeight.add(item.getNetWeight() != null ? 
+                        item.getNetWeight() : BigDecimal.ZERO);
+                }
+            }
+            
+            BigDecimal remainingWeight = availableWeight.subtract(alreadyAddedWeight);
+            
+            // Make variables final for lambda
+            final BigDecimal finalAvailableWeight = availableWeight;
+            final BigDecimal finalAlreadyAddedWeight = alreadyAddedWeight;
+            final BigDecimal finalRemainingWeight = remainingWeight;
+            
+            // Update display
+            Platform.runLater(() -> {
+                String stockInfo = String.format("Available: %.3f g | Used: %.3f g | Remaining: %.3f g", 
+                    finalAvailableWeight, finalAlreadyAddedWeight, finalRemainingWeight);
+                
+                // You can display this in a label or tooltip
+                if (txtExchangeNetWeight != null) {
+                    txtExchangeNetWeight.setPromptText(stockInfo);
+                    
+                    // Change border color based on availability
+                    if (finalRemainingWeight.compareTo(BigDecimal.ZERO) <= 0) {
+                        txtExchangeNetWeight.setStyle("-fx-border-color: red;");
+                    } else if (finalRemainingWeight.compareTo(new BigDecimal("10")) < 0) {
+                        txtExchangeNetWeight.setStyle("-fx-border-color: orange;");
+                    } else {
+                        txtExchangeNetWeight.setStyle("");
+                    }
+                }
+            });
+        } catch (Exception e) {
+            LOG.error("Error updating exchange stock display", e);
+        }
     }
     
     private void updateSupplierInfo(Supplier supplier) {
@@ -578,8 +646,19 @@ public class PurchaseInvoiceController implements Initializable {
             txtExchangeDeduction.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeNetWeight());
         }
         if (txtExchangeNetWeight != null && txtExchangeRate != null) {
-            txtExchangeNetWeight.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeTotal());
+            txtExchangeNetWeight.textProperty().addListener((obs, oldVal, newVal) -> {
+                calculateExchangeTotal();
+                updateExchangeStockDisplay();
+            });
             txtExchangeRate.textProperty().addListener((obs, oldVal, newVal) -> calculateExchangeTotal());
+        }
+        
+        // Update stock display when metal type or purity changes
+        if (cmbExchangeMetalType != null) {
+            cmbExchangeMetalType.valueProperty().addListener((obs, oldVal, newVal) -> updateExchangeStockDisplay());
+        }
+        if (txtExchangePurity != null) {
+            txtExchangePurity.textProperty().addListener((obs, oldVal, newVal) -> updateExchangeStockDisplay());
         }
         
         // Discount and GST rate listeners
@@ -634,11 +713,11 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void setupItemNameAutoComplete() {
         if (txtItemName != null) {
-            // Create AutoCompleteTextField for item name search
-            itemNameAutoComplete = new AutoCompleteTextField(txtItemName);
-            
             // Load item names from jewelry items
             updateItemNameSuggestions();
+            
+            // Setup autocomplete using TextFields
+            org.controlsfx.control.textfield.TextFields.bindAutoCompletion(txtItemName, itemNameSuggestions);
             
             // When an item is selected, populate other fields
             txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -664,13 +743,13 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private void updateItemNameSuggestions() {
-        if (itemNameAutoComplete != null && stockItems != null) {
-            List<String> itemNames = stockItems.stream()
+        if (stockItems != null) {
+            itemNameSuggestions.clear();
+            itemNameSuggestions.addAll(stockItems.stream()
                 .map(JewelryItem::getItemName)
                 .distinct()
                 .sorted()
-                .collect(Collectors.toList());
-            itemNameAutoComplete.setSuggestions(itemNames);
+                .collect(Collectors.toList()));
         }
     }
     
@@ -758,80 +837,178 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML
     private void handleAddToBill() {
         try {
-            PurchaseTransaction newItem = new PurchaseTransaction();
+            // Validate inputs
+            if (txtItemCode == null || txtItemCode.getText().trim().isEmpty()) {
+                alertNotification.showError("Please enter item code");
+                return;
+            }
             
-            // Get values from form fields
-            newItem.setItemCode(txtItemCode != null ? txtItemCode.getText() : "ITEM-" + System.currentTimeMillis());
-            newItem.setItemName(txtItemName != null ? txtItemName.getText() : "New Item");
+            String itemCode = txtItemCode.getText().trim();
+            String itemName = txtItemName != null ? txtItemName.getText().trim() : "New Item";
             Metal selectedMetal = cmbMetalType != null ? cmbMetalType.getValue() : null;
-            newItem.setMetalType(selectedMetal != null ? selectedMetal.getMetalName() : "GOLD");
+            String metalType = selectedMetal != null ? selectedMetal.getMetalName() : "GOLD";
             
-            // Parse numeric values
-            newItem.setPurity(parseBigDecimal(txtPurity));
-            newItem.setQuantity(parseInt(txtQuantity, 1));
-            newItem.setGrossWeight(parseBigDecimal(txtGrossWeight));
-            newItem.setNetWeight(parseBigDecimal(txtNetWeight));
+            PurchaseTransaction itemToUpdate;
+            
+            // Check if we're in edit mode
+            if (editingItem != null) {
+                itemToUpdate = editingItem;
+            } else {
+                // Check if item with same code already exists
+                itemToUpdate = purchaseItems.stream()
+                    .filter(item -> item.getItemCode().equalsIgnoreCase(itemCode))
+                    .findFirst()
+                    .orElse(null);
+                    
+                if (itemToUpdate == null) {
+                    itemToUpdate = new PurchaseTransaction();
+                    purchaseItems.add(itemToUpdate);
+                }
+            }
+            
+            // Update values
+            itemToUpdate.setItemCode(itemCode);
+            itemToUpdate.setItemName(itemName);
+            itemToUpdate.setMetalType(metalType);
+            itemToUpdate.setPurity(parseBigDecimal(txtPurity));
+            itemToUpdate.setQuantity(parseInt(txtQuantity, 1));
+            itemToUpdate.setGrossWeight(parseBigDecimal(txtGrossWeight));
+            itemToUpdate.setNetWeight(parseBigDecimal(txtNetWeight));
             
             // Get rate per 10 grams and convert to per gram
             BigDecimal ratePerTenGrams = parseBigDecimal(txtRate);
             if (ratePerTenGrams.compareTo(BigDecimal.ZERO) == 0) {
-                ratePerTenGrams = getCurrentMetalRate(newItem.getMetalType(), newItem.getPurity());
+                ratePerTenGrams = getCurrentMetalRate(metalType, itemToUpdate.getPurity());
             }
             BigDecimal ratePerGram = ratePerTenGrams.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP);
-            newItem.setRatePerGram(ratePerGram);
+            itemToUpdate.setRatePerGram(ratePerGram);
             
             // Set making charges
-            newItem.setMakingCharges(parseBigDecimal(txtLabourCharges));
+            itemToUpdate.setMakingCharges(parseBigDecimal(txtLabourCharges));
             
-            newItem.setItemType(ItemType.NEW_ITEM);
-            newItem.calculateTotalAmount();
+            itemToUpdate.setItemType(ItemType.NEW_ITEM);
+            itemToUpdate.calculateTotalAmount();
             
-            purchaseItems.add(newItem);
+            // Refresh table
+            purchaseItemsTable.refresh();
             updateSummary();
             clearPurchaseForm();
             
-            // Focus on the new item
-            purchaseItemsTable.scrollTo(newItem);
-            purchaseItemsTable.getSelectionModel().select(newItem);
+            // Reset edit mode
+            editingItem = null;
+            
+            // Focus on the item
+            purchaseItemsTable.scrollTo(itemToUpdate);
+            purchaseItemsTable.getSelectionModel().select(itemToUpdate);
         } catch (Exception e) {
-            LOG.error("Error adding item", e);
-            alertNotification.showError("Failed to add item: " + e.getMessage());
+            LOG.error("Error adding/updating item", e);
+            alertNotification.showError("Failed to add/update item: " + e.getMessage());
         }
     }
     
     @FXML
     private void handleAddExchangeItem() {
         try {
-            ExchangeTransaction newItem = new ExchangeTransaction();
+            // Validate inputs
+            if (txtExchangeItemName == null || txtExchangeItemName.getText().trim().isEmpty()) {
+                alertNotification.showError("Please enter item name");
+                return;
+            }
             
-            // Get values from form fields
-            newItem.setItemName(txtExchangeItemName != null ? txtExchangeItemName.getText() : "Exchange Item");
+            String itemName = txtExchangeItemName.getText().trim();
             Metal selectedExchangeMetal = cmbExchangeMetalType != null ? cmbExchangeMetalType.getValue() : null;
-            newItem.setMetalType(selectedExchangeMetal != null ? selectedExchangeMetal.getMetalName() : "GOLD");
-            newItem.setPurity(parseBigDecimal(txtExchangePurity));
-            newItem.setGrossWeight(parseBigDecimal(txtExchangeGrossWeight));
-            newItem.setDeduction(parseBigDecimal(txtExchangeDeduction));
-            newItem.setNetWeight(parseBigDecimal(txtExchangeNetWeight));
+            String metalType = selectedExchangeMetal != null ? selectedExchangeMetal.getMetalName() : "GOLD";
+            BigDecimal purity = parseBigDecimal(txtExchangePurity);
+            BigDecimal netWeight = parseBigDecimal(txtExchangeNetWeight);
+            
+            // Check available exchange metal stock
+            // Use purity 0 to match how billing system stores exchange metal
+            BigDecimal stockPurity = new BigDecimal("0");
+            Optional<ExchangeMetalStock> stockOpt = metalStockService.getMetalStock(metalType, stockPurity);
+            BigDecimal availableWeight = BigDecimal.ZERO;
+            if (stockOpt.isPresent()) {
+                availableWeight = stockOpt.get().getAvailableWeight();
+            }
+            
+            // Calculate total weight already added for this metal type (ignore purity for stock calculation)
+            BigDecimal alreadyAddedWeight = BigDecimal.ZERO;
+            for (PurchaseExchangeTransaction existingItem : exchangeItems) {
+                if (existingItem.getMetalType().equals(metalType) &&
+                    existingItem != editingExchangeItem) { // Don't count the item being edited
+                    alreadyAddedWeight = alreadyAddedWeight.add(existingItem.getNetWeight() != null ? 
+                        existingItem.getNetWeight() : BigDecimal.ZERO);
+                }
+            }
+            
+            // Calculate remaining available weight
+            BigDecimal remainingWeight = availableWeight.subtract(alreadyAddedWeight);
+            
+            // Check if sufficient stock is available
+            if (remainingWeight.compareTo(netWeight) < 0) {
+                String message = String.format(
+                    "Insufficient exchange metal stock!\n\n" +
+                    "Metal: %s %s\n" +
+                    "Available Stock: %.3f grams\n" +
+                    "Already Added: %.3f grams\n" +
+                    "Remaining: %.3f grams\n" +
+                    "Requested: %.3f grams\n\n" +
+                    "Please reduce the quantity or add exchange metal stock first.",
+                    metalType, purity, availableWeight, alreadyAddedWeight, 
+                    remainingWeight, netWeight
+                );
+                alertNotification.showError(message);
+                return;
+            }
+            
+            PurchaseExchangeTransaction itemToUpdate;
+            
+            // Check if we're in edit mode
+            if (editingExchangeItem != null) {
+                itemToUpdate = editingExchangeItem;
+            } else {
+                // Check if item with same name already exists
+                itemToUpdate = exchangeItems.stream()
+                    .filter(item -> item.getItemName().equalsIgnoreCase(itemName))
+                    .findFirst()
+                    .orElse(null);
+                    
+                if (itemToUpdate == null) {
+                    itemToUpdate = new PurchaseExchangeTransaction();
+                    exchangeItems.add(itemToUpdate);
+                }
+            }
+            
+            // Update values
+            itemToUpdate.setItemName(itemName);
+            itemToUpdate.setMetalType(metalType);
+            itemToUpdate.setPurity(parseBigDecimal(txtExchangePurity));
+            itemToUpdate.setGrossWeight(parseBigDecimal(txtExchangeGrossWeight));
+            itemToUpdate.setDeduction(parseBigDecimal(txtExchangeDeduction));
+            itemToUpdate.setNetWeight(parseBigDecimal(txtExchangeNetWeight));
             
             // Get rate per 10 grams
             BigDecimal ratePerTenGrams = parseBigDecimal(txtExchangeRate);
             if (ratePerTenGrams.compareTo(BigDecimal.ZERO) == 0) {
-                ratePerTenGrams = getCurrentMetalRate(newItem.getMetalType(), newItem.getPurity());
+                ratePerTenGrams = getCurrentMetalRate(metalType, itemToUpdate.getPurity());
             }
-            newItem.setRatePerTenGrams(ratePerTenGrams);
+            itemToUpdate.setRatePerTenGrams(ratePerTenGrams);
             
-            newItem.calculateNetWeightAndAmount();
+            itemToUpdate.calculateNetWeightAndAmount();
             
-            exchangeItems.add(newItem);
+            // Refresh table
+            exchangeItemsTable.refresh();
             updateSummary();
             clearExchangeForm();
             
-            // Focus on the new item
-            exchangeItemsTable.scrollTo(newItem);
-            exchangeItemsTable.getSelectionModel().select(newItem);
+            // Reset edit mode
+            editingExchangeItem = null;
+            
+            // Focus on the item
+            exchangeItemsTable.scrollTo(itemToUpdate);
+            exchangeItemsTable.getSelectionModel().select(itemToUpdate);
         } catch (Exception e) {
-            LOG.error("Error adding exchange item", e);
-            alertNotification.showError("Failed to add exchange item: " + e.getMessage());
+            LOG.error("Error adding/updating exchange item", e);
+            alertNotification.showError("Failed to add/update exchange item: " + e.getMessage());
         }
     }
     
@@ -839,8 +1016,74 @@ public class PurchaseInvoiceController implements Initializable {
     private void handleClearForm() {
         clearPurchaseForm();
         editingItem = null;
-        btnAddToBill.setVisible(true);
-        btnUpdateItem.setVisible(false);
+    }
+    
+    @FXML
+    private void handleEditPurchaseItem() {
+        PurchaseTransaction selectedItem = purchaseItemsTable.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            alertNotification.showError("Please select an item to edit");
+            return;
+        }
+        
+        // Set edit mode
+        editingItem = selectedItem;
+        
+        // Populate form fields with selected item data
+        if (txtItemCode != null) txtItemCode.setText(selectedItem.getItemCode());
+        if (txtItemName != null) txtItemName.setText(selectedItem.getItemName());
+        
+        // Find and set the metal type in combo box
+        if (cmbMetalType != null) {
+            Metal metal = cmbMetalType.getItems().stream()
+                .filter(m -> m.getMetalName().equals(selectedItem.getMetalType()))
+                .findFirst()
+                .orElse(null);
+            cmbMetalType.setValue(metal);
+        }
+        
+        if (txtPurity != null) txtPurity.setText(selectedItem.getPurity().toString());
+        if (txtQuantity != null) txtQuantity.setText(selectedItem.getQuantity().toString());
+        if (txtGrossWeight != null) txtGrossWeight.setText(selectedItem.getGrossWeight().toString());
+        if (txtStoneWeight != null) {
+            BigDecimal stoneWeight = selectedItem.getGrossWeight().subtract(selectedItem.getNetWeight());
+            txtStoneWeight.setText(stoneWeight.toString());
+        }
+        if (txtNetWeight != null) txtNetWeight.setText(selectedItem.getNetWeight().toString());
+        if (txtRate != null) {
+            // Convert rate per gram to rate per 10 grams for display
+            BigDecimal ratePerTenGrams = selectedItem.getRatePerGram().multiply(BigDecimal.TEN);
+            txtRate.setText(ratePerTenGrams.toString());
+        }
+        if (txtLabourCharges != null) txtLabourCharges.setText(selectedItem.getMakingCharges().toString());
+        if (txtAmount != null) txtAmount.setText(selectedItem.getTotalAmount().toString());
+    }
+    
+    @FXML
+    private void handleDeletePurchaseItem() {
+        PurchaseTransaction selectedItem = purchaseItemsTable.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            alertNotification.showError("Please select an item to delete");
+            return;
+        }
+        
+        // Confirm deletion
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setHeaderText("Delete Purchase Item");
+        alert.setContentText("Are you sure you want to delete: " + selectedItem.getItemName() + "?");
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            purchaseItems.remove(selectedItem);
+            updateSummary();
+            clearPurchaseForm();
+            
+            // Clear edit mode if deleting the item being edited
+            if (editingItem == selectedItem) {
+                editingItem = null;
+            }
+        }
     }
     
     @FXML
@@ -873,8 +1116,6 @@ public class PurchaseInvoiceController implements Initializable {
             // Clear form and reset buttons
             clearPurchaseForm();
             editingItem = null;
-            btnAddToBill.setVisible(true);
-            btnUpdateItem.setVisible(false);
         }
     }
     
@@ -911,6 +1152,64 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML
     private void handleClearExchangeForm() {
         clearExchangeForm();
+    }
+    
+    @FXML
+    private void handleEditExchangeItem() {
+        PurchaseExchangeTransaction selectedItem = exchangeItemsTable.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            alertNotification.showError("Please select an item to edit");
+            return;
+        }
+        
+        // Set edit mode
+        editingExchangeItem = selectedItem;
+        
+        // Populate form fields with selected item data
+        if (txtExchangeItemName != null) txtExchangeItemName.setText(selectedItem.getItemName());
+        
+        // Find and set the metal type in combo box
+        if (cmbExchangeMetalType != null) {
+            Metal metal = cmbExchangeMetalType.getItems().stream()
+                .filter(m -> m.getMetalName().equals(selectedItem.getMetalType()))
+                .findFirst()
+                .orElse(null);
+            cmbExchangeMetalType.setValue(metal);
+        }
+        
+        if (txtExchangePurity != null) txtExchangePurity.setText(selectedItem.getPurity().toString());
+        if (txtExchangeGrossWeight != null) txtExchangeGrossWeight.setText(selectedItem.getGrossWeight().toString());
+        if (txtExchangeDeduction != null) txtExchangeDeduction.setText(selectedItem.getDeduction().toString());
+        if (txtExchangeNetWeight != null) txtExchangeNetWeight.setText(selectedItem.getNetWeight().toString());
+        if (txtExchangeRate != null) txtExchangeRate.setText(selectedItem.getRatePerTenGrams().toString());
+        if (txtExchangeAmount != null) txtExchangeAmount.setText(selectedItem.getTotalAmount().toString());
+    }
+    
+    @FXML
+    private void handleDeleteExchangeItem() {
+        PurchaseExchangeTransaction selectedItem = exchangeItemsTable.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            alertNotification.showError("Please select an item to delete");
+            return;
+        }
+        
+        // Confirm deletion
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setHeaderText("Delete Exchange Item");
+        alert.setContentText("Are you sure you want to delete: " + selectedItem.getItemName() + "?");
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            exchangeItems.remove(selectedItem);
+            updateSummary();
+            clearExchangeForm();
+            
+            // Clear edit mode if deleting the item being edited
+            if (editingExchangeItem == selectedItem) {
+                editingExchangeItem = null;
+            }
+        }
     }
     
     private void updateMetalRate(Metal metal) {
@@ -993,7 +1292,7 @@ public class PurchaseInvoiceController implements Initializable {
                 return;
             }
             
-            Supplier supplier = cmbSupplier.getValue();
+            Supplier supplier = supplierSearchField != null ? supplierSearchField.getSelectedItem() : null;
             PurchaseType purchaseType = PurchaseType.NEW_STOCK;
             
             // Determine purchase type based on items
@@ -1007,7 +1306,7 @@ public class PurchaseInvoiceController implements Initializable {
             List<PurchaseTransaction> allTransactions = new ArrayList<>(purchaseItems);
             
             // Convert exchange items to purchase transactions
-            for (ExchangeTransaction exItem : exchangeItems) {
+            for (PurchaseExchangeTransaction exItem : exchangeItems) {
                 PurchaseTransaction pTrans = new PurchaseTransaction();
                 pTrans.setItemCode("EX-" + System.currentTimeMillis());
                 pTrans.setItemName(exItem.getItemName());
@@ -1055,7 +1354,8 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private boolean validateForm() {
-        if (cmbSupplier.getValue() == null) {
+        Supplier selectedSupplier = supplierSearchField != null ? supplierSearchField.getSelectedItem() : null;
+        if (selectedSupplier == null) {
             alertNotification.showError("Please select a supplier");
             return false;
         }
@@ -1110,12 +1410,12 @@ public class PurchaseInvoiceController implements Initializable {
             // Exchange items summary
             int totalExchangeItems = exchangeItems.size();
             BigDecimal totalExchangeWeight = exchangeItems.stream()
-                .map(ExchangeTransaction::getNetWeight)
+                .map(PurchaseExchangeTransaction::getNetWeight)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             BigDecimal exchangeTotal = exchangeItems.stream()
-                .map(ExchangeTransaction::getTotalAmount)
+                .map(PurchaseExchangeTransaction::getTotalAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1134,16 +1434,20 @@ public class PurchaseInvoiceController implements Initializable {
             // Step 4: Subtract exchange amount
             BigDecimal grandTotal = totalAfterDiscount.subtract(exchangeTotal);
             
-            // Update labels
-            if (lblTotalPurchaseItems != null) lblTotalPurchaseItems.setText(String.valueOf(totalPurchaseItems));
-            if (lblTotalPurchaseWeight != null) lblTotalPurchaseWeight.setText(WeightFormatter.format(totalPurchaseWeight) + " g");
-            if (lblTotalExchangeItems != null) lblTotalExchangeItems.setText(String.valueOf(totalExchangeItems));
-            if (lblTotalExchangeWeight != null) lblTotalExchangeWeight.setText(WeightFormatter.format(totalExchangeWeight) + " g");
+            // Update labels - Purchase section
+            if (lblTotalPurchaseItems != null) lblTotalPurchaseItems.setText("(" + totalPurchaseItems + " items)");
+            if (lblPurchaseAmount != null) lblPurchaseAmount.setText(CurrencyFormatter.format(purchaseTotal));
+            
+            // Update labels - Exchange section
+            if (lblTotalExchangeItems != null) lblTotalExchangeItems.setText("(" + totalExchangeItems + " items)");
+            if (lblExchangeAmount != null) lblExchangeAmount.setText(CurrencyFormatter.format(exchangeTotal));
+            if (lblExchangeDeduction != null) lblExchangeDeduction.setText("-" + CurrencyFormatter.format(exchangeTotal));
+            
+            // Update labels - Bill calculation
             if (lblSubtotal != null) lblSubtotal.setText(CurrencyFormatter.format(subtotal));
             if (lblGST != null) lblGST.setText(CurrencyFormatter.format(gstAmount));
             if (lblNetTotal != null) lblNetTotal.setText(CurrencyFormatter.format(totalWithGst));
             if (lblTotalAmount != null) lblTotalAmount.setText(CurrencyFormatter.format(totalAfterDiscount));
-            if (lblExchangeAmount != null) lblExchangeAmount.setText(CurrencyFormatter.format(exchangeTotal));
             if (lblGrandTotal != null) lblGrandTotal.setText(CurrencyFormatter.format(grandTotal));
             
             updatePendingAmount();
@@ -1153,7 +1457,10 @@ public class PurchaseInvoiceController implements Initializable {
     private void clearForm() {
         purchaseItems.clear();
         exchangeItems.clear();
-        cmbSupplier.setValue(null);
+        if (supplierSearchField != null) supplierSearchField.clear();
+        if (txtSupplierName != null) txtSupplierName.clear();
+        if (txtGSTNumber != null) txtGSTNumber.clear();
+        if (txtSupplierContact != null) txtSupplierContact.clear();
         if (txtSupplierInvoice != null) txtSupplierInvoice.clear();
         if (txtPaymentReference != null) txtPaymentReference.clear();
         if (txtPaidAmount != null) txtPaidAmount.clear();
@@ -1167,6 +1474,9 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private void clearPurchaseForm() {
+        // Reset edit mode
+        editingItem = null;
+        
         if (txtItemCode != null) txtItemCode.clear();
         if (txtItemName != null) txtItemName.clear();
         if (cmbMetalType != null) {
@@ -1190,6 +1500,9 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private void clearExchangeForm() {
+        // Reset edit mode
+        editingExchangeItem = null;
+        
         if (txtExchangeItemName != null) txtExchangeItemName.clear();
         if (cmbExchangeMetalType != null) {
             // Set to first metal (usually GOLD) or find GOLD metal
@@ -1400,9 +1713,8 @@ public class PurchaseInvoiceController implements Initializable {
         
         if (txtLabourCharges != null) txtLabourCharges.setText(item.getMakingCharges().toString());
         
-        // Show update button and hide add button
-        btnAddToBill.setVisible(false);
-        btnUpdateItem.setVisible(true);
+        // Set editing mode
+        editingItem = item;
         
         isProgrammaticallySettingFields = false;
         
@@ -1532,5 +1844,135 @@ public class PurchaseInvoiceController implements Initializable {
                 icon.setFill(chipExchange.isSelected() ? Color.WHITE : Color.valueOf("#757575"));
             }
         }
+    }
+    
+    @FXML
+    private void handleSaveInvoice() {
+        // Validate required fields
+        Supplier selectedSupplier = supplierSearchField != null ? supplierSearchField.getSelectedItem() : null;
+        if (selectedSupplier == null) {
+            alertNotification.showError("Please select a supplier");
+            return;
+        }
+        
+        if (purchaseItems.isEmpty() && exchangeItems.isEmpty()) {
+            alertNotification.showError("Please add at least one item or exchange item");
+            return;
+        }
+        
+        try {
+            // Get payment details
+            PaymentMethod paymentMethod = cmbPaymentMode.getValue();
+            if (paymentMethod == null) {
+                paymentMethod = PaymentMethod.CASH;
+            }
+            
+            String paymentReference = txtPaymentReference.getText();
+            
+            // Get paid amount
+            BigDecimal paidAmount = BigDecimal.ZERO;
+            if (!txtPaidAmount.getText().trim().isEmpty()) {
+                try {
+                    paidAmount = new BigDecimal(txtPaidAmount.getText().trim());
+                } catch (NumberFormatException e) {
+                    alertNotification.showError("Invalid paid amount");
+                    return;
+                }
+            }
+            
+            // Get discount
+            BigDecimal discount = BigDecimal.ZERO;
+            if (!txtDiscount.getText().trim().isEmpty()) {
+                try {
+                    discount = new BigDecimal(txtDiscount.getText().trim());
+                } catch (NumberFormatException e) {
+                    alertNotification.showError("Invalid discount amount");
+                    return;
+                }
+            }
+            
+            // Create purchase invoice entity
+            PurchaseInvoice invoice = PurchaseInvoice.builder()
+                .supplier(selectedSupplier)
+                .supplierInvoiceNumber(txtSupplierInvoice.getText().trim())
+                .purchaseType(chipExchange.isSelected() ? PurchaseType.EXCHANGE_ITEMS : PurchaseType.NEW_STOCK)
+                .invoiceDate(LocalDateTime.now())
+                .paymentMethod(paymentMethod)
+                .paymentReference(paymentReference)
+                .status(PurchaseInvoice.InvoiceStatus.PAID)
+                .discount(discount)
+                .gstRate(new BigDecimal(txtGstRate.getText()))
+                .transportCharges(BigDecimal.ZERO)
+                .otherCharges(BigDecimal.ZERO)
+                .paidAmount(paidAmount)
+                .purchaseTransactions(new ArrayList<>(purchaseItems))
+                .purchaseExchangeTransactions(new ArrayList<>(exchangeItems))
+                .build();
+            
+            // Save invoice - this will handle stock updates
+            PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoiceWithStockUpdate(invoice);
+            
+            alertNotification.showSuccess("Purchase invoice saved successfully!");
+            
+            // Clear the form
+            clearAll();
+            
+            // Update date time display
+            updateDateTime();
+            
+        } catch (Exception e) {
+            LOG.error("Error saving purchase invoice", e);
+            alertNotification.showError("Error saving invoice: " + e.getMessage());
+        }
+    }
+    
+    private void clearAll() {
+        // Clear supplier info
+        if (supplierSearchField != null) {
+            supplierSearchField.clear();
+        }
+        txtSupplierName.clear();
+        txtGSTNumber.clear();
+        txtSupplierContact.clear();
+        txtSupplierInvoice.clear();
+        
+        // Clear purchase form
+        txtItemCode.clear();
+        txtItemName.clear();
+        cmbMetalType.setValue(null);
+        txtPurity.clear();
+        txtQuantity.clear();
+        txtGrossWeight.clear();
+        txtStoneWeight.clear();
+        txtNetWeight.clear();
+        txtRate.clear();
+        txtLabourCharges.clear();
+        txtAmount.clear();
+        
+        // Clear exchange form
+        txtExchangeItemName.clear();
+        cmbExchangeMetalType.setValue(null);
+        txtExchangePurity.clear();
+        txtExchangeGrossWeight.clear();
+        txtExchangeDeduction.clear();
+        txtExchangeNetWeight.clear();
+        txtExchangeRate.clear();
+        txtExchangeAmount.clear();
+        
+        // Clear payment details
+        cmbPaymentMode.setValue(null);
+        txtPaymentReference.clear();
+        txtPaidAmount.clear();
+        txtDiscount.setText("0.00");
+        
+        // Clear tables
+        purchaseItems.clear();
+        exchangeItems.clear();
+        
+        // Reset mode to purchase
+        chipPurchase.setSelected(true);
+        
+        // Update summary
+        updateSummary();
     }
 }
