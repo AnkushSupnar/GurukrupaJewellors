@@ -297,4 +297,27 @@ public class JewelryItemService {
                 .map(JewelryItem::getQuantity)
                 .orElse(0);
     }
+    
+    /**
+     * Get all unique categories from jewelry items
+     */
+    public List<String> getAllUniqueCategories() {
+        return jewelryItemRepository.findDistinctCategories().stream()
+                .filter(category -> category != null && !category.trim().isEmpty())
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * Get count of items per category
+     */
+    public java.util.Map<String, Long> getCategoryItemCount() {
+        List<JewelryItem> allItems = getAllJewelryItems();
+        return allItems.stream()
+                .filter(item -> item.getCategory() != null && !item.getCategory().trim().isEmpty())
+                .collect(java.util.stream.Collectors.groupingBy(
+                    JewelryItem::getCategory,
+                    java.util.stream.Collectors.counting()
+                ));
+    }
 }

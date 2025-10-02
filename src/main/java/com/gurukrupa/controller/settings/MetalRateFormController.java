@@ -1,5 +1,6 @@
 package com.gurukrupa.controller.settings;
 
+import com.gurukrupa.config.SpringFXMLLoader;
 import com.gurukrupa.data.entities.LoginUser;
 import com.gurukrupa.data.entities.Metal;
 import com.gurukrupa.data.entities.MetalRate;
@@ -13,10 +14,16 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -31,6 +38,12 @@ import java.util.stream.Collectors;
 
 @Component
 public class MetalRateFormController implements Initializable {
+    
+    private static final Logger logger = LoggerFactory.getLogger(MetalRateFormController.class);
+    
+    @Lazy
+    @Autowired
+    private SpringFXMLLoader springFXMLLoader;
     
     @Autowired
     private MetalService metalService;
@@ -55,6 +68,7 @@ public class MetalRateFormController implements Initializable {
     @FXML private Button btnUpdate;
     @FXML private Button btnClear;
     @FXML private Button btnDelete;
+    @FXML private Button btnBack;
     
     // Search controls
     @FXML private DatePicker dpSearchDate;
@@ -86,6 +100,11 @@ public class MetalRateFormController implements Initializable {
         setupTable();
         loadData();
         setupEventHandlers();
+        
+        // Initialize back button if it exists
+        if (btnBack != null) {
+            btnBack.setOnAction(e -> navigateBackToSettingsMenu());
+        }
     }
     
     private void setupControls() {
@@ -385,5 +404,25 @@ public class MetalRateFormController implements Initializable {
                 textField.setText(oldValue);
             }
         });
+    }
+    
+    private void navigateBackToSettingsMenu() {
+        try {
+            BorderPane dashboard = (BorderPane) btnBack.getScene().getRoot();
+            Parent settingsMenu = springFXMLLoader.load("/fxml/settings/SettingsMenu.fxml");
+            dashboard.setCenter(settingsMenu);
+            logger.info("Navigated back to Settings Menu");
+        } catch (Exception e) {
+            logger.error("Error navigating back: {}", e.getMessage());
+            alert.showError("Error navigating back: " + e.getMessage());
+        }
+    }
+    
+    public void setDialogStage(Stage dialogStage) {
+        // Hide back button when in dialog mode
+        if (btnBack != null) {
+            btnBack.setVisible(false);
+            btnBack.setManaged(false);
+        }
     }
 }

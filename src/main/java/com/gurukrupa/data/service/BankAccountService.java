@@ -87,6 +87,10 @@ public class BankAccountService {
         return bankAccountRepository.findByIsActiveTrueOrderByCreatedDateDesc();
     }
     
+    public List<BankAccount> getAllBankAccounts() {
+        return bankAccountRepository.findAll();
+    }
+    
     public List<BankAccount> searchBankAccounts(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllActiveBankAccounts();

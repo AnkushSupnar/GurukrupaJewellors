@@ -1,14 +1,20 @@
 package com.gurukrupa.controller.settings;
 
+import com.gurukrupa.config.SpringFXMLLoader;
 import com.gurukrupa.data.service.AppSettingsService;
 import com.gurukrupa.view.AlertNotification;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
@@ -16,6 +22,12 @@ import java.util.ResourceBundle;
 
 @Component
 public class TaxConfigurationController implements Initializable {
+    
+    private static final Logger logger = LoggerFactory.getLogger(TaxConfigurationController.class);
+    
+    @Lazy
+    @Autowired
+    private SpringFXMLLoader springFXMLLoader;
     
     @Autowired
     private AppSettingsService appSettingsService;
@@ -30,7 +42,7 @@ public class TaxConfigurationController implements Initializable {
     private Label lblCurrentGstRate, lblCurrentCgstRate, lblCurrentSgstRate;
     
     @FXML
-    private Button btnSaveGstRate, btnSaveCgstRate, btnSaveSgstRate, btnClose;
+    private Button btnSaveGstRate, btnSaveCgstRate, btnSaveSgstRate, btnClose, btnBack;
     
     private Stage dialogStage;
     
@@ -41,6 +53,11 @@ public class TaxConfigurationController implements Initializable {
         btnSaveCgstRate.setOnAction(event -> saveCgstRate());
         btnSaveSgstRate.setOnAction(event -> saveSgstRate());
         btnClose.setOnAction(event -> closeWindow());
+        
+        // Initialize back button if it exists
+        if (btnBack != null) {
+            btnBack.setOnAction(e -> navigateBackToSettingsMenu());
+        }
         
         // Add GST rate change listener for auto-calculation
         txtGstRate.textProperty().addListener((obs, oldVal, newVal) -> updateGstRates(newVal));
@@ -209,7 +226,24 @@ public class TaxConfigurationController implements Initializable {
         }
     }
     
+    private void navigateBackToSettingsMenu() {
+        try {
+            BorderPane dashboard = (BorderPane) btnBack.getScene().getRoot();
+            Parent settingsMenu = springFXMLLoader.load("/fxml/settings/SettingsMenu.fxml");
+            dashboard.setCenter(settingsMenu);
+            logger.info("Navigated back to Settings Menu");
+        } catch (Exception e) {
+            logger.error("Error navigating back: {}", e.getMessage());
+            alert.showError("Error navigating back: " + e.getMessage());
+        }
+    }
+    
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
+        // Hide back button when in dialog mode
+        if (btnBack != null) {
+            btnBack.setVisible(false);
+            btnBack.setManaged(false);
+        }
     }
 }

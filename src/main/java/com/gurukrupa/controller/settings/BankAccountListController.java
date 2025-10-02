@@ -33,13 +33,18 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import com.gurukrupa.config.SpringFXMLLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class BankAccountListController implements Initializable {
+    private static final Logger logger = LoggerFactory.getLogger(BankAccountListController.class);
 
     @Autowired
     @Lazy
@@ -53,12 +58,18 @@ public class BankAccountListController implements Initializable {
 
     @Autowired
     private AlertNotification alert;
+    
+    @Autowired
+    private SpringFXMLLoader springFXMLLoader;
 
     @FXML
     private TextField txtSearch;
     
     @FXML
     private Label lblTotalAccounts, lblTotalBalance, lblActiveAccounts;
+    
+    @FXML
+    private Text txtResultCount;
     
     @FXML
     private Button btnRefresh, btnAddBank, btnBack;
@@ -69,6 +80,7 @@ public class BankAccountListController implements Initializable {
     private ObservableList<BankAccount> bankAccountsList = FXCollections.observableArrayList();
     private FilteredList<BankAccount> filteredList;
     private Stage dialogStage;
+    private boolean isDashboardMode = true;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -90,6 +102,7 @@ public class BankAccountListController implements Initializable {
                        bankAccount.getAccountHolderName().toLowerCase().contains(lowerCaseFilter);
             });
             updateBankCards();
+            updateResultCount();
         });
         
         // Load data
@@ -99,90 +112,121 @@ public class BankAccountListController implements Initializable {
     private void updateBankCards() {
         bankCardsContainer.getChildren().clear();
         
-        for (BankAccount account : filteredList) {
+        // Sort by active status first (active accounts come first)
+        List<BankAccount> sortedList = new ArrayList<>(filteredList);
+        sortedList.sort((a, b) -> {
+            // Active accounts come first
+            if (a.getIsActive() && !b.getIsActive()) return -1;
+            if (!a.getIsActive() && b.getIsActive()) return 1;
+            // If same status, sort by bank name
+            return a.getBankName().compareToIgnoreCase(b.getBankName());
+        });
+        
+        for (BankAccount account : sortedList) {
             VBox card = createBankCard(account);
             bankCardsContainer.getChildren().add(card);
+        }
+        updateResultCount();
+    }
+    
+    private void updateResultCount() {
+        if (txtResultCount != null) {
+            int count = filteredList.size();
+            txtResultCount.setText(String.format("Showing %d account%s", count, count != 1 ? "s" : ""));
         }
     }
     
     private VBox createBankCard(BankAccount account) {
-        VBox card = new VBox(15);
-        card.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 25; " +
+        VBox card = new VBox(12);
+        card.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; " +
                       "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 3); " +
-                      "-fx-pref-width: 360; -fx-pref-height: 280;");
+                      "-fx-pref-width: 300; -fx-pref-height: 240;");
         
-        // Header with bank icon and name
-        HBox header = new HBox(15);
+        // Header with bank initials and name
+        HBox header = new HBox(12);
         header.setAlignment(Pos.CENTER_LEFT);
         
-        // Bank icon with colored background
+        // Bank initials with colored background
         StackPane iconContainer = new StackPane();
-        iconContainer.setStyle("-fx-background-color: #E3F2FD; -fx-background-radius: 50; " +
-                               "-fx-pref-width: 60; -fx-pref-height: 60;");
-        FontAwesomeIcon bankIcon = new FontAwesomeIcon();
-        bankIcon.setGlyphName("UNIVERSITY");
-        bankIcon.setSize("2em");
-        bankIcon.setFill(Color.web("#1976D2"));
-        iconContainer.getChildren().add(bankIcon);
+        String bankColor = getBankColor(account.getBankName());
+        iconContainer.setStyle("-fx-background-color: " + bankColor + "; -fx-background-radius: 50; " +
+                               "-fx-pref-width: 50; -fx-pref-height: 50;");
         
-        // Bank info
+        Label initialsLabel = new Label(getBankInitials(account.getBankName()));
+        initialsLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: white;");
+        iconContainer.getChildren().add(initialsLabel);
+        
+        // Bank info and status in VBox
         VBox bankInfo = new VBox(4);
+        HBox.setHgrow(bankInfo, Priority.ALWAYS);
+        
+        // Bank name with ellipsis for overflow
         Label bankName = new Label(account.getBankName());
-        bankName.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: #263238;");
+        bankName.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #263238;");
+        bankName.setMaxWidth(180);
+        bankName.setEllipsisString("...");
+        
+        // Account number and status in HBox
+        HBox accountRow = new HBox(8);
+        accountRow.setAlignment(Pos.CENTER_LEFT);
         
         Label accountNumber = new Label("A/C: " + account.getAccountNumber());
-        accountNumber.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-text-fill: #546E7A;");
+        accountNumber.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #546E7A;");
         
-        bankInfo.getChildren().addAll(bankName, accountNumber);
-        
-        // Status badge
+        // Status badge with fixed min width
         Label statusBadge = new Label(account.getIsActive() ? "Active" : "Inactive");
         statusBadge.setStyle(account.getIsActive() ? 
-            "-fx-background-color: #E8F5E9; -fx-text-fill: #2E7D32; -fx-padding: 6 16 6 16; " +
-            "-fx-background-radius: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-font-weight: 600; " +
-            "-fx-min-width: 80;" :
-            "-fx-background-color: #FFEBEE; -fx-text-fill: #C62828; -fx-padding: 6 16 6 16; " +
-            "-fx-background-radius: 12; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-font-weight: 600; " +
-            "-fx-min-width: 80;");
+            "-fx-background-color: #E8F5E9; -fx-text-fill: #2E7D32; -fx-padding: 4 12 4 12; " +
+            "-fx-background-radius: 10; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: 600; " +
+            "-fx-min-width: 60;" :
+            "-fx-background-color: #FFEBEE; -fx-text-fill: #C62828; -fx-padding: 4 12 4 12; " +
+            "-fx-background-radius: 10; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: 600; " +
+            "-fx-min-width: 60;");
         statusBadge.setAlignment(Pos.CENTER);
         
-        Region headerSpacer = new Region();
-        HBox.setHgrow(headerSpacer, Priority.ALWAYS);
-        header.getChildren().addAll(iconContainer, bankInfo, headerSpacer, statusBadge);
+        accountRow.getChildren().addAll(accountNumber, statusBadge);
+        bankInfo.getChildren().addAll(bankName, accountRow);
+        
+        header.getChildren().addAll(iconContainer, bankInfo);
         
         // Account details
-        VBox details = new VBox(8);
-        details.setStyle("-fx-padding: 15 0 15 0;");
+        VBox details = new VBox(6);
+        details.setStyle("-fx-padding: 10 0 10 0;");
         
         // Account holder
-        HBox holderRow = createDetailRow("USER", "Account Holder", account.getAccountHolderName(), "#757575");
+        Label holderLabel = new Label("Account Holder: " + account.getAccountHolderName());
+        holderLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #424242;");
         
-        // Account type and IFSC
-        HBox typeRow = createDetailRow("CREDIT_CARD", "Account Type", account.getAccountType().getDisplayName(), "#757575");
-        HBox ifscRow = createDetailRow("CODE", "IFSC Code", account.getIfscCode(), "#757575");
+        // Account type
+        Label typeLabel = new Label("Type: " + account.getAccountType().getDisplayName());
+        typeLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #424242;");
         
-        details.getChildren().addAll(holderRow, typeRow, ifscRow);
+        // IFSC Code
+        Label ifscLabel = new Label("IFSC: " + account.getIfscCode());
+        ifscLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #424242;");
+        
+        details.getChildren().addAll(holderLabel, typeLabel, ifscLabel);
         
         // Balance section
-        VBox balanceSection = new VBox(5);
-        balanceSection.setStyle("-fx-background-color: #F5F5F5; -fx-background-radius: 8; -fx-padding: 15;");
+        VBox balanceSection = new VBox(3);
+        balanceSection.setStyle("-fx-background-color: #F5F5F5; -fx-background-radius: 8; -fx-padding: 12;");
         
         Label balanceLabel = new Label("Current Balance");
-        balanceLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575;");
+        balanceLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #757575;");
         
         Label balanceAmount = new Label(String.format("₹ %,.2f", account.getCurrentBalance()));
-        balanceAmount.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 24px; -fx-font-weight: 700; " +
+        balanceAmount.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 20px; -fx-font-weight: 700; " +
                                "-fx-text-fill: " + (account.getCurrentBalance().compareTo(BigDecimal.ZERO) >= 0 ? "#2E7D32" : "#D32F2F") + ";");
         
         balanceSection.getChildren().addAll(balanceLabel, balanceAmount);
         
         // Action buttons
-        HBox actions = new HBox(10);
+        HBox actions = new HBox(8);
         actions.setAlignment(Pos.CENTER);
         
         Button btnView = createActionButton("VIEW", "#2196F3", e -> viewBankAccount(account));
         Button btnEdit = createActionButton("EDIT", "#4CAF50", e -> editBankAccount(account));
-        Button btnTransactions = createActionButton("TRANSACTIONS", "#FF9800", e -> viewTransactions(account));
+        Button btnTransactions = createActionButton("TRANS", "#FF9800", e -> viewTransactions(account));
         
         actions.getChildren().addAll(btnView, btnEdit, btnTransactions);
         
@@ -194,39 +238,99 @@ public class BankAccountListController implements Initializable {
         return card;
     }
     
-    private HBox createDetailRow(String iconName, String label, String value, String color) {
-        HBox row = new HBox(10);
-        row.setAlignment(Pos.CENTER_LEFT);
+    private String getBankInitials(String bankName) {
+        if (bankName == null || bankName.trim().isEmpty()) {
+            return "BK";
+        }
         
-        FontAwesomeIcon icon = new FontAwesomeIcon();
-        icon.setGlyphName(iconName);
-        icon.setSize("1em");
-        icon.setFill(Color.web(color));
+        // Handle common bank acronyms
+        String upperName = bankName.toUpperCase();
+        if (upperName.contains("STATE BANK OF INDIA") || upperName.contains("SBI")) {
+            return "SBI";
+        } else if (upperName.contains("HDFC")) {
+            return "HDF";
+        } else if (upperName.contains("ICICI")) {
+            return "ICI";
+        } else if (upperName.contains("AXIS")) {
+            return "AXS";
+        } else if (upperName.contains("PUNJAB NATIONAL") || upperName.contains("PNB")) {
+            return "PNB";
+        } else if (upperName.contains("BANK OF BARODA") || upperName.contains("BOB")) {
+            return "BOB";
+        } else if (upperName.contains("CANARA")) {
+            return "CAN";
+        } else if (upperName.contains("UNION BANK")) {
+            return "UBI";
+        } else if (upperName.contains("INDIAN BANK")) {
+            return "IND";
+        } else if (upperName.contains("KOTAK")) {
+            return "KTK";
+        }
         
-        Label labelText = new Label(label + ":");
-        labelText.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575;");
+        // Extract first letter of each word (max 3 letters)
+        String[] words = bankName.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
         
-        Label valueText = new Label(value);
-        valueText.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-text-fill: #424242; -fx-font-weight: 600;");
+        for (String word : words) {
+            if (!word.isEmpty() && Character.isLetter(word.charAt(0))) {
+                initials.append(Character.toUpperCase(word.charAt(0)));
+                if (initials.length() >= 3) break;
+            }
+        }
         
-        row.getChildren().addAll(icon, labelText, valueText);
-        return row;
+        // If no initials found, use first 2 characters
+        if (initials.length() == 0) {
+            return bankName.length() >= 2 ? 
+                   bankName.substring(0, 2).toUpperCase() : 
+                   bankName.toUpperCase();
+        }
+        
+        return initials.toString();
+    }
+    
+    private String getBankColor(String bankName) {
+        if (bankName == null) return "#0D47A1"; // Default dark blue
+        
+        String upperName = bankName.toUpperCase();
+        if (upperName.contains("STATE BANK") || upperName.contains("SBI")) {
+            return "#1976D2"; // Blue
+        } else if (upperName.contains("HDFC")) {
+            return "#D32F2F"; // Red
+        } else if (upperName.contains("ICICI")) {
+            return "#F57C00"; // Orange
+        } else if (upperName.contains("AXIS")) {
+            return "#7B1FA2"; // Purple
+        } else if (upperName.contains("PUNJAB NATIONAL") || upperName.contains("PNB")) {
+            return "#C62828"; // Dark Red
+        } else if (upperName.contains("BANK OF BARODA") || upperName.contains("BOB")) {
+            return "#E64A19"; // Deep Orange
+        } else if (upperName.contains("CANARA")) {
+            return "#303F9F"; // Indigo
+        } else if (upperName.contains("UNION BANK")) {
+            return "#00796B"; // Teal
+        } else if (upperName.contains("INDIAN BANK")) {
+            return "#5D4037"; // Brown
+        } else if (upperName.contains("KOTAK")) {
+            return "#D81B60"; // Pink
+        }
+        
+        return "#0D47A1"; // Default dark blue
     }
     
     private Button createActionButton(String text, String color, javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
         Button button = new Button(text);
         button.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white; " +
-                        "-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: 600; " +
-                        "-fx-background-radius: 18; -fx-padding: 6 16 6 16; -fx-cursor: hand;");
+                        "-fx-font-family: 'Segoe UI'; -fx-font-size: 10px; -fx-font-weight: 600; " +
+                        "-fx-background-radius: 16; -fx-padding: 5 12 5 12; -fx-cursor: hand;");
         button.setOnAction(handler);
         
         // Add hover effect
         button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: derive(" + color + ", -10%); -fx-text-fill: white; " +
-                        "-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: 600; " +
-                        "-fx-background-radius: 18; -fx-padding: 6 16 6 16; -fx-cursor: hand;"));
+                        "-fx-font-family: 'Segoe UI'; -fx-font-size: 10px; -fx-font-weight: 600; " +
+                        "-fx-background-radius: 16; -fx-padding: 5 12 5 12; -fx-cursor: hand;"));
         button.setOnMouseExited(e -> button.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white; " +
-                        "-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: 600; " +
-                        "-fx-background-radius: 18; -fx-padding: 6 16 6 16; -fx-cursor: hand;"));
+                        "-fx-font-family: 'Segoe UI'; -fx-font-size: 10px; -fx-font-weight: 600; " +
+                        "-fx-background-radius: 16; -fx-padding: 5 12 5 12; -fx-cursor: hand;"));
         
         return button;
     }
@@ -241,7 +345,8 @@ public class BankAccountListController implements Initializable {
     
     private void loadBankAccounts() {
         try {
-            List<BankAccount> accounts = bankAccountService.getAllActiveBankAccounts();
+            // Get all accounts (both active and inactive)
+            List<BankAccount> accounts = bankAccountService.getAllBankAccounts();
             bankAccountsList.clear();
             bankAccountsList.addAll(accounts);
             
@@ -275,30 +380,33 @@ public class BankAccountListController implements Initializable {
     
     private void openAddBankAccount() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
-            
-            // Load the FXML and controller
-            Map.Entry<Parent, BankAccountFormController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.BANKACCOUNTFORM.getFxmlFile(), BankAccountFormController.class);
-            
-            Parent root = entry.getKey();
-            BankAccountFormController controller = entry.getValue();
-            
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Add New Bank Account");
-            dialog.setResizable(false);
-            
-            // Show the dialog and wait
-            dialog.showAndWait();
-            
-            // Refresh the list after adding
-            loadBankAccounts();
-            
+            if (isDashboardMode && btnAddBank != null && btnAddBank.getScene() != null) {
+                // Open in dashboard mode
+                BorderPane dashboard = (BorderPane) btnAddBank.getScene().getRoot();
+                Parent bankAccountForm = springFXMLLoader.load("/fxml/settings/BankAccountForm.fxml");
+                dashboard.setCenter(bankAccountForm);
+                logger.info("Bank Account form opened in dashboard");
+            } else {
+                // Open as dialog (fallback)
+                Stage dialog = new Stage();
+                dialog.initModality(Modality.APPLICATION_MODAL);
+                dialog.initOwner(stageManager.getPrimaryStage());
+                
+                Map.Entry<Parent, BankAccountFormController> entry = stageManager.getSpringFXMLLoader()
+                        .loadWithController(FxmlView.BANKACCOUNTFORM.getFxmlFile(), BankAccountFormController.class);
+                
+                Parent root = entry.getKey();
+                BankAccountFormController controller = entry.getValue();
+                
+                dialog.setScene(new Scene(root));
+                dialog.setTitle("Add New Bank Account");
+                dialog.setResizable(false);
+                dialog.showAndWait();
+                
+                loadBankAccounts();
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error opening bank account form: {}", e.getMessage());
             alert.showError("Error opening add bank account form: " + e.getMessage());
         }
     }
@@ -507,6 +615,17 @@ public class BankAccountListController implements Initializable {
     private void goBack() {
         if (dialogStage != null) {
             dialogStage.close();
+        } else if (isDashboardMode && btnBack != null && btnBack.getScene() != null) {
+            try {
+                // Navigate back to Settings Menu in dashboard mode
+                BorderPane dashboard = (BorderPane) btnBack.getScene().getRoot();
+                Parent settingsMenu = springFXMLLoader.load("/fxml/settings/SettingsMenu.fxml");
+                dashboard.setCenter(settingsMenu);
+                logger.info("Navigated back to Settings Menu");
+            } catch (Exception e) {
+                logger.error("Error navigating back to Settings Menu: {}", e.getMessage());
+                alert.showError("Error navigating back: " + e.getMessage());
+            }
         } else {
             stageManager.switchScene(FxmlView.SETTINGS_MENU);
         }
@@ -514,5 +633,11 @@ public class BankAccountListController implements Initializable {
     
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
+        this.isDashboardMode = false;
+        // Hide back button in dialog mode
+        if (btnBack != null) {
+            btnBack.setVisible(false);
+            btnBack.setManaged(false);
+        }
     }
 }

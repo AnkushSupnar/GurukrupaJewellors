@@ -9,8 +9,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -22,6 +25,8 @@ import java.util.ResourceBundle;
 
 @Component
 public class SettingsMenuController implements Initializable {
+    
+    private static final Logger logger = LoggerFactory.getLogger(SettingsMenuController.class);
     
     @Autowired
     @Lazy
@@ -115,61 +120,45 @@ public class SettingsMenuController implements Initializable {
     
     private void openAppSettings() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening Application Settings");
             
-            // Load the FXML and get both the root and controller
-            Map.Entry<Parent, AppSettingsController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.APP_SETTINGS.getFxmlFile(), AppSettingsController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAppSettings.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            AppSettingsController controller = entry.getValue();
+            // Load the FXML
+            Parent appSettings = stageManager.getSpringFXMLLoader().load("/fxml/settings/AppSettings.fxml");
             
-            // Set up the dialog stage in controller
-            controller.setDialogStage(dialog);
+            // Set the form in the center of the dashboard
+            dashboard.setCenter(appSettings);
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Application Settings");
-            dialog.setResizable(false);
+            logger.info("Application Settings loaded in dashboard successfully");
             
-            // Show the dialog and wait for it to close
-            dialog.showAndWait();
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening Application Settings: {}", e.getMessage());
             e.printStackTrace();
-            alert.showError("Failed to open Application Settings: " + e.getMessage());
+            alert.showError("Error opening Application Settings: " + e.getMessage());
         }
     }
     
     private void openTaxConfiguration() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening Tax Configuration");
             
-            // Load the Tax Configuration FXML
-            Map.Entry<Parent, TaxConfigurationController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController("/fxml/settings/TaxConfiguration.fxml", TaxConfigurationController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnConfigureTax.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            TaxConfigurationController controller = entry.getValue();
+            // Load the FXML
+            Parent taxConfiguration = stageManager.getSpringFXMLLoader().load("/fxml/settings/TaxConfiguration.fxml");
             
-            // Set up the dialog stage in controller
-            controller.setDialogStage(dialog);
+            // Set the form in the center of the dashboard
+            dashboard.setCenter(taxConfiguration);
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Tax Configuration");
-            dialog.setResizable(false);
+            logger.info("Tax Configuration loaded in dashboard successfully");
             
-            // Show the dialog and wait for it to close
-            dialog.showAndWait();
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening Tax Configuration: {}", e.getMessage());
             e.printStackTrace();
-            alert.showError("Failed to open Tax Configuration: " + e.getMessage());
+            alert.showError("Error opening Tax Configuration: " + e.getMessage());
         }
     }
     
@@ -185,66 +174,43 @@ public class SettingsMenuController implements Initializable {
     
     private void openMetalRateManagement() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening Metal Rate Management");
             
-            // Load the FXML and get both the root and controller
-            Map.Entry<Parent, MetalRateFormController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.METAL_RATE_FORM.getFxmlFile(), MetalRateFormController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnMetalRate.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            MetalRateFormController controller = entry.getValue();
+            // Load the FXML
+            Parent metalRateForm = stageManager.getSpringFXMLLoader().load("/fxml/settings/MetalRateFrame.fxml");
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Metal Rate Management");
-            dialog.setResizable(true);
-            dialog.setWidth(1200);
-            dialog.setHeight(700);
+            // Set the form in the center of the dashboard
+            dashboard.setCenter(metalRateForm);
             
-            // Show the dialog and wait for it to close
-            dialog.showAndWait();
+            logger.info("Metal Rate Management loaded in dashboard successfully");
             
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening Metal Rate Management: {}", e.getMessage());
             e.printStackTrace();
-            alert.showError("Failed to open Metal Rate Management: " + e.getMessage());
+            alert.showError("Error opening Metal Rate Management: " + e.getMessage());
         }
     }
     
     private void openBankAccountForm() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening Bank Account Form");
             
-            // Load the Bank Account Form FXML
-            Map.Entry<Parent, BankAccountFormController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController("/fxml/settings/BankAccountForm.fxml", BankAccountFormController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddBank.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            BankAccountFormController controller = entry.getValue();
+            // Load the FXML
+            Parent bankAccountForm = stageManager.getSpringFXMLLoader().load("/fxml/settings/BankAccountForm.fxml");
             
-            // Set up the dialog stage in controller
-            controller.setDialogStage(dialog);
+            // Set the bank account form in the center of the dashboard
+            dashboard.setCenter(bankAccountForm);
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Add New Bank Account");
-            dialog.setResizable(false);
+            logger.info("Bank Account form loaded in dashboard successfully");
             
-            // Show the dialog and wait for it to close
-            dialog.showAndWait();
-            
-            // Handle the result after dialog closes
-            if (controller.isSaved()) {
-                System.out.println("Bank account saved successfully!");
-                alert.showSuccess("Bank account added successfully!");
-            } else {
-                System.out.println("Bank account addition was cancelled");
-            }
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening bank account form: {}", e.getMessage());
             e.printStackTrace();
             alert.showError("Error opening bank account form: " + e.getMessage());
         }
@@ -252,31 +218,21 @@ public class SettingsMenuController implements Initializable {
     
     private void viewAllBankAccounts() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening Bank Accounts List");
             
-            // Load the Bank Account List FXML
-            Map.Entry<Parent, BankAccountListController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController("/fxml/settings/BankAccountList.fxml", BankAccountListController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnViewBanks.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            BankAccountListController controller = entry.getValue();
+            // Load the FXML
+            Parent bankAccountList = stageManager.getSpringFXMLLoader().load("/fxml/settings/BankAccountList.fxml");
             
-            // Set the dialog stage in controller
-            controller.setDialogStage(dialog);
+            // Set the bank account list in the center of the dashboard
+            dashboard.setCenter(bankAccountList);
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Bank Accounts Management");
-            dialog.setWidth(1200);
-            dialog.setHeight(700);
-            dialog.setResizable(true);
+            logger.info("Bank Accounts list loaded in dashboard successfully");
             
-            // Show the dialog
-            dialog.showAndWait();
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening bank accounts list: {}", e.getMessage());
             e.printStackTrace();
             alert.showError("Error opening bank accounts list: " + e.getMessage());
         }
@@ -289,64 +245,45 @@ public class SettingsMenuController implements Initializable {
     
     private void openAddUPIPayment() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening Add UPI Payment");
             
-            // Load the Add UPI Payment FXML
-            Map.Entry<Parent, UPIPaymentController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.ADD_UPI_PAYMENT.getFxmlFile(), UPIPaymentController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddUPI.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            UPIPaymentController controller = entry.getValue();
+            // Load the FXML
+            Parent addUPIPayment = stageManager.getSpringFXMLLoader().load("/fxml/settings/AddUPIPayment.fxml");
             
-            // Set up the dialog stage in controller
-            controller.setDialogStage(dialog);
+            // Set the form in the center of the dashboard
+            dashboard.setCenter(addUPIPayment);
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Add UPI Payment Method");
-            dialog.setResizable(false);
+            logger.info("Add UPI Payment loaded in dashboard successfully");
             
-            // Show the dialog and wait for it to close
-            dialog.showAndWait();
-            
-            if (controller.isSaved()) {
-                alert.showSuccess("UPI Payment Method added successfully!");
-            }
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening Add UPI Payment: {}", e.getMessage());
             e.printStackTrace();
-            alert.showError("Error opening add UPI payment form: " + e.getMessage());
+            alert.showError("Error opening Add UPI Payment: " + e.getMessage());
         }
     }
     
     private void viewAllUPIPayments() {
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            logger.info("Opening UPI Payment List");
             
-            // Load the UPI Payment List FXML
-            Map.Entry<Parent, UPIPaymentListController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.UPI_PAYMENT_LIST.getFxmlFile(), UPIPaymentListController.class);
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnViewUPI.getScene().getRoot();
             
-            Parent root = entry.getKey();
-            UPIPaymentListController controller = entry.getValue();
+            // Load the FXML
+            Parent upiPaymentList = stageManager.getSpringFXMLLoader().load("/fxml/settings/UPIPaymentList.fxml");
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("UPI Payment Methods");
-            dialog.setWidth(1000);
-            dialog.setHeight(700);
-            dialog.setResizable(true);
+            // Set the form in the center of the dashboard
+            dashboard.setCenter(upiPaymentList);
             
-            // Show the dialog
-            dialog.showAndWait();
+            logger.info("UPI Payment List loaded in dashboard successfully");
             
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("Error opening UPI Payment List: {}", e.getMessage());
             e.printStackTrace();
-            alert.showError("Error opening UPI payments list: " + e.getMessage());
+            alert.showError("Error opening UPI Payment List: " + e.getMessage());
         }
     }
 }

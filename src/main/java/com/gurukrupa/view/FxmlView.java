@@ -193,6 +193,16 @@ public enum FxmlView {
         public String getFxmlFile() {
             return "/fxml/transaction/PurchaseInvoiceFrame.fxml";
         }
+    },
+    CATEGORY_FORM {
+        @Override
+        String getTitle() {
+            return "Category Management";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/master/Categories.fxml";
+        }
     }
     ;
     abstract String getTitle();

@@ -135,8 +135,8 @@ public class JewelryItemMenuController implements Initializable {
         btnViewRates.setOnAction(event -> showNotImplemented("View Rates History"));
         
         // Categories Management
-        btnAddCategory.setOnAction(event -> showNotImplemented("Add Category"));
-        btnViewCategories.setOnAction(event -> showNotImplemented("Manage Categories"));
+        btnAddCategory.setOnAction(event -> openCategoryForm());
+        btnViewCategories.setOnAction(event -> openCategoryForm());
         
         // Suppliers Management
         btnAddSupplier.setOnAction(event -> openAddSupplierDialog());
@@ -186,22 +186,16 @@ public class JewelryItemMenuController implements Initializable {
     private void openAddCustomerDialog() {
         logger.info("Opening Add Customer form");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddCustomer.getScene().getRoot();
             
-            // Load the customer form FXML
-            Parent root = springFXMLLoader.load(FxmlView.CUSTOMER_FORM.getFxmlFile());
+            // Load the FXML
+            Parent customerForm = springFXMLLoader.load(FxmlView.CUSTOMER_FORM.getFxmlFile());
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Customer Management");
-            dialog.setResizable(true);
+            // Set the customer form in the center of the dashboard
+            dashboard.setCenter(customerForm);
             
-            // Show the dialog
-            dialog.show();
-            
-            logger.info("Customer form opened successfully");
+            logger.info("Customer form loaded in dashboard successfully");
             
         } catch (Exception e) {
             logger.error("Error opening customer form: {}", e.getMessage());
@@ -222,22 +216,16 @@ public class JewelryItemMenuController implements Initializable {
     private void openMetalForm() {
         logger.info("Opening Metal Form");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddMetal.getScene().getRoot();
             
-            // Load the metal form FXML
-            Parent root = springFXMLLoader.load(FxmlView.METAL_FORM.getFxmlFile());
+            // Load the FXML
+            Parent metalForm = springFXMLLoader.load(FxmlView.METAL_FORM.getFxmlFile());
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Metal Management");
-            dialog.setResizable(true);
+            // Set the metal form in the center of the dashboard
+            dashboard.setCenter(metalForm);
             
-            // Show the dialog
-            dialog.show();
-            
-            logger.info("Metal form opened successfully");
+            logger.info("Metal form loaded in dashboard successfully");
             
         } catch (Exception e) {
             logger.error("Error opening metal form: {}", e.getMessage());
@@ -248,25 +236,39 @@ public class JewelryItemMenuController implements Initializable {
     private void openAddSupplierDialog() {
         logger.info("Opening Add Supplier form");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddSupplier.getScene().getRoot();
             
-            // Load the supplier form FXML
-            Parent root = springFXMLLoader.load(FxmlView.ADD_SUPPLIER.getFxmlFile());
+            // Load the FXML
+            Parent supplierForm = springFXMLLoader.load(FxmlView.ADD_SUPPLIER.getFxmlFile());
             
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Supplier Management");
-            dialog.setResizable(true);
+            // Set the supplier form in the center of the dashboard
+            dashboard.setCenter(supplierForm);
             
-            // Show the dialog
-            dialog.show();
-            
-            logger.info("Supplier form opened successfully");
+            logger.info("Supplier form loaded in dashboard successfully");
             
         } catch (Exception e) {
             logger.error("Error opening supplier form: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void openCategoryForm() {
+        logger.info("Opening Category Management form");
+        try {
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddCategory.getScene().getRoot();
+            
+            // Load the FXML
+            Parent categoryForm = springFXMLLoader.load(FxmlView.CATEGORY_FORM.getFxmlFile());
+            
+            // Set the category form in the center of the dashboard
+            dashboard.setCenter(categoryForm);
+            
+            logger.info("Category form loaded in dashboard successfully");
+            
+        } catch (Exception e) {
+            logger.error("Error opening category form: {}", e.getMessage());
             e.printStackTrace();
         }
     }

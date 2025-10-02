@@ -1,6 +1,8 @@
 package com.gurukrupa.controller.master;
 
+import com.gurukrupa.data.entities.Category;
 import com.gurukrupa.data.entities.JewelryItem;
+import com.gurukrupa.data.service.CategoryService;
 import com.gurukrupa.data.service.JewelryItemService;
 import com.gurukrupa.data.service.MetalService;
 import com.gurukrupa.view.AlertNotification;
@@ -38,6 +40,9 @@ public class JewelryItemFormController implements Initializable {
     
     @Autowired
     private MetalService metalService;
+    
+    @Autowired
+    private CategoryService categoryService;
     
     @Autowired
     private AlertNotification alert;
@@ -114,13 +119,8 @@ public class JewelryItemFormController implements Initializable {
     }
     
     private void setupFormFields() {
-        // Setup category options
-        List<String> categories = Arrays.asList(
-            "Ring", "Necklace", "Earrings", "Bracelet", "Pendant", 
-            "Chain", "Bangles", "Anklet", "Nose Pin", "Toe Ring"
-        );
-        cmbCategory.setItems(FXCollections.observableArrayList(categories));
-        cmbFilterCategory.setItems(FXCollections.observableArrayList(categories));
+        // Setup category options from database
+        loadCategories();
         
         // Setup metal type options from database
         loadMetalTypes();
@@ -209,6 +209,44 @@ public class JewelryItemFormController implements Initializable {
             }
         } catch (Exception e) {
             logger.warn("Could not load existing categories: {}", e.getMessage());
+        }
+    }
+    
+    private void loadCategories() {
+        try {
+            // First ensure existing categories are migrated
+            if (categoryService.getTotalCategoryCount() == 0) {
+                categoryService.migrateExistingCategories();
+            }
+            
+            // Load all active categories
+            List<Category> categories = categoryService.getAllActiveCategories();
+            ObservableList<String> categoryNames = FXCollections.observableArrayList();
+            
+            for (Category category : categories) {
+                categoryNames.add(category.getCategoryName());
+            }
+            
+            cmbCategory.setItems(categoryNames);
+            cmbFilterCategory.setItems(categoryNames);
+            
+            // Also add existing categories from items that might not be in the category table yet
+            List<String> existingCategories = jewelryItemService.getDistinctCategories();
+            for (String cat : existingCategories) {
+                if (cat != null && !cat.trim().isEmpty() && !categoryNames.contains(cat)) {
+                    categoryNames.add(cat);
+                }
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error loading categories: {}", e.getMessage());
+            // Fallback to default categories if database fails
+            List<String> defaultCategories = Arrays.asList(
+                "Ring", "Necklace", "Earrings", "Bracelet", "Pendant", 
+                "Chain", "Bangles", "Anklet", "Nose Pin", "Toe Ring"
+            );
+            cmbCategory.setItems(FXCollections.observableArrayList(defaultCategories));
+            cmbFilterCategory.setItems(FXCollections.observableArrayList(defaultCategories));
         }
     }
     
@@ -522,6 +560,7 @@ public class JewelryItemFormController implements Initializable {
     }
     
     private void refreshTable() {
+        loadCategories(); // Reload categories in case new ones were added
         loadJewelryItems();
         alert.showSuccess("Table refreshed successfully");
     }

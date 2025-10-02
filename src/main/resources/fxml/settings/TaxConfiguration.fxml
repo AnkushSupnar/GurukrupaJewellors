@@ -6,267 +6,213 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<BorderPane prefHeight="650.0" prefWidth="900.0" style="-fx-background-color: #FAFAFA;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.settings.TaxConfigurationController">
-   <top>
-      <!-- Material Design Header -->
-      <VBox>
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.settings.TaxConfigurationController">
+   <children>
+      
+      <!-- Main Container -->
+      <VBox spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
          <children>
-            <HBox alignment="CENTER_LEFT" style="-fx-background-color: linear-gradient(to right, #FF9800, #F57C00); -fx-padding: 24;" prefHeight="80.0">
+            
+            <!-- Header with Back Button -->
+            <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 4);">
                <children>
-                  <FontAwesomeIcon fill="#FFFFFF" glyphName="CALCULATOR" size="2.2em">
-                     <HBox.margin>
-                        <Insets right="20.0" />
-                     </HBox.margin>
-                  </FontAwesomeIcon>
-                  <VBox spacing="4.0">
-                     <children>
-                        <Label text="Tax Configuration" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-text-fill: #FFFFFF;">
-                           <font>
-                              <Font size="26.0" />
-                           </font>
-                        </Label>
-                        <Label text="Configure GST rates for your business" style="-fx-font-family: 'Segoe UI'; -fx-text-fill: rgba(255,255,255,0.8);">
-                           <font>
-                              <Font size="14.0" />
-                           </font>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <HBox HBox.hgrow="ALWAYS" />
-                  <Button fx:id="btnClose" minWidth="48.0" minHeight="48.0" maxWidth="48.0" maxHeight="48.0" style="-fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 24; -fx-cursor: hand;">
+                  <!-- Back Button -->
+                  <Button fx:id="btnBack" mnemonicParsing="false" style="-fx-background-color: #E0E0E0; -fx-background-radius: 20; -fx-padding: 10; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 0, 0, 1);">
                      <graphic>
-                        <FontAwesomeIcon fill="#FFFFFF" glyphName="TIMES" size="1.6em" />
+                        <FontAwesomeIcon fill="#424242" glyphName="ARROW_LEFT" size="1.5em" />
                      </graphic>
                   </Button>
+                  
+                  <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: linear-gradient(135deg, #00897B 0%, #00695C 100%); -fx-background-radius: 30;">
+                     <children>
+                        <FontAwesomeIcon fill="WHITE" glyphName="CALCULATOR" size="1.8em" />
+                     </children>
+                  </StackPane>
+                  <VBox>
+                     <children>
+                        <Text fill="#00695C" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 28px; -fx-font-family: 'Segoe UI';" text="Tax Configuration" />
+                        <Text fill="#757575" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 14px; -fx-font-family: 'Segoe UI';" text="Configure GST rates for your business" />
+                     </children>
+                  </VBox>
                </children>
             </HBox>
-            <!-- Shadow line -->
-            <HBox prefHeight="4.0" style="-fx-background-color: linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0));" />
-         </children>
-      </VBox>
-   </top>
-   
-   <center>
-      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent; -fx-background: transparent;">
-         <content>
-            <VBox spacing="24.0" style="-fx-padding: 32;">
-               <children>
-                  
-                  <!-- GST Rates Setting (Combined) -->
-                  <VBox spacing="0.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 2); -fx-border-color: rgba(0,0,0,0.06); -fx-border-radius: 12;">
+            
+            <!-- Content Area -->
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS">
+               <content>
+                  <VBox spacing="20.0">
                      <children>
-                        <!-- Card Header -->
-                        <HBox alignment="CENTER_LEFT" style="-fx-padding: 24 24 16 24; -fx-background-color: #F8F9FA; -fx-background-radius: 12 12 0 0;">
-                           <children>
-                              <FontAwesomeIcon fill="#FF9800" glyphName="CALCULATOR" size="1.8em">
-                                 <HBox.margin>
-                                    <Insets right="16.0" />
-                                 </HBox.margin>
-                              </FontAwesomeIcon>
-                              <VBox spacing="2.0">
-                                 <children>
-                                    <Label text="GST Configuration" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-text-fill: #212121;">
-                                       <font>
-                                          <Font size="20.0" />
-                                       </font>
-                                    </Label>
-                                    <Label text="Configure GST rates - CGST + SGST = Total GST" style="-fx-font-family: 'Segoe UI'; -fx-text-fill: #757575;">
-                                       <font>
-                                          <Font size="13.0" />
-                                       </font>
-                                    </Label>
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
                         
-                        <!-- Card Content -->
-                        <VBox spacing="24.0" style="-fx-padding: 24;">
+                        <!-- GST Configuration Card -->
+                        <VBox spacing="0.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 4);">
                            <children>
-                              
-                              <!-- Total GST Rate Section -->
-                              <VBox spacing="12.0">
+                              <!-- Card Header -->
+                              <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: linear-gradient(135deg, #00897B 0%, #00695C 100%); -fx-background-radius: 16 16 0 0; -fx-padding: 20;">
                                  <children>
-                                    <Label text="Total GST Rate (%)" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-text-fill: #424242;">
-                                       <font>
-                                          <Font size="16.0" />
-                                       </font>
-                                    </Label>
-                                    <HBox spacing="16.0" alignment="CENTER_LEFT">
+                                    <StackPane prefHeight="40.0" prefWidth="40.0" style="-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 20;">
                                        <children>
-                                          <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #FFF3E0; -fx-background-radius: 8; -fx-border-color: #FF9800; -fx-border-radius: 8; -fx-border-width: 2; -fx-padding: 4;">
-                                             <children>
-                                                <TextField fx:id="txtGstRate" promptText="3.00" prefWidth="200.0" style="-fx-font-size: 15; -fx-padding: 10; -fx-background-color: transparent; -fx-border-color: transparent;" />
-                                                <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 15px; -fx-text-fill: #FF9800; -fx-padding: 0 12 0 0;">%</Label>
-                                             </children>
-                                          </HBox>
-                                          <Button fx:id="btnSaveGstRate" text="SAVE GST" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: 600; -fx-padding: 14 28; -fx-background-radius: 8; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(255,152,0,0.3), 4, 0, 0, 2);">
-                                             <font>
-                                                <Font size="13.0" />
-                                             </font>
-                                          </Button>
+                                          <FontAwesomeIcon fill="WHITE" glyphName="PERCENT" size="1.4em" />
                                        </children>
-                                    </HBox>
-                                    
-                                    <!-- Current Total GST Display -->
-                                    <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #FFF3E0; -fx-background-radius: 8; -fx-padding: 16;">
+                                    </StackPane>
+                                    <VBox>
                                        <children>
-                                          <FontAwesomeIcon fill="#FF9800" glyphName="INFO_CIRCLE" size="1.2em" />
-                                          <Label text="Current Total GST:" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500; -fx-text-fill: #F57C00;">
-                                             <font>
-                                                <Font size="14.0" />
-                                             </font>
-                                          </Label>
-                                          <Label fx:id="lblCurrentGstRate" text="3.00%" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-text-fill: #E65100;">
-                                             <font>
-                                                <Font size="16.0" />
-                                             </font>
-                                          </Label>
+                                          <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-font-family: 'Segoe UI';" text="GST Rate Configuration" />
+                                          <Text fill="rgba(255,255,255,0.9)" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Configure GST rates - CGST + SGST = Total GST" />
                                        </children>
-                                    </HBox>
+                                    </VBox>
                                  </children>
-                              </VBox>
+                              </HBox>
                               
-                              <!-- Separator -->
-                              <HBox prefHeight="1.0" style="-fx-background-color: #E0E0E0;" />
-                              
-                              <!-- CGST and SGST Section -->
-                              <VBox spacing="16.0">
+                              <!-- Card Content -->
+                              <VBox spacing="25.0" style="-fx-padding: 30;">
                                  <children>
-                                    <Label text="Component Tax Rates" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-text-fill: #424242;">
-                                       <font>
-                                          <Font size="16.0" />
-                                       </font>
-                                    </Label>
-                                    
-                                    <HBox spacing="24.0" alignment="CENTER_LEFT">
+                                    <!-- Total GST Rate Section -->
+                                    <VBox spacing="15.0">
                                        <children>
-                                          <!-- CGST Section -->
-                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                          <Text fill="#00897B" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="TOTAL GST RATE" />
+                                          
+                                          <VBox spacing="8.0">
                                              <children>
-                                                <Label text="CGST Rate (%)" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500; -fx-text-fill: #424242;">
-                                                   <font>
-                                                      <Font size="14.0" />
-                                                   </font>
-                                                </Label>
-                                                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Total GST Rate (%) *" />
+                                                <HBox spacing="15.0" alignment="CENTER_LEFT">
                                                    <children>
-                                                      <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #F3E5F5; -fx-background-radius: 8; -fx-border-color: #9C27B0; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 4;">
-                                                         <children>
-                                                            <TextField fx:id="txtCgstRate" promptText="1.50" prefWidth="120.0" style="-fx-font-size: 14; -fx-padding: 8; -fx-background-color: transparent; -fx-border-color: transparent;" />
-                                                            <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 14px; -fx-text-fill: #9C27B0; -fx-padding: 0 8 0 0;">%</Label>
-                                                         </children>
-                                                      </HBox>
-                                                      <Button fx:id="btnSaveCgstRate" text="SAVE" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-weight: 600; -fx-padding: 10 20; -fx-background-radius: 6; -fx-cursor: hand;">
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
+                                                      <TextField fx:id="txtGstRate" promptText="Enter GST rate (e.g., 3.00)" prefWidth="250.0" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                                      <Button fx:id="btnSaveGstRate" mnemonicParsing="false" prefHeight="48.0" prefWidth="150.0" style="-fx-background-color: #00897B; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,137,123,0.3), 4, 0, 0, 2); -fx-font-family: 'Segoe UI';" text="SAVE GST">
+                                                         <graphic>
+                                                            <FontAwesomeIcon fill="WHITE" glyphName="SAVE" size="1.2em" />
+                                                         </graphic>
                                                       </Button>
                                                    </children>
                                                 </HBox>
                                              </children>
                                           </VBox>
                                           
-                                          <!-- SGST Section -->
-                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                          <!-- Current Total GST Display -->
+                                          <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #E0F2F1; -fx-background-radius: 8; -fx-padding: 16;">
                                              <children>
-                                                <Label text="SGST Rate (%)" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500; -fx-text-fill: #424242;">
-                                                   <font>
-                                                      <Font size="14.0" />
-                                                   </font>
-                                                </Label>
-                                                <HBox spacing="12.0" alignment="CENTER_LEFT">
+                                                <FontAwesomeIcon fill="#00897B" glyphName="INFO_CIRCLE" size="1.2em" />
+                                                <Text fill="#00695C" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: 600; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="Current Total GST: " />
+                                                <Text fx:id="lblCurrentGstRate" fill="#00695C" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-family: 'Segoe UI'; -fx-font-size: 16px;" text="3.00%" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    
+                                    <!-- Separator -->
+                                    <HBox prefHeight="1.0" style="-fx-background-color: #E0E0E0;" />
+                                    
+                                    <!-- Component Tax Rates Section -->
+                                    <VBox spacing="15.0">
+                                       <children>
+                                          <Text fill="#00897B" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="COMPONENT TAX RATES" />
+                                          
+                                          <HBox spacing="20.0" alignment="CENTER">
+                                             <children>
+                                                <!-- CGST Card -->
+                                                <VBox spacing="15.0" style="-fx-background-color: #F5F5F5; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 3, 0, 0, 1);" HBox.hgrow="ALWAYS">
                                                    <children>
-                                                      <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #E3F2FD; -fx-background-radius: 8; -fx-border-color: #2196F3; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 4;">
+                                                      <HBox alignment="CENTER_LEFT" spacing="10.0">
                                                          <children>
-                                                            <TextField fx:id="txtSgstRate" promptText="1.50" prefWidth="120.0" style="-fx-font-size: 14; -fx-padding: 8; -fx-background-color: transparent; -fx-border-color: transparent;" />
-                                                            <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 14px; -fx-text-fill: #2196F3; -fx-padding: 0 8 0 0;">%</Label>
+                                                            <StackPane prefHeight="35.0" prefWidth="35.0" style="-fx-background-color: #9C27B0; -fx-background-radius: 18;">
+                                                               <children>
+                                                                  <FontAwesomeIcon fill="WHITE" glyphName="PIE_CHART" size="1.2em" />
+                                                               </children>
+                                                            </StackPane>
+                                                            <Text fill="#7B1FA2" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-font-family: 'Segoe UI';" text="CGST RATE" />
                                                          </children>
                                                       </HBox>
-                                                      <Button fx:id="btnSaveSgstRate" text="SAVE" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: 600; -fx-padding: 10 20; -fx-background-radius: 6; -fx-cursor: hand;">
-                                                         <font>
-                                                            <Font size="12.0" />
-                                                         </font>
+                                                      
+                                                      <VBox spacing="8.0">
+                                                         <children>
+                                                            <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="CGST Rate (%)" />
+                                                            <TextField fx:id="txtCgstRate" promptText="Enter CGST rate" style="-fx-background-color: #FFFFFF; -fx-background-radius: 8; -fx-padding: 10; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                                         </children>
+                                                      </VBox>
+                                                      
+                                                      <Button fx:id="btnSaveCgstRate" mnemonicParsing="false" prefHeight="40.0" prefWidth="120.0" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 13px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(156,39,176,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="SAVE">
+                                                         <graphic>
+                                                            <FontAwesomeIcon fill="WHITE" glyphName="CHECK" size="1.0em" />
+                                                         </graphic>
                                                       </Button>
+                                                      
+                                                      <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #F3E5F5; -fx-background-radius: 6; -fx-padding: 10;">
+                                                         <children>
+                                                            <Text fill="#7B1FA2" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: 600; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Current:" />
+                                                            <Text fx:id="lblCurrentCgstRate" fill="#4A148C" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="1.50%" />
+                                                         </children>
+                                                      </HBox>
                                                    </children>
-                                                </HBox>
-                                             </children>
-                                          </VBox>
-                                       </children>
-                                    </HBox>
-                                    
-                                    <!-- Current CGST and SGST Display -->
-                                    <HBox spacing="24.0" alignment="CENTER_LEFT">
-                                       <children>
-                                          <!-- Current CGST -->
-                                          <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #F3E5F5; -fx-background-radius: 6; -fx-padding: 12;" HBox.hgrow="ALWAYS">
-                                             <children>
-                                                <FontAwesomeIcon fill="#9C27B0" glyphName="INFO_CIRCLE" size="1.0em" />
-                                                <Label text="Current CGST:" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500; -fx-text-fill: #7B1FA2;">
-                                                   <font>
-                                                      <Font size="13.0" />
-                                                   </font>
-                                                </Label>
-                                                <Label fx:id="lblCurrentCgstRate" text="1.50%" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-text-fill: #4A148C;">
-                                                   <font>
-                                                      <Font size="14.0" />
-                                                   </font>
-                                                </Label>
+                                                </VBox>
+                                                
+                                                <!-- SGST Card -->
+                                                <VBox spacing="15.0" style="-fx-background-color: #F5F5F5; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 3, 0, 0, 1);" HBox.hgrow="ALWAYS">
+                                                   <children>
+                                                      <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                                         <children>
+                                                            <StackPane prefHeight="35.0" prefWidth="35.0" style="-fx-background-color: #2196F3; -fx-background-radius: 18;">
+                                                               <children>
+                                                                  <FontAwesomeIcon fill="WHITE" glyphName="PIE_CHART" size="1.2em" />
+                                                               </children>
+                                                            </StackPane>
+                                                            <Text fill="#1976D2" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-font-family: 'Segoe UI';" text="SGST RATE" />
+                                                         </children>
+                                                      </HBox>
+                                                      
+                                                      <VBox spacing="8.0">
+                                                         <children>
+                                                            <Label style="-fx-text-fill: #424242; -fx-font-weight: 600; -fx-font-size: 12px; -fx-font-family: 'Segoe UI';" text="SGST Rate (%)" />
+                                                            <TextField fx:id="txtSgstRate" promptText="Enter SGST rate" style="-fx-background-color: #FFFFFF; -fx-background-radius: 8; -fx-padding: 10; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                                         </children>
+                                                      </VBox>
+                                                      
+                                                      <Button fx:id="btnSaveSgstRate" mnemonicParsing="false" prefHeight="40.0" prefWidth="120.0" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 13px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(33,150,243,0.3), 3, 0, 0, 1); -fx-font-family: 'Segoe UI';" text="SAVE">
+                                                         <graphic>
+                                                            <FontAwesomeIcon fill="WHITE" glyphName="CHECK" size="1.0em" />
+                                                         </graphic>
+                                                      </Button>
+                                                      
+                                                      <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #E3F2FD; -fx-background-radius: 6; -fx-padding: 10;">
+                                                         <children>
+                                                            <Text fill="#1976D2" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: 600; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Current:" />
+                                                            <Text fx:id="lblCurrentSgstRate" fill="#0D47A1" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="1.50%" />
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </VBox>
                                              </children>
                                           </HBox>
                                           
-                                          <!-- Current SGST -->
-                                          <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-background-color: #E3F2FD; -fx-background-radius: 6; -fx-padding: 12;" HBox.hgrow="ALWAYS">
+                                          <!-- Formula Display -->
+                                          <HBox alignment="CENTER" spacing="8.0" style="-fx-background-color: #E0F2F1; -fx-background-radius: 8; -fx-padding: 16;">
                                              <children>
-                                                <FontAwesomeIcon fill="#2196F3" glyphName="INFO_CIRCLE" size="1.0em" />
-                                                <Label text="Current SGST:" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500; -fx-text-fill: #1976D2;">
-                                                   <font>
-                                                      <Font size="13.0" />
-                                                   </font>
-                                                </Label>
-                                                <Label fx:id="lblCurrentSgstRate" text="1.50%" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-text-fill: #0D47A1;">
-                                                   <font>
-                                                      <Font size="14.0" />
-                                                   </font>
-                                                </Label>
+                                                <FontAwesomeIcon fill="#00897B" glyphName="INFO_CIRCLE" size="1.2em" />
+                                                <Text fill="#00695C" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: 600; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="Formula: CGST + SGST = Total GST" />
                                              </children>
                                           </HBox>
                                        </children>
-                                    </HBox>
+                                    </VBox>
                                     
-                                    <!-- Formula Display -->
-                                    <HBox alignment="CENTER" spacing="8.0" style="-fx-background-color: #F5F5F5; -fx-background-radius: 8; -fx-padding: 16;">
-                                       <children>
-                                          <Label text="Formula:" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500; -fx-text-fill: #666666;">
-                                             <font>
-                                                <Font size="13.0" />
-                                             </font>
-                                          </Label>
-                                          <Label text="CGST + SGST = Total GST" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-text-fill: #424242;">
-                                             <font>
-                                                <Font size="14.0" />
-                                             </font>
-                                          </Label>
-                                       </children>
-                                    </HBox>
                                  </children>
                               </VBox>
                            </children>
                         </VBox>
+                        
                      </children>
+                     <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                     </padding>
                   </VBox>
-                  
-                  <!-- Bottom padding for scroll -->
-                  <VBox prefHeight="20.0" />
-                  
-               </children>
-            </VBox>
-         </content>
-      </ScrollPane>
-   </center>
-</BorderPane>
+               </content>
+            </ScrollPane>
+            
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

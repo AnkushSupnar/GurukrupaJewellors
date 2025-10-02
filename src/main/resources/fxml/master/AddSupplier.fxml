@@ -1,143 +1,328 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
 <?import javafx.geometry.Insets?>
-<?import de.jensd.fx.glyphs.fontawesome.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<AnchorPane prefWidth="600.0" prefHeight="700.0" stylesheets="@../../styles/master.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.master.SupplierController">
-    <VBox spacing="20" AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
-        <padding>
-            <Insets top="20" right="30" bottom="20" left="30"/>
-        </padding>
-        
-        <!-- Header -->
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Label text="Add New Supplier" styleClass="header-title"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="btnClose" styleClass="close-button">
-                <graphic>
-                    <FontAwesomeIcon glyphName="CLOSE" size="1.2em" fill="WHITE"/>
-                </graphic>
-            </Button>
-        </HBox>
-        
-        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
-            <VBox spacing="20">
-                <padding>
-                    <Insets top="10" right="10" bottom="10" left="10"/>
-                </padding>
-                
-                <!-- Basic Information -->
-                <VBox spacing="15">
-                    <Label text="Basic Information" styleClass="section-header"/>
-                    
-                    <GridPane hgap="15" vgap="15">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
-                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
-                        </columnConstraints>
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.master.SupplierController">
+   <children>
+      
+      <!-- Main Container -->
+      <HBox spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+         <children>
+            
+            <!-- Left Panel - Form -->
+            <VBox spacing="20.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 4);" HBox.hgrow="ALWAYS">
+               <children>
+                  
+                  <!-- Form Header with Back Button -->
+                  <HBox alignment="CENTER_LEFT" spacing="15.0">
+                     <children>
+                        <!-- Back Button -->
+                        <Button fx:id="btnBack" mnemonicParsing="false" style="-fx-background-color: #E0E0E0; -fx-background-radius: 20; -fx-padding: 10; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 0, 0, 1);">
+                           <graphic>
+                              <FontAwesomeIcon fill="#424242" glyphName="ARROW_LEFT" size="1.5em" />
+                           </graphic>
+                        </Button>
                         
-                        <Label text="Supplier Name *" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="txtSupplierName" promptText="Enter supplier name" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        
-                        <Label text="Company Name" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtCompanyName" promptText="Enter company name" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        
-                        <Label text="GST Number" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <TextField fx:id="txtGstNumber" promptText="Enter GST number" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                        
-                        <Label text="Supplier Type" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                        <ComboBox fx:id="cmbSupplierType" prefWidth="300.0" promptText="Select supplier type" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                    </GridPane>
-                </VBox>
-                
-                <Separator/>
-                
-                <!-- Contact Information -->
-                <VBox spacing="15">
-                    <Label text="Contact Information" styleClass="section-header"/>
-                    
-                    <GridPane hgap="15" vgap="15">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
-                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
-                        </columnConstraints>
-                        
-                        <Label text="Mobile Number *" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="txtMobile" promptText="Enter mobile number" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        
-                        <Label text="Alternate Mobile" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtAlternateMobile" promptText="Enter alternate mobile" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        
-                        <Label text="Email" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <TextField fx:id="txtEmail" promptText="Enter email address" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                        
-                        <Label text="Contact Person" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                        <TextField fx:id="txtContactPerson" promptText="Enter contact person name" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                    </GridPane>
-                </VBox>
-                
-                <Separator/>
-                
-                <!-- Address Information -->
-                <VBox spacing="15">
-                    <Label text="Address Information" styleClass="section-header"/>
-                    
-                    <GridPane hgap="15" vgap="15">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
-                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
-                        </columnConstraints>
-                        
-                        <Label text="Address" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextArea fx:id="txtAddress" promptText="Enter complete address" prefRowCount="3" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        
-                        <Label text="City" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtCity" promptText="Enter city" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        
-                        <Label text="State" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <TextField fx:id="txtState" promptText="Enter state" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                        
-                        <Label text="Pincode" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                        <TextField fx:id="txtPincode" promptText="Enter pincode" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                    </GridPane>
-                </VBox>
-                
-                <Separator/>
-                
-                <!-- Financial Information -->
-                <VBox spacing="15">
-                    <Label text="Financial Information" styleClass="section-header"/>
-                    
-                    <GridPane hgap="15" vgap="15">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" prefWidth="150.0"/>
-                            <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
-                        </columnConstraints>
-                        
-                        <Label text="Credit Limit" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="txtCreditLimit" promptText="Enter credit limit (0 for no limit)" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        
-                        <Label text="Notes" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextArea fx:id="txtNotes" promptText="Any additional notes" prefRowCount="2" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                    </GridPane>
-                </VBox>
+                        <StackPane prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: linear-gradient(135deg, #C62828 0%, #8E0000 100%); -fx-background-radius: 30;">
+                           <children>
+                              <FontAwesomeIcon fill="WHITE" glyphName="TRUCK" size="1.8em" />
+                           </children>
+                        </StackPane>
+                        <VBox>
+                           <children>
+                              <Text fx:id="txtFormTitle" fill="#1A237E" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 26px; -fx-font-family: 'Segoe UI';" text="Add New Supplier" />
+                              <Text fill="#757575" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 14px;" text="Fill in the details below to add a new supplier" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  
+                  <!-- Form Content in ScrollPane -->
+                  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS">
+                     <content>
+                        <VBox spacing="20.0">
+                           <children>
+                              
+                              <!-- Basic Information Section -->
+                              <VBox spacing="15.0">
+                                 <children>
+                                    <Text fill="#C62828" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="BASIC INFORMATION" />
+                                    
+                                    <!-- Row 1: Supplier Name and Company Name -->
+                                    <HBox spacing="15.0">
+                                       <children>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Supplier Name *" />
+                                                <TextField fx:id="txtSupplierName" promptText="Enter supplier name" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Company Name" />
+                                                <TextField fx:id="txtCompanyName" promptText="Enter company name (optional)" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                    
+                                    <!-- Row 2: GST Number and Supplier Type -->
+                                    <HBox spacing="15.0">
+                                       <children>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="GST Number" />
+                                                <TextField fx:id="txtGstNumber" promptText="Enter GST number" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Supplier Type" />
+                                                <ComboBox fx:id="cmbSupplierType" promptText="Select supplier type" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 8; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Contact Information Section -->
+                              <VBox spacing="15.0">
+                                 <children>
+                                    <Text fill="#1976D2" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="CONTACT INFORMATION" />
+                                    
+                                    <!-- Row 1: Mobile Numbers -->
+                                    <HBox spacing="15.0">
+                                       <children>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Mobile Number *" />
+                                                <TextField fx:id="txtMobile" promptText="Enter 10-digit mobile number" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Alternate Mobile" />
+                                                <TextField fx:id="txtAlternateMobile" promptText="Optional alternate number" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                    
+                                    <!-- Row 2: Email and Contact Person -->
+                                    <HBox spacing="15.0">
+                                       <children>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Email" />
+                                                <TextField fx:id="txtEmail" promptText="Enter email address" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Contact Person" />
+                                                <TextField fx:id="txtContactPerson" promptText="Enter contact person name" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Address Information Section -->
+                              <VBox spacing="15.0">
+                                 <children>
+                                    <Text fill="#2E7D32" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="ADDRESS INFORMATION" />
+                                    
+                                    <!-- Address -->
+                                    <VBox spacing="8.0">
+                                       <children>
+                                          <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Address" />
+                                          <TextArea fx:id="txtAddress" prefRowCount="2" promptText="Enter complete address..." style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                    
+                                    <!-- City, State, Pincode -->
+                                    <HBox spacing="15.0">
+                                       <children>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="City" />
+                                                <TextField fx:id="txtCity" promptText="Enter city name" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="State" />
+                                                <TextField fx:id="txtState" promptText="Enter state name" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Pincode" />
+                                                <TextField fx:id="txtPincode" promptText="Enter 6-digit pincode" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Financial Information Section -->
+                              <VBox spacing="15.0">
+                                 <children>
+                                    <Text fill="#F57C00" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-font-family: 'Segoe UI';" text="FINANCIAL INFORMATION" />
+                                    
+                                    <!-- Credit Limit and Current Balance -->
+                                    <HBox spacing="15.0">
+                                       <children>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Credit Limit" />
+                                                <TextField fx:id="txtCreditLimit" promptText="Enter credit limit (0 for no limit)" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Current Balance (Auto-calculated)" />
+                                                <TextField fx:id="txtCurrentBalance" editable="false" text="₹ 0.00" style="-fx-background-color: #FFF3E0; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #F57C00; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-weight: 600; -fx-font-family: 'Segoe UI';" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                    
+                                    <!-- Notes -->
+                                    <VBox spacing="8.0">
+                                       <children>
+                                          <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Notes" />
+                                          <TextArea fx:id="txtNotes" prefRowCount="2" promptText="Any additional notes about the supplier..." style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Action Buttons -->
+                              <HBox alignment="CENTER" spacing="15.0">
+                                 <children>
+                                    <Button fx:id="btnSave" mnemonicParsing="false" prefHeight="48.0" prefWidth="140.0" style="-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(46,125,50,0.3), 4, 0, 0, 2); -fx-font-family: 'Segoe UI';" text="SAVE">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="WHITE" glyphName="SAVE" size="1.2em" />
+                                       </graphic>
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="btnUpdate" mnemonicParsing="false" prefHeight="48.0" prefWidth="140.0" style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(25,118,210,0.3), 4, 0, 0, 2); -fx-font-family: 'Segoe UI';" text="UPDATE" visible="false">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="WHITE" glyphName="EDIT" size="1.2em" />
+                                       </graphic>
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="btnClear" mnemonicParsing="false" prefHeight="48.0" prefWidth="140.0" style="-fx-background-color: #616161; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 14px; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(97,97,97,0.3), 4, 0, 0, 2); -fx-font-family: 'Segoe UI';" text="CLEAR">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="WHITE" glyphName="ERASER" size="1.2em" />
+                                       </graphic>
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets top="20.0" />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </children>
             </VBox>
-        </ScrollPane>
-        
-        <!-- Action Buttons -->
-        <HBox alignment="CENTER" spacing="15">
-            <Button fx:id="btnSave" text="Save Supplier" prefWidth="150" styleClass="primary-button">
-                <graphic>
-                    <FontAwesomeIcon glyphName="SAVE" size="1.2em" fill="WHITE"/>
-                </graphic>
-            </Button>
-            <Button fx:id="btnReset" text="Reset" prefWidth="100" styleClass="secondary-button">
-                <graphic>
-                    <FontAwesomeIcon glyphName="REFRESH" size="1.2em"/>
-                </graphic>
-            </Button>
-        </HBox>
-    </VBox>
+            
+            <!-- Right Panel - Supplier List -->
+            <VBox spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 4);" HBox.hgrow="ALWAYS">
+               <children>
+                  
+                  <!-- List Header -->
+                  <HBox alignment="CENTER_LEFT" spacing="15.0">
+                     <children>
+                        <StackPane prefHeight="50.0" prefWidth="50.0" style="-fx-background-color: linear-gradient(135deg, #C62828 0%, #8E0000 100%); -fx-background-radius: 25;">
+                           <children>
+                              <FontAwesomeIcon fill="WHITE" glyphName="LIST" size="1.5em" />
+                           </children>
+                        </StackPane>
+                        <VBox HBox.hgrow="ALWAYS">
+                           <children>
+                              <Text fill="#1A237E" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-font-size: 22px; -fx-font-family: 'Segoe UI';" text="Suppliers" />
+                              <Text fill="#757575" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 12px;" text="Click on a supplier to edit" />
+                           </children>
+                        </VBox>
+                        <Button fx:id="btnRefresh" mnemonicParsing="false" style="-fx-background-color: #E0E0E0; -fx-background-radius: 20; -fx-padding: 10; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 0, 0, 1);" text="">
+                           <graphic>
+                              <FontAwesomeIcon fill="#616161" glyphName="REFRESH" size="1.2em" />
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
+                  
+                  <!-- Search Box -->
+                  <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #F5F5F5; -fx-background-radius: 25; -fx-padding: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 25; -fx-border-width: 1;">
+                     <children>
+                        <FontAwesomeIcon fill="#757575" glyphName="SEARCH" size="1.2em" />
+                        <TextField fx:id="txtSearch" promptText="Search by name, company, mobile, or GST..." style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+                  
+                  <!-- Filter by Type -->
+                  <HBox spacing="10.0">
+                     <children>
+                        <ComboBox fx:id="cmbFilterType" promptText="All Supplier Types" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8; -fx-padding: 8; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="btnClearFilters" mnemonicParsing="false" style="-fx-background-color: #FFEBEE; -fx-background-radius: 8; -fx-padding: 8 16 8 16; -fx-border-color: #EF5350; -fx-border-radius: 8; -fx-border-width: 1; -fx-cursor: hand; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Clear">
+                           <graphic>
+                              <FontAwesomeIcon fill="#D32F2F" glyphName="TIMES" size="1em" />
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
+                  
+                  <!-- Suppliers Table -->
+                  <TableView fx:id="tableSuppliers" style="-fx-background-color: transparent; -fx-background-insets: 0; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="colId" prefWidth="40.0" style="-fx-alignment: CENTER;" text="#" visible="false" />
+                        <TableColumn fx:id="colSupplierName" prefWidth="150.0" text="Supplier Name" />
+                        <TableColumn fx:id="colCompanyName" prefWidth="150.0" text="Company" />
+                        <TableColumn fx:id="colMobile" prefWidth="100.0" style="-fx-alignment: CENTER;" text="Mobile" />
+                        <TableColumn fx:id="colGstNumber" prefWidth="120.0" style="-fx-alignment: CENTER;" text="GST No." />
+                        <TableColumn fx:id="colType" prefWidth="100.0" style="-fx-alignment: CENTER;" text="Type" />
+                        <TableColumn fx:id="colBalance" prefWidth="100.0" style="-fx-alignment: CENTER;" text="Balance" />
+                        <TableColumn fx:id="colStatus" prefWidth="80.0" style="-fx-alignment: CENTER;" text="Status" />
+                     </columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </TableView>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </children>
 </AnchorPane>

@@ -1,15 +1,21 @@
 package com.gurukrupa.controller.settings;
 
+import com.gurukrupa.config.SpringFXMLLoader;
 import com.gurukrupa.data.service.AppSettingsService;
 import com.gurukrupa.data.service.BillService;
 import com.gurukrupa.view.AlertNotification;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
@@ -17,6 +23,12 @@ import java.util.ResourceBundle;
 
 @Component
 public class AppSettingsController implements Initializable {
+    
+    private static final Logger logger = LoggerFactory.getLogger(AppSettingsController.class);
+    
+    @Lazy
+    @Autowired
+    private SpringFXMLLoader springFXMLLoader;
     
     @Autowired
     private AppSettingsService appSettingsService;
@@ -34,13 +46,18 @@ public class AppSettingsController implements Initializable {
     private Label lblCurrentPrefix;
     
     @FXML
-    private Button btnSaveBillPrefix, btnClose;
+    private Button btnSaveBillPrefix, btnClose, btnBack;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize individual button actions
         btnSaveBillPrefix.setOnAction(event -> saveBillPrefix());
         btnClose.setOnAction(event -> closeWindow());
+        
+        // Initialize back button if it exists
+        if (btnBack != null) {
+            btnBack.setOnAction(e -> navigateBackToSettingsMenu());
+        }
         
         // Load current settings
         refreshSettings();
@@ -122,8 +139,24 @@ public class AppSettingsController implements Initializable {
         stage.close();
     }
     
+    private void navigateBackToSettingsMenu() {
+        try {
+            BorderPane dashboard = (BorderPane) btnBack.getScene().getRoot();
+            Parent settingsMenu = springFXMLLoader.load("/fxml/settings/SettingsMenu.fxml");
+            dashboard.setCenter(settingsMenu);
+            logger.info("Navigated back to Settings Menu");
+        } catch (Exception e) {
+            logger.error("Error navigating back: {}", e.getMessage());
+            alert.showError("Error navigating back: " + e.getMessage());
+        }
+    }
+    
     // Method to open this settings window from other controllers
     public void setDialogStage(Stage dialogStage) {
-        // This method can be used if needed to set dialog stage reference
+        // Hide back button when in dialog mode
+        if (btnBack != null) {
+            btnBack.setVisible(false);
+            btnBack.setManaged(false);
+        }
     }
 }
