@@ -33,7 +33,6 @@ public class DashboardController implements Initializable {
     @FXML private Label lblCurrentMenu;
     @FXML private BorderPane mainPane;
     @FXML private HBox menuDashboard;
-    @FXML private HBox menuDashboard1;
     @FXML private HBox menuTransaction;
     @FXML private HBox menuCreate;
     @FXML private HBox menuInventary;
@@ -47,16 +46,16 @@ public class DashboardController implements Initializable {
     private Pane pane;
     private List<HBox> menuItems;
     
-    // Define styles for selected and unselected menu items
-    private final String SELECTED_STYLE = "-fx-background-color: #303F9F; -fx-background-radius: 8; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(48,63,159,0.4), 6, 0, 0, 2);";
-    private final String UNSELECTED_STYLE = "-fx-background-color: transparent; -fx-background-radius: 8; -fx-cursor: hand;";
-    private final String LOGOUT_STYLE = "-fx-background-color: #D32F2F; -fx-background-radius: 8; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(211,47,47,0.3), 4, 0, 0, 2);";
+    // Define styles for selected and unselected menu items with modern material design
+    private final String SELECTED_STYLE = "-fx-background-color: #2196F3; -fx-background-radius: 12; -fx-cursor: hand;";
+    private final String UNSELECTED_STYLE = "-fx-background-color: #FAFAFA; -fx-background-radius: 12; -fx-cursor: hand;";
+    private final String HOVER_STYLE = "-fx-background-color: #EEEEEE; -fx-background-radius: 12; -fx-cursor: hand;";
+    private final String LOGOUT_STYLE = "-fx-background-color: #F44336; -fx-background-radius: 12; -fx-cursor: hand;";
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Initialize menu items list
         menuItems = new ArrayList<>();
         menuItems.add(menuDashboard);
-        menuItems.add(menuDashboard1);
         menuItems.add(menuTransaction);
         menuItems.add(menuMaster);
         menuItems.add(menuReport);
@@ -78,11 +77,6 @@ public class DashboardController implements Initializable {
             setSelectedMenu(menuDashboard, "Dashboard");
             pane =loader.getPage("/fxml/dashboard/Dashboard.fxml");
             mainPane.setCenter(pane);
-        });
-        
-        menuDashboard1.setOnMouseClicked(e -> {
-            setSelectedMenu(menuDashboard1, "Billing");
-            // Add billing page loading logic here when ready
         });
         
         menuTransaction.setOnMouseClicked(e -> {
@@ -127,18 +121,35 @@ public class DashboardController implements Initializable {
         // Reset all menu items to unselected state
         for (HBox menuItem : menuItems) {
             menuItem.setStyle(UNSELECTED_STYLE);
-            updateMenuTextColor(menuItem, "#424242", "#757575"); // Dark text, gray icon for white sidebar
+            updateMenuTextColor(menuItem, "#424242", "#616161"); // Dark text, gray icon
+            
+            // Add hover effects
+            menuItem.setOnMouseEntered(e -> {
+                if (menuItem != selectedMenu) {
+                    menuItem.setStyle(HOVER_STYLE);
+                }
+            });
+            menuItem.setOnMouseExited(e -> {
+                if (menuItem != selectedMenu) {
+                    menuItem.setStyle(UNSELECTED_STYLE);
+                }
+            });
         }
         
         // Set the selected menu item
         selectedMenu.setStyle(SELECTED_STYLE);
         updateMenuTextColor(selectedMenu, "#FFFFFF", "#FFFFFF"); // White text, white icon
         
+        // Remove hover effect from selected item
+        selectedMenu.setOnMouseEntered(null);
+        selectedMenu.setOnMouseExited(null);
+        
         // Update header title
         lblCurrentMenu.setText(menuName);
         
         // Keep logout button with its special style
         menuExit.setStyle(LOGOUT_STYLE);
+        updateMenuTextColor(menuExit, "#FFFFFF", "#FFFFFF");
     }
     
     /**
@@ -149,12 +160,16 @@ public class DashboardController implements Initializable {
             if (node instanceof Text) {
                 Text text = (Text) node;
                 text.setFill(javafx.scene.paint.Color.web(textColor));
-                // Preserve the font size
-                if (!text.getStyle().contains("-fx-font-size")) {
-                    text.setStyle(text.getStyle() + "; -fx-font-size: 14px;");
-                }
             } else if (node instanceof de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon) {
                 ((de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon) node).setFill(javafx.scene.paint.Color.web(iconColor));
+            } else if (node instanceof javafx.scene.layout.StackPane) {
+                // Handle icon inside StackPane
+                javafx.scene.layout.StackPane stackPane = (javafx.scene.layout.StackPane) node;
+                stackPane.getChildren().forEach(child -> {
+                    if (child instanceof de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon) {
+                        ((de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon) child).setFill(javafx.scene.paint.Color.web(iconColor));
+                    }
+                });
             }
         });
     }

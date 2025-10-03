@@ -168,6 +168,7 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private Label lblGrandTotal;
     
     // Payment Details
+    @FXML private CheckBox chkCreditPurchase;
     @FXML private ComboBox<BankAccount> cmbBankAccount;
     @FXML private Label lblAvailableBalance;
     @FXML private TextField txtPaymentReference;
@@ -673,6 +674,33 @@ public class PurchaseInvoiceController implements Initializable {
             txtPaidAmount.textProperty().addListener((obs, oldVal, newVal) -> updatePendingAmount());
         }
         
+        // Credit purchase checkbox listener
+        if (chkCreditPurchase != null) {
+            chkCreditPurchase.selectedProperty().addListener((obs, wasCreditPurchase, isCreditPurchase) -> {
+                if (isCreditPurchase) {
+                    // Credit mode - disable payment fields
+                    if (cmbBankAccount != null) cmbBankAccount.setDisable(true);
+                    if (txtPaymentReference != null) txtPaymentReference.setDisable(true);
+                    if (txtPaidAmount != null) {
+                        txtPaidAmount.setText("0");
+                        txtPaidAmount.setDisable(true);
+                    }
+                } else {
+                    // Cash/Bank mode - enable payment fields
+                    if (cmbBankAccount != null) cmbBankAccount.setDisable(false);
+                    if (txtPaymentReference != null) txtPaymentReference.setDisable(false);
+                    if (txtPaidAmount != null) {
+                        txtPaidAmount.setDisable(false);
+                        // Set paid amount to grand total by default
+                        if (lblGrandTotal != null) {
+                            String grandTotalText = lblGrandTotal.getText().replaceAll("[₹,\\s]", "");
+                            txtPaidAmount.setText(grandTotalText);
+                        }
+                    }
+                }
+            });
+        }
+        
         // Clear search on button click
         if (btnClearSearch != null) {
             btnClearSearch.setOnAction(e -> {
@@ -732,14 +760,24 @@ public class PurchaseInvoiceController implements Initializable {
             
             // Filter function for searching items
             Function<String, List<JewelryItem>> filterFunction = searchText -> {
-                if (searchText == null || searchText.isEmpty()) {
+                if (searchText == null || searchText.trim().isEmpty()) {
+                    // Show all items when the search text is empty or only contains spaces
                     return stockItems;
                 }
-                String lowerSearch = searchText.toLowerCase();
+                String lowerSearch = searchText.trim().toLowerCase();
                 return stockItems.stream()
                     .filter(item -> item.getItemName().toLowerCase().contains(lowerSearch) ||
                                     item.getItemCode().toLowerCase().contains(lowerSearch) ||
                                     item.getCategory().toLowerCase().contains(lowerSearch))
+                    .sorted((a, b) -> {
+                        // Prioritize items that start with the search text
+                        boolean aStartsWith = a.getItemName().toLowerCase().startsWith(lowerSearch);
+                        boolean bStartsWith = b.getItemName().toLowerCase().startsWith(lowerSearch);
+                        if (aStartsWith && !bStartsWith) return -1;
+                        if (!aStartsWith && bStartsWith) return 1;
+                        // Then sort by name
+                        return a.getItemName().compareTo(b.getItemName());
+                    })
                     .collect(Collectors.toList());
             };
             
@@ -867,6 +905,12 @@ public class PurchaseInvoiceController implements Initializable {
         if (lblStockCount != null && filteredStockItems != null) {
             int count = filteredStockItems.size();
             lblStockCount.setText(count + " items found");
+        }
+    }
+    
+    private void updateItemNameSuggestions() {
+        if (itemSearchField != null && stockItems != null) {
+            itemSearchField.setSuggestions(stockItems);
         }
     }
     
@@ -1363,6 +1407,23 @@ public class PurchaseInvoiceController implements Initializable {
                 allTransactions.add(pTrans);
             }
             
+            // Determine payment method
+            PurchaseInvoice.PaymentMethod paymentMethod;
+            boolean isCreditPurchase = chkCreditPurchase != null && chkCreditPurchase.isSelected();
+            
+            if (isCreditPurchase) {
+                paymentMethod = PurchaseInvoice.PaymentMethod.CREDIT;
+            } else {
+                // Check if partial payment
+                BigDecimal paidAmount = parseBigDecimal(txtPaidAmount);
+                BigDecimal grandTotal = calculateGrandTotal();
+                if (paidAmount.compareTo(grandTotal) < 0 && paidAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    paymentMethod = PurchaseInvoice.PaymentMethod.PARTIAL;
+                } else {
+                    paymentMethod = PurchaseInvoice.PaymentMethod.BANK_TRANSFER;
+                }
+            }
+            
             // Create invoice
             PurchaseInvoice invoice = purchaseInvoiceService.createPurchaseInvoice(
                 supplier,
@@ -1373,13 +1434,32 @@ public class PurchaseInvoiceController implements Initializable {
                 gstRate,
                 BigDecimal.ZERO,  // transport charges
                 BigDecimal.ZERO,  // other charges
-                PurchaseInvoice.PaymentMethod.BANK_TRANSFER,
+                paymentMethod,
                 txtPaymentReference != null ? txtPaymentReference.getText().trim() : "",
                 null  // notes
             );
             
-            // Process payment if needed
-            if (invoice.getGrandTotal().compareTo(BigDecimal.ZERO) > 0) {
+            // Set paid and pending amounts
+            BigDecimal paidAmount = parseBigDecimal(txtPaidAmount);
+            invoice.setPaidAmount(paidAmount);
+            invoice.setPendingAmount(invoice.getGrandTotal().subtract(paidAmount));
+            
+            // Determine invoice status based on payment
+            if (isCreditPurchase) {
+                invoice.setStatus(PurchaseInvoice.InvoiceStatus.CONFIRMED);
+            } else if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
+                invoice.setStatus(PurchaseInvoice.InvoiceStatus.CONFIRMED);
+            } else if (paidAmount.compareTo(invoice.getGrandTotal()) >= 0) {
+                invoice.setStatus(PurchaseInvoice.InvoiceStatus.PAID);
+            } else {
+                invoice.setStatus(PurchaseInvoice.InvoiceStatus.PARTIAL);
+            }
+            
+            // Save the invoice with updated status and amounts
+            invoice = purchaseInvoiceService.savePurchaseInvoice(invoice);
+            
+            // Process payment if needed (not for credit purchases)
+            if (!isCreditPurchase && invoice.getGrandTotal().compareTo(BigDecimal.ZERO) > 0 && paidAmount.compareTo(BigDecimal.ZERO) > 0) {
                 processPayment(invoice);
             }
             
@@ -1421,24 +1501,31 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void processPayment(PurchaseInvoice invoice) {
         try {
+            // Get paid amount
+            BigDecimal paidAmount = parseBigDecimal(txtPaidAmount);
+            if (paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                return; // No payment to process
+            }
+            
             // Get selected bank account
             BankAccount selectedBankAccount = cmbBankAccount.getValue();
             if (selectedBankAccount != null) {
                 // Check if sufficient balance
-                if (selectedBankAccount.getCurrentBalance().compareTo(invoice.getGrandTotal()) >= 0) {
+                if (selectedBankAccount.getCurrentBalance().compareTo(paidAmount) >= 0) {
                     // Create bank transaction
                     bankTransactionService.recordDebit(
                         selectedBankAccount,
-                        invoice.getGrandTotal(),
+                        paidAmount,
                         BankTransaction.TransactionSource.PURCHASE_PAYMENT,
                         "PURCHASE",
                         invoice.getId(),
                         invoice.getInvoiceNumber(),
                         txtPaymentReference.getText().trim(),
                         invoice.getSupplier().getSupplierName(),
-                        String.format("Payment for purchase invoice %s to %s", 
+                        String.format("Payment for purchase invoice %s to %s (Paid: %s)", 
                             invoice.getInvoiceNumber(), 
-                            invoice.getSupplier().getSupplierName())
+                            invoice.getSupplier().getSupplierName(),
+                            CurrencyFormatter.format(paidAmount))
                     );
                     
                     // Reload bank accounts to refresh balances
@@ -1524,6 +1611,7 @@ public class PurchaseInvoiceController implements Initializable {
         if (txtPaymentReference != null) txtPaymentReference.clear();
         if (txtPaidAmount != null) txtPaidAmount.clear();
         if (txtDiscount != null) txtDiscount.setText("0");
+        if (chkCreditPurchase != null) chkCreditPurchase.setSelected(false);
         if (!cmbBankAccount.getItems().isEmpty()) {
             cmbBankAccount.setValue(cmbBankAccount.getItems().get(0));
         }
@@ -1677,7 +1765,10 @@ public class PurchaseInvoiceController implements Initializable {
         isProgrammaticallySettingFields = true;
         
         if (txtItemCode != null) txtItemCode.setText(item.getItemCode());
-        // Item is already selected in the search field
+        // Set the item in the search field
+        if (itemSearchField != null) {
+            itemSearchField.setSelectedItem(item);
+        }
         if (cmbMetalType != null) {
             // Find the Metal object that matches the item's metal type string
             for (Metal metal : cmbMetalType.getItems()) {
@@ -1921,9 +2012,12 @@ public class PurchaseInvoiceController implements Initializable {
             return;
         }
         
-        // Validate bank account selection
+        // Check if credit purchase
+        boolean isCreditPurchase = chkCreditPurchase != null && chkCreditPurchase.isSelected();
+        
+        // Validate bank account selection (not required for credit purchases)
         BankAccount selectedBankAccount = cmbBankAccount.getValue();
-        if (selectedBankAccount == null) {
+        if (!isCreditPurchase && selectedBankAccount == null) {
             alertNotification.showError("Please select a bank account");
             return;
         }
@@ -1954,14 +2048,29 @@ public class PurchaseInvoiceController implements Initializable {
                 }
             }
             
-            // Check if bank account has sufficient balance
+            // Check if bank account has sufficient balance (skip for credit purchases)
             BigDecimal grandTotal = calculateGrandTotal();
-            if (selectedBankAccount.getCurrentBalance().compareTo(grandTotal) < 0) {
+            if (!isCreditPurchase && selectedBankAccount != null && selectedBankAccount.getCurrentBalance().compareTo(grandTotal) < 0) {
                 alertNotification.showError(String.format("Insufficient balance in %s. Available: ₹%.2f, Required: ₹%.2f", 
                     selectedBankAccount.getBankName(), 
                     selectedBankAccount.getCurrentBalance(), 
                     grandTotal));
                 return;
+            }
+            
+            // Determine payment method and status based on credit purchase
+            PurchaseInvoice.PaymentMethod paymentMethod;
+            PurchaseInvoice.InvoiceStatus invoiceStatus;
+            BigDecimal paidAmountFinal = BigDecimal.ZERO;
+            
+            if (isCreditPurchase) {
+                paymentMethod = PurchaseInvoice.PaymentMethod.CREDIT;
+                invoiceStatus = PurchaseInvoice.InvoiceStatus.CONFIRMED;
+                paidAmountFinal = BigDecimal.ZERO;
+            } else {
+                paymentMethod = PurchaseInvoice.PaymentMethod.BANK_TRANSFER;
+                invoiceStatus = PurchaseInvoice.InvoiceStatus.PAID;
+                paidAmountFinal = grandTotal;
             }
             
             // Create purchase invoice entity
@@ -1970,14 +2079,15 @@ public class PurchaseInvoiceController implements Initializable {
                 .supplierInvoiceNumber(txtSupplierInvoice.getText().trim())
                 .purchaseType(chipExchange.isSelected() ? PurchaseType.EXCHANGE_ITEMS : PurchaseType.NEW_STOCK)
                 .invoiceDate(LocalDateTime.now())
-                .paymentMethod(PurchaseInvoice.PaymentMethod.BANK_TRANSFER) // Always bank transfer now
+                .paymentMethod(paymentMethod)
                 .paymentReference(paymentReference)
-                .status(PurchaseInvoice.InvoiceStatus.PAID)
+                .status(invoiceStatus)
                 .discount(discount)
                 .gstRate(new BigDecimal(txtGstRate.getText()))
                 .transportCharges(BigDecimal.ZERO)
                 .otherCharges(BigDecimal.ZERO)
-                .paidAmount(grandTotal) // Always pay full amount
+                .paidAmount(paidAmountFinal)
+                .pendingAmount(isCreditPurchase ? grandTotal : BigDecimal.ZERO)
                 .purchaseTransactions(new ArrayList<>(purchaseItems))
                 .purchaseExchangeTransactions(new ArrayList<>(exchangeItems))
                 .build();
@@ -1985,22 +2095,28 @@ public class PurchaseInvoiceController implements Initializable {
             // Save invoice - this will handle stock updates
             PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoiceWithStockUpdate(invoice);
             
-            // Create bank transaction for the payment
-            bankTransactionService.recordDebit(
-                selectedBankAccount,
-                grandTotal,
-                BankTransaction.TransactionSource.PURCHASE_PAYMENT,
-                "PURCHASE",
-                savedInvoice.getId(),
-                savedInvoice.getInvoiceNumber(),
-                paymentReference,
-                selectedSupplier.getSupplierName(),
-                String.format("Payment for purchase invoice %s to %s", 
-                    savedInvoice.getInvoiceNumber(), 
-                    selectedSupplier.getSupplierName())
-            );
+            // Create bank transaction for the payment (only if not credit purchase)
+            if (!isCreditPurchase && selectedBankAccount != null) {
+                bankTransactionService.recordDebit(
+                    selectedBankAccount,
+                    grandTotal,
+                    BankTransaction.TransactionSource.PURCHASE_PAYMENT,
+                    "PURCHASE",
+                    savedInvoice.getId(),
+                    savedInvoice.getInvoiceNumber(),
+                    paymentReference,
+                    selectedSupplier.getSupplierName(),
+                    String.format("Payment for purchase invoice %s to %s", 
+                        savedInvoice.getInvoiceNumber(), 
+                        selectedSupplier.getSupplierName())
+                );
+            }
             
-            alertNotification.showSuccess("Purchase invoice saved and payment recorded successfully!");
+            if (isCreditPurchase) {
+                alertNotification.showSuccess("Purchase invoice saved as credit. Payment pending: " + CurrencyFormatter.format(grandTotal));
+            } else {
+                alertNotification.showSuccess("Purchase invoice saved and payment recorded successfully!");
+            }
             
             // Clear the form
             clearAll();

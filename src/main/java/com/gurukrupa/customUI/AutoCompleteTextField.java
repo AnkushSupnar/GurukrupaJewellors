@@ -228,6 +228,10 @@ public class AutoCompleteTextField<T> {
                 "-fx-padding: 0;"
             );
             
+            // Make wrapper expand to fill available space
+            wrapper.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(wrapper, Priority.ALWAYS);
+            
             // Update text field style to be transparent
             textField.setStyle(
                 "-fx-background-color: transparent; " +
@@ -236,6 +240,10 @@ public class AutoCompleteTextField<T> {
                 "-fx-font-family: 'Segoe UI'; " +
                 "-fx-font-size: 13px;"
             );
+            
+            // Make container expand to fill wrapper
+            container.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(container, Priority.ALWAYS);
             
             container.getChildren().addAll(iconContainer, textField, clearButton);
             wrapper.getChildren().add(container);

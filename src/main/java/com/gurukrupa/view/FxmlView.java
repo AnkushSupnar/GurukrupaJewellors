@@ -31,7 +31,7 @@ public enum FxmlView {
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/home/Dashboard.fxml";
+            return "/fxml/home/Home.fxml";
         }
     },
     BILLING {
