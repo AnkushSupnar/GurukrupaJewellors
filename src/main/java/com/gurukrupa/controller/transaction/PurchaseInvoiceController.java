@@ -2,8 +2,8 @@ package com.gurukrupa.controller.transaction;
 
 import com.gurukrupa.customUI.AutoCompleteTextField;
 import com.gurukrupa.data.entities.*;
-import com.gurukrupa.data.entities.PurchaseInvoice.PaymentMethod;
 import com.gurukrupa.data.entities.PurchaseInvoice.PurchaseType;
+import com.gurukrupa.data.entities.PurchaseInvoice.PaymentMethod;
 import com.gurukrupa.data.entities.PurchaseTransaction.ItemType;
 import com.gurukrupa.data.entities.PurchaseExchangeTransaction;
 import com.gurukrupa.data.entities.ExchangeMetalStock;
@@ -78,15 +78,12 @@ public class PurchaseInvoiceController implements Initializable {
     
     // Header and Supplier Info
     @FXML private Label lblInvoiceNumber;
-    @FXML private HBox supplierSearchBox;
+    @FXML private ComboBox<Supplier> cmbSupplier;
     @FXML private TextField txtSupplierName;
     @FXML private TextField txtGSTNumber;
     @FXML private TextField txtSupplierContact;
     @FXML private TextField txtInvoiceDate;
     @FXML private TextField txtSupplierInvoice;
-    
-    // AutoComplete supplier search
-    private AutoCompleteTextField<Supplier> supplierSearchField;
     
     // Chip/Toggle Controls
     @FXML private ToggleButton chipPurchase;
@@ -97,7 +94,8 @@ public class PurchaseInvoiceController implements Initializable {
     
     // Purchase Items Tab - Form Fields
     @FXML private TextField txtItemCode;
-    @FXML private TextField txtItemName;
+    @FXML private HBox itemSearchBox;
+    private AutoCompleteTextField<JewelryItem> itemSearchField;
     @FXML private ComboBox<Metal> cmbMetalType;
     @FXML private TextField txtPurity;
     @FXML private TextField txtQuantity;
@@ -170,7 +168,8 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private Label lblGrandTotal;
     
     // Payment Details
-    @FXML private ComboBox<PaymentMethod> cmbPaymentMode;
+    @FXML private ComboBox<BankAccount> cmbBankAccount;
+    @FXML private Label lblAvailableBalance;
     @FXML private TextField txtPaymentReference;
     @FXML private TextField txtPaidAmount;
     @FXML private Label lblPendingAmount;
@@ -199,6 +198,12 @@ public class PurchaseInvoiceController implements Initializable {
     private PaymentModeService paymentModeService;
     
     @Autowired
+    private BankAccountService bankAccountService;
+    
+    @Autowired
+    private BankTransactionService bankTransactionService;
+    
+    @Autowired
     private JewelryItemService jewelryItemService;
     
     @Autowired
@@ -214,7 +219,6 @@ public class PurchaseInvoiceController implements Initializable {
     private BigDecimal gstRate = new BigDecimal("3.00");
     private JewelryItem selectedStockItem = null;
     private BigDecimal currentLabourPercentage = null;
-    private List<String> itemNameSuggestions = new ArrayList<>();
     private boolean isProgrammaticallySettingFields = false;
     private PurchaseTransaction editingItem = null;
     private PurchaseExchangeTransaction editingExchangeItem = null;
@@ -226,11 +230,11 @@ public class PurchaseInvoiceController implements Initializable {
         setupTableColumns();
         setupComboBoxes();
         setupListeners();
-        setupItemNameAutoComplete();
         setupStockCatalog();
-        loadSuppliers();
+        setupSupplierCombo();
         loadMetalStock();
         loadStockItems();
+        setupItemSearchField(); // Must be after loadStockItems
         updateDateTime();
         clearForm();
         
@@ -313,10 +317,32 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private void setupComboBoxes() {
-        // Payment mode combo
-        cmbPaymentMode.setItems(FXCollections.observableArrayList(PaymentMethod.values()));
-        cmbPaymentMode.setValue(PaymentMethod.CASH);
+        // Bank account combo
+        loadBankAccounts();
         
+        // Set up bank account selection listener
+        if (cmbBankAccount != null) {
+            cmbBankAccount.setConverter(new StringConverter<BankAccount>() {
+                @Override
+                public String toString(BankAccount account) {
+                    if (account == null) return "";
+                    return account.getBankName() + " - " + account.getAccountNumber();
+                }
+                
+                @Override
+                public BankAccount fromString(String string) {
+                    return null;
+                }
+            });
+            
+            cmbBankAccount.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && lblAvailableBalance != null) {
+                    lblAvailableBalance.setText(CurrencyFormatter.format(newVal.getCurrentBalance()));
+                } else if (lblAvailableBalance != null) {
+                    lblAvailableBalance.setText("₹ 0.00");
+                }
+            });
+        }
         
         // Metal type combos - Load from database like in BillingController
         try {
@@ -379,80 +405,46 @@ public class PurchaseInvoiceController implements Initializable {
 
     }
     
-    private void loadSuppliers() {
+    private void loadBankAccounts() {
+        try {
+            List<BankAccount> accounts = bankAccountService.getAllActiveBankAccounts();
+            ObservableList<BankAccount> accountList = FXCollections.observableArrayList(accounts);
+            cmbBankAccount.setItems(accountList);
+            
+            // Select the first account by default if available
+            if (!accounts.isEmpty()) {
+                cmbBankAccount.setValue(accounts.get(0));
+            }
+        } catch (Exception e) {
+            LOG.error("Error loading bank accounts", e);
+            alertNotification.showError("Failed to load bank accounts: " + e.getMessage());
+        }
+    }
+    
+    private void setupSupplierCombo() {
         try {
             List<Supplier> suppliers = supplierService.getAllActiveSuppliers();
+            ObservableList<Supplier> supplierList = FXCollections.observableArrayList(suppliers);
+            cmbSupplier.setItems(supplierList);
             
-            // Create AutoCompleteTextField for supplier search
-            StringConverter<Supplier> supplierConverter = new StringConverter<Supplier>() {
+            // Set up supplier converter
+            cmbSupplier.setConverter(new StringConverter<Supplier>() {
                 @Override
                 public String toString(Supplier supplier) {
-                    if (supplier != null) {
-                        return supplier.getSupplierFullName() + 
-                               (supplier.getGstNumber() != null ? " (GST: " + supplier.getGstNumber() + ")" : "");
-                    }
-                    return "";
+                    if (supplier == null) return "";
+                    return supplier.getSupplierFullName() + 
+                           (supplier.getGstNumber() != null ? " (GST: " + supplier.getGstNumber() + ")" : "");
                 }
                 
                 @Override
                 public Supplier fromString(String string) {
                     return null;
                 }
-            };
-            
-            // Filter function for searching suppliers
-            Function<String, List<Supplier>> filterFunction = searchText -> {
-                if (searchText == null || searchText.isEmpty()) {
-                    return suppliers;
-                }
-                String lowerSearch = searchText.toLowerCase();
-                return suppliers.stream()
-                    .filter(s -> s.getSupplierFullName().toLowerCase().contains(lowerSearch) ||
-                                (s.getGstNumber() != null && s.getGstNumber().toLowerCase().contains(lowerSearch)) ||
-                                (s.getMobile() != null && s.getMobile().contains(searchText)))
-                    .collect(Collectors.toList());
-            };
-            
-            // Create the AutoCompleteTextField
-            supplierSearchField = new AutoCompleteTextField<>(suppliers, supplierConverter, filterFunction);
-            supplierSearchField.setPromptText("Search supplier by name, GST or mobile...");
-            
-            // Custom cell factory to show more supplier info
-            supplierSearchField.setCellFactory(supplier -> {
-                Label label = new Label();
-                if (supplier != null) {
-                    VBox content = new VBox(2);
-                    content.setPadding(new Insets(4, 8, 4, 8));
-                    
-                    Label nameLabel = new Label(supplier.getSupplierFullName());
-                    nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-                    
-                    HBox detailsBox = new HBox(10);
-                    if (supplier.getGstNumber() != null && !supplier.getGstNumber().isEmpty()) {
-                        Label gstLabel = new Label("GST: " + supplier.getGstNumber());
-                        gstLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
-                        detailsBox.getChildren().add(gstLabel);
-                    }
-                    if (supplier.getMobile() != null && !supplier.getMobile().isEmpty()) {
-                        Label mobileLabel = new Label("Mobile: " + supplier.getMobile());
-                        mobileLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
-                        detailsBox.getChildren().add(mobileLabel);
-                    }
-                    
-                    content.getChildren().addAll(nameLabel, detailsBox);
-                    label.setGraphic(content);
-                }
-                return label;
             });
             
-            // Add to the UI
-            supplierSearchBox.getChildren().clear();
-            supplierSearchBox.getChildren().add(supplierSearchField.getNode());
-            HBox.setHgrow(supplierSearchField.getNode(), Priority.ALWAYS);
-            
             // Handle supplier selection
-            supplierSearchField.selectedItemProperty().addListener((obs, oldSupplier, newSupplier) -> {
-                updateSupplierInfo(newSupplier);
+            cmbSupplier.valueProperty().addListener((obs, oldVal, newVal) -> {
+                updateSupplierInfo(newVal);
             });
             
         } catch (Exception e) {
@@ -693,6 +685,7 @@ public class PurchaseInvoiceController implements Initializable {
             btnRefreshStock.setOnAction(e -> {
                 loadStockItems();
                 loadMetalStock();
+                setupItemSearchField(); // Refresh the search field with new items
             });
         }
         
@@ -711,47 +704,90 @@ public class PurchaseInvoiceController implements Initializable {
         setupChipStyles();
     }
     
-    private void setupItemNameAutoComplete() {
-        if (txtItemName != null) {
-            // Load item names from jewelry items
-            updateItemNameSuggestions();
-            
-            // Setup autocomplete using TextFields
-            org.controlsfx.control.textfield.TextFields.bindAutoCompletion(txtItemName, itemNameSuggestions);
-            
-            // When an item is selected, populate other fields
-            txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
-                // Skip if we're programmatically setting fields
-                if (isProgrammaticallySettingFields) {
-                    return;
+    private String getSelectedItemName() {
+        if (itemSearchField != null && itemSearchField.getSelectedItem() != null) {
+            return itemSearchField.getSelectedItem().getItemName();
+        }
+        return "";
+    }
+    
+    private void setupItemSearchField() {
+        try {
+            // Create AutoCompleteTextField for item search
+            StringConverter<JewelryItem> itemConverter = new StringConverter<JewelryItem>() {
+                @Override
+                public String toString(JewelryItem item) {
+                    if (item != null) {
+                        return item.getItemName() + " - " + item.getItemCode() + 
+                               " (" + item.getMetalType() + " " + item.getPurity() + "k)";
+                    }
+                    return "";
                 }
                 
-                if (newVal != null && !newVal.isEmpty()) {
-                    // Find matching item in stock
-                    JewelryItem matchedItem = stockItems.stream()
-                        .filter(item -> item.getItemName().equalsIgnoreCase(newVal))
-                        .findFirst()
-                        .orElse(null);
+                @Override
+                public JewelryItem fromString(String string) {
+                    return null;
+                }
+            };
+            
+            // Filter function for searching items
+            Function<String, List<JewelryItem>> filterFunction = searchText -> {
+                if (searchText == null || searchText.isEmpty()) {
+                    return stockItems;
+                }
+                String lowerSearch = searchText.toLowerCase();
+                return stockItems.stream()
+                    .filter(item -> item.getItemName().toLowerCase().contains(lowerSearch) ||
+                                    item.getItemCode().toLowerCase().contains(lowerSearch) ||
+                                    item.getCategory().toLowerCase().contains(lowerSearch))
+                    .collect(Collectors.toList());
+            };
+            
+            // Create the AutoCompleteTextField
+            itemSearchField = new AutoCompleteTextField<>(stockItems, itemConverter, filterFunction);
+            itemSearchField.setPromptText("Search item by name, code or category...");
+            
+            // Custom cell factory to show more item info
+            itemSearchField.setCellFactory(item -> {
+                Label label = new Label();
+                if (item != null) {
+                    VBox content = new VBox(2);
+                    content.setPadding(new Insets(4, 8, 4, 8));
                     
-                    if (matchedItem != null) {
-                        // Use the same method to populate all fields consistently
-                        populatePurchaseItemFields(matchedItem);
-                    }
+                    Label nameLabel = new Label(item.getItemName() + " - " + item.getItemCode());
+                    nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+                    
+                    Label detailsLabel = new Label(item.getCategory() + " | " + 
+                                                  item.getMetalType() + " " + item.getPurity() + "k");
+                    detailsLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
+                    
+                    content.getChildren().addAll(nameLabel, detailsLabel);
+                    label.setGraphic(content);
+                }
+                return label;
+            });
+            
+            // Add to the UI
+            if (itemSearchBox != null) {
+                itemSearchBox.getChildren().clear();
+                itemSearchBox.getChildren().add(itemSearchField.getNode());
+                HBox.setHgrow(itemSearchField.getNode(), Priority.ALWAYS);
+            }
+            
+            // Handle item selection
+            itemSearchField.selectedItemProperty().addListener((obs, oldItem, newItem) -> {
+                if (newItem != null) {
+                    populatePurchaseItemFields(newItem);
                 }
             });
+            
+        } catch (Exception e) {
+            LOG.error("Error setting up item search", e);
+            alertNotification.showError("Failed to setup item search: " + e.getMessage());
         }
     }
     
-    private void updateItemNameSuggestions() {
-        if (stockItems != null) {
-            itemNameSuggestions.clear();
-            itemNameSuggestions.addAll(stockItems.stream()
-                .map(JewelryItem::getItemName)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList()));
-        }
-    }
+    
     
     private void setupStockCatalog() {
         if (listViewStock != null && stockItems != null) {
@@ -844,7 +880,10 @@ public class PurchaseInvoiceController implements Initializable {
             }
             
             String itemCode = txtItemCode.getText().trim();
-            String itemName = txtItemName != null ? txtItemName.getText().trim() : "New Item";
+            String itemName = getSelectedItemName();
+            if (itemName.isEmpty()) {
+                itemName = "New Item";
+            }
             Metal selectedMetal = cmbMetalType != null ? cmbMetalType.getValue() : null;
             String metalType = selectedMetal != null ? selectedMetal.getMetalName() : "GOLD";
             
@@ -1031,7 +1070,7 @@ public class PurchaseInvoiceController implements Initializable {
         
         // Populate form fields with selected item data
         if (txtItemCode != null) txtItemCode.setText(selectedItem.getItemCode());
-        if (txtItemName != null) txtItemName.setText(selectedItem.getItemName());
+        // Item name is set through the search field
         
         // Find and set the metal type in combo box
         if (cmbMetalType != null) {
@@ -1091,7 +1130,7 @@ public class PurchaseInvoiceController implements Initializable {
         if (editingItem != null) {
             // Update the item with new values
             editingItem.setItemCode(txtItemCode != null ? txtItemCode.getText() : "");
-            editingItem.setItemName(txtItemName != null ? txtItemName.getText() : "");
+            editingItem.setItemName(getSelectedItemName());
             Metal selectedMetal = cmbMetalType != null ? cmbMetalType.getValue() : null;
             editingItem.setMetalType(selectedMetal != null ? selectedMetal.getMetalName() : "GOLD");
             editingItem.setPurity(parseBigDecimal(txtPurity));
@@ -1142,7 +1181,7 @@ public class PurchaseInvoiceController implements Initializable {
             
             // Refresh stock items and autocomplete
             loadStockItems();
-            updateItemNameSuggestions();
+            setupItemSearchField(); // Refresh the item search field
         } catch (Exception e) {
             LOG.error("Error opening jewelry item form", e);
             alertNotification.showError("Failed to open jewelry item form: " + e.getMessage());
@@ -1292,7 +1331,7 @@ public class PurchaseInvoiceController implements Initializable {
                 return;
             }
             
-            Supplier supplier = supplierSearchField != null ? supplierSearchField.getSelectedItem() : null;
+            Supplier supplier = cmbSupplier != null ? cmbSupplier.getValue() : null;
             PurchaseType purchaseType = PurchaseType.NEW_STOCK;
             
             // Determine purchase type based on items
@@ -1334,7 +1373,7 @@ public class PurchaseInvoiceController implements Initializable {
                 gstRate,
                 BigDecimal.ZERO,  // transport charges
                 BigDecimal.ZERO,  // other charges
-                cmbPaymentMode.getValue(),
+                PurchaseInvoice.PaymentMethod.BANK_TRANSFER,
                 txtPaymentReference != null ? txtPaymentReference.getText().trim() : "",
                 null  // notes
             );
@@ -1354,7 +1393,7 @@ public class PurchaseInvoiceController implements Initializable {
     }
     
     private boolean validateForm() {
-        Supplier selectedSupplier = supplierSearchField != null ? supplierSearchField.getSelectedItem() : null;
+        Supplier selectedSupplier = cmbSupplier != null ? cmbSupplier.getValue() : null;
         if (selectedSupplier == null) {
             alertNotification.showError("Please select a supplier");
             return false;
@@ -1382,12 +1421,32 @@ public class PurchaseInvoiceController implements Initializable {
     
     private void processPayment(PurchaseInvoice invoice) {
         try {
-            paymentModeService.createPurchasePayment(
-                invoice,
-                cmbPaymentMode.getValue().name(),
-                invoice.getGrandTotal(),
-                txtPaymentReference.getText().trim()
-            );
+            // Get selected bank account
+            BankAccount selectedBankAccount = cmbBankAccount.getValue();
+            if (selectedBankAccount != null) {
+                // Check if sufficient balance
+                if (selectedBankAccount.getCurrentBalance().compareTo(invoice.getGrandTotal()) >= 0) {
+                    // Create bank transaction
+                    bankTransactionService.recordDebit(
+                        selectedBankAccount,
+                        invoice.getGrandTotal(),
+                        BankTransaction.TransactionSource.PURCHASE_PAYMENT,
+                        "PURCHASE",
+                        invoice.getId(),
+                        invoice.getInvoiceNumber(),
+                        txtPaymentReference.getText().trim(),
+                        invoice.getSupplier().getSupplierName(),
+                        String.format("Payment for purchase invoice %s to %s", 
+                            invoice.getInvoiceNumber(), 
+                            invoice.getSupplier().getSupplierName())
+                    );
+                    
+                    // Reload bank accounts to refresh balances
+                    loadBankAccounts();
+                } else {
+                    LOG.warn("Insufficient balance for payment of invoice " + invoice.getInvoiceNumber());
+                }
+            }
         } catch (Exception e) {
             LOG.error("Error processing payment for invoice " + invoice.getInvoiceNumber(), e);
         }
@@ -1457,7 +1516,7 @@ public class PurchaseInvoiceController implements Initializable {
     private void clearForm() {
         purchaseItems.clear();
         exchangeItems.clear();
-        if (supplierSearchField != null) supplierSearchField.clear();
+        if (cmbSupplier != null) cmbSupplier.setValue(null);
         if (txtSupplierName != null) txtSupplierName.clear();
         if (txtGSTNumber != null) txtGSTNumber.clear();
         if (txtSupplierContact != null) txtSupplierContact.clear();
@@ -1465,7 +1524,9 @@ public class PurchaseInvoiceController implements Initializable {
         if (txtPaymentReference != null) txtPaymentReference.clear();
         if (txtPaidAmount != null) txtPaidAmount.clear();
         if (txtDiscount != null) txtDiscount.setText("0");
-        cmbPaymentMode.setValue(PaymentMethod.CASH);
+        if (!cmbBankAccount.getItems().isEmpty()) {
+            cmbBankAccount.setValue(cmbBankAccount.getItems().get(0));
+        }
         clearPurchaseForm();
         clearExchangeForm();
         updateDateTime();
@@ -1478,7 +1539,7 @@ public class PurchaseInvoiceController implements Initializable {
         editingItem = null;
         
         if (txtItemCode != null) txtItemCode.clear();
-        if (txtItemName != null) txtItemName.clear();
+        if (itemSearchField != null) itemSearchField.clear();
         if (cmbMetalType != null) {
             // Set to first metal (usually GOLD) or find GOLD metal
             if (!cmbMetalType.getItems().isEmpty()) {
@@ -1616,7 +1677,7 @@ public class PurchaseInvoiceController implements Initializable {
         isProgrammaticallySettingFields = true;
         
         if (txtItemCode != null) txtItemCode.setText(item.getItemCode());
-        if (txtItemName != null) txtItemName.setText(item.getItemName());
+        // Item is already selected in the search field
         if (cmbMetalType != null) {
             // Find the Metal object that matches the item's metal type string
             for (Metal metal : cmbMetalType.getItems()) {
@@ -1685,7 +1746,7 @@ public class PurchaseInvoiceController implements Initializable {
         
         // Populate all fields with item data
         if (txtItemCode != null) txtItemCode.setText(item.getItemCode());
-        if (txtItemName != null) txtItemName.setText(item.getItemName());
+        // Item is already selected in the search field
         if (cmbMetalType != null) {
             // Find the Metal object that matches the item's metal type string
             for (Metal metal : cmbMetalType.getItems()) {
@@ -1849,7 +1910,7 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML
     private void handleSaveInvoice() {
         // Validate required fields
-        Supplier selectedSupplier = supplierSearchField != null ? supplierSearchField.getSelectedItem() : null;
+        Supplier selectedSupplier = cmbSupplier.getValue();
         if (selectedSupplier == null) {
             alertNotification.showError("Please select a supplier");
             return;
@@ -1860,13 +1921,15 @@ public class PurchaseInvoiceController implements Initializable {
             return;
         }
         
+        // Validate bank account selection
+        BankAccount selectedBankAccount = cmbBankAccount.getValue();
+        if (selectedBankAccount == null) {
+            alertNotification.showError("Please select a bank account");
+            return;
+        }
+        
         try {
             // Get payment details
-            PaymentMethod paymentMethod = cmbPaymentMode.getValue();
-            if (paymentMethod == null) {
-                paymentMethod = PaymentMethod.CASH;
-            }
-            
             String paymentReference = txtPaymentReference.getText();
             
             // Get paid amount
@@ -1891,20 +1954,30 @@ public class PurchaseInvoiceController implements Initializable {
                 }
             }
             
+            // Check if bank account has sufficient balance
+            BigDecimal grandTotal = calculateGrandTotal();
+            if (selectedBankAccount.getCurrentBalance().compareTo(grandTotal) < 0) {
+                alertNotification.showError(String.format("Insufficient balance in %s. Available: ₹%.2f, Required: ₹%.2f", 
+                    selectedBankAccount.getBankName(), 
+                    selectedBankAccount.getCurrentBalance(), 
+                    grandTotal));
+                return;
+            }
+            
             // Create purchase invoice entity
             PurchaseInvoice invoice = PurchaseInvoice.builder()
                 .supplier(selectedSupplier)
                 .supplierInvoiceNumber(txtSupplierInvoice.getText().trim())
                 .purchaseType(chipExchange.isSelected() ? PurchaseType.EXCHANGE_ITEMS : PurchaseType.NEW_STOCK)
                 .invoiceDate(LocalDateTime.now())
-                .paymentMethod(paymentMethod)
+                .paymentMethod(PurchaseInvoice.PaymentMethod.BANK_TRANSFER) // Always bank transfer now
                 .paymentReference(paymentReference)
                 .status(PurchaseInvoice.InvoiceStatus.PAID)
                 .discount(discount)
                 .gstRate(new BigDecimal(txtGstRate.getText()))
                 .transportCharges(BigDecimal.ZERO)
                 .otherCharges(BigDecimal.ZERO)
-                .paidAmount(paidAmount)
+                .paidAmount(grandTotal) // Always pay full amount
                 .purchaseTransactions(new ArrayList<>(purchaseItems))
                 .purchaseExchangeTransactions(new ArrayList<>(exchangeItems))
                 .build();
@@ -1912,7 +1985,22 @@ public class PurchaseInvoiceController implements Initializable {
             // Save invoice - this will handle stock updates
             PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoiceWithStockUpdate(invoice);
             
-            alertNotification.showSuccess("Purchase invoice saved successfully!");
+            // Create bank transaction for the payment
+            bankTransactionService.recordDebit(
+                selectedBankAccount,
+                grandTotal,
+                BankTransaction.TransactionSource.PURCHASE_PAYMENT,
+                "PURCHASE",
+                savedInvoice.getId(),
+                savedInvoice.getInvoiceNumber(),
+                paymentReference,
+                selectedSupplier.getSupplierName(),
+                String.format("Payment for purchase invoice %s to %s", 
+                    savedInvoice.getInvoiceNumber(), 
+                    selectedSupplier.getSupplierName())
+            );
+            
+            alertNotification.showSuccess("Purchase invoice saved and payment recorded successfully!");
             
             // Clear the form
             clearAll();
@@ -1920,16 +2008,55 @@ public class PurchaseInvoiceController implements Initializable {
             // Update date time display
             updateDateTime();
             
+            // Reload bank accounts to refresh balances
+            loadBankAccounts();
+            
         } catch (Exception e) {
             LOG.error("Error saving purchase invoice", e);
             alertNotification.showError("Error saving invoice: " + e.getMessage());
         }
     }
     
+    private BigDecimal calculateGrandTotal() {
+        // Calculate purchase total
+        BigDecimal purchaseTotal = purchaseItems.stream()
+            .map(PurchaseTransaction::getTotalAmount)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Calculate exchange total
+        BigDecimal exchangeTotal = exchangeItems.stream()
+            .map(PurchaseExchangeTransaction::getTotalAmount)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Get GST rate
+        BigDecimal gstRate = parseBigDecimal(txtGstRate);
+        
+        // Calculate GST on purchase amount
+        BigDecimal gstAmount = purchaseTotal.multiply(gstRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        
+        // Calculate subtotal
+        BigDecimal subtotal = purchaseTotal.add(gstAmount);
+        
+        // Get discount
+        BigDecimal discount = parseBigDecimal(txtDiscount);
+        
+        // Calculate grand total
+        BigDecimal grandTotal = subtotal.subtract(exchangeTotal).subtract(discount);
+        
+        // Ensure non-negative
+        if (grandTotal.compareTo(BigDecimal.ZERO) < 0) {
+            grandTotal = BigDecimal.ZERO;
+        }
+        
+        return grandTotal;
+    }
+    
     private void clearAll() {
         // Clear supplier info
-        if (supplierSearchField != null) {
-            supplierSearchField.clear();
+        if (cmbSupplier != null) {
+            cmbSupplier.setValue(null);
         }
         txtSupplierName.clear();
         txtGSTNumber.clear();
@@ -1938,7 +2065,7 @@ public class PurchaseInvoiceController implements Initializable {
         
         // Clear purchase form
         txtItemCode.clear();
-        txtItemName.clear();
+        if (itemSearchField != null) itemSearchField.clear();
         cmbMetalType.setValue(null);
         txtPurity.clear();
         txtQuantity.clear();
@@ -1960,7 +2087,9 @@ public class PurchaseInvoiceController implements Initializable {
         txtExchangeAmount.clear();
         
         // Clear payment details
-        cmbPaymentMode.setValue(null);
+        if (!cmbBankAccount.getItems().isEmpty()) {
+            cmbBankAccount.setValue(cmbBankAccount.getItems().get(0));
+        }
         txtPaymentReference.clear();
         txtPaidAmount.clear();
         txtDiscount.setText("0.00");
