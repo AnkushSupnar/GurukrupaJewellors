@@ -82,10 +82,7 @@ public class TransactionMenuController implements Initializable {
         btnPurchaseInvoice.setOnAction(e -> openPurchaseInvoiceDialog());
         btnBilling.setOnAction(e -> openBillingDialog());
         btnViewBills.setOnAction(e -> openViewBillsDialog());
-        btnViewPurchases.setOnAction(e -> {
-            LOG.info("View Purchases button clicked - functionality to be implemented");
-            // TODO: Implement view purchases functionality
-        });
+        btnViewPurchases.setOnAction(e -> openViewPurchasesDialog());
         btnRefresh.setOnAction(e -> loadStatistics());
         btnMetalRates.setOnAction(e -> openMetalRatesDialog());
         btnViewRates.setOnAction(e -> openMetalRatesDialog()); // Same dialog for now
@@ -251,6 +248,36 @@ public class TransactionMenuController implements Initializable {
             
         } catch (Exception e) {
             LOG.error("Error opening purchase invoice dialog: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void openViewPurchasesDialog() {
+        LOG.info("Opening View Purchases dialog");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+            
+            // Load the FXML and get both the root and controller
+            Map.Entry<Parent, ViewPurchasesController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.VIEW_PURCHASES.getFxmlFile(), ViewPurchasesController.class);
+            
+            Parent root = entry.getKey();
+            
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("View Purchases - Gurukrupa Jewelry");
+            dialog.setResizable(true);
+            dialog.setMaximized(true);
+            
+            // Show the dialog
+            dialog.show();
+            
+            LOG.info("View Purchases dialog opened successfully");
+            
+        } catch (Exception e) {
+            LOG.error("Error opening view purchases dialog: {}", e.getMessage());
             e.printStackTrace();
         }
     }

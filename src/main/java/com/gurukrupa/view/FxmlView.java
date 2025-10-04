@@ -124,6 +124,16 @@ public enum FxmlView {
             return "/fxml/transaction/ViewBills.fxml";
         }
     },
+    VIEW_PURCHASES {
+        @Override
+        String getTitle() {
+            return "View Purchases";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/transaction/ViewPurchases.fxml";
+        }
+    },
     BANK_ACCOUNT_LIST {
         @Override
         String getTitle() {

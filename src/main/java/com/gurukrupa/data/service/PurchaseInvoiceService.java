@@ -7,9 +7,11 @@ import com.gurukrupa.data.entities.Supplier;
 import com.gurukrupa.data.entities.JewelryItem;
 import com.gurukrupa.data.entities.StockTransaction;
 import com.gurukrupa.data.entities.BankAccount;
+import com.gurukrupa.data.entities.BankTransaction;
 import com.gurukrupa.data.entities.ExchangeMetalStock;
 import com.gurukrupa.data.repository.PurchaseInvoiceRepository;
 import com.gurukrupa.data.repository.PurchaseTransactionRepository;
+import com.gurukrupa.data.repository.PurchaseExchangeTransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,9 @@ public class PurchaseInvoiceService {
     
     @Autowired
     private PurchaseTransactionRepository purchaseTransactionRepository;
+    
+    @Autowired
+    private PurchaseExchangeTransactionRepository purchaseExchangeTransactionRepository;
     
     @Autowired
     private SupplierService supplierService;
@@ -331,6 +336,353 @@ public class PurchaseInvoiceService {
     
     public List<PurchaseInvoice> findExchangePurchaseInvoices() {
         return purchaseInvoiceRepository.findExchangePurchaseInvoices();
+    }
+    
+    /**
+     * Revert the effects of a purchase invoice before editing
+     * This includes stock adjustments, bank transactions, and exchange metal stock
+     */
+    @Transactional
+    public void revertPurchaseInvoiceEffects(PurchaseInvoice originalInvoice) {
+        String supplierName = originalInvoice.getSupplier() != null ? 
+                            originalInvoice.getSupplier().getSupplierFullName() : "Supplier";
+        
+        LOG.info("Reverting purchase invoice effects for: {}", originalInvoice.getInvoiceNumber());
+        
+        try {
+            // 1. Revert stock additions from original purchase transactions
+            for (PurchaseTransaction transaction : originalInvoice.getPurchaseTransactions()) {
+                if (transaction.getItemType() == PurchaseTransaction.ItemType.NEW_ITEM) {
+                    Integer quantity = transaction.getQuantity() != null ? transaction.getQuantity() : 1;
+                    
+                    if (quantity > 0) {
+                        // Find the jewelry item and reduce stock
+                        Optional<JewelryItem> existingItem = jewelryItemService.findByItemCode(transaction.getItemCode());
+                        
+                        if (existingItem.isPresent()) {
+                            // Reduce stock (this is reverse of the original purchase)
+                            jewelryItemService.reduceStock(
+                                existingItem.get().getId(),
+                                quantity,
+                                StockTransaction.TransactionSource.ADJUSTMENT,
+                                "PURCHASE_EDIT_REVERSAL",
+                                originalInvoice.getId(),
+                                originalInvoice.getInvoiceNumber(),
+                                "Stock reduction due to purchase invoice edit - " + supplierName,
+                                "System"
+                            );
+                            LOG.info("Reverted stock for item {} quantity {} from invoice {}", 
+                                    transaction.getItemCode(), quantity, originalInvoice.getInvoiceNumber());
+                        }
+                    }
+                }
+            }
+            
+            // 2. Revert exchange metal stock reductions (add back the metal stock)
+            if (originalInvoice.getPurchaseExchangeTransactions() != null && 
+                !originalInvoice.getPurchaseExchangeTransactions().isEmpty()) {
+                
+                for (PurchaseExchangeTransaction exchangeTransaction : originalInvoice.getPurchaseExchangeTransactions()) {
+                    BigDecimal netWeight = exchangeTransaction.getNetWeight();
+                    
+                    if (netWeight != null && netWeight.compareTo(BigDecimal.ZERO) > 0) {
+                        // Add back the exchange metal stock (reverse of original reduction)
+                        BigDecimal stockPurity = new BigDecimal("0"); // Use purity 0 to match billing system
+                        exchangeMetalStockService.addExchangeMetalWeight(
+                            exchangeTransaction.getMetalType(),
+                            stockPurity,
+                            netWeight,
+                            "PURCHASE_EDIT_REVERSAL",
+                            originalInvoice.getId(),
+                            originalInvoice.getInvoiceNumber(),
+                            "Exchange metal stock reversal due to purchase invoice edit - " + supplierName
+                        );
+                        
+                        LOG.info("Reverted exchange metal stock: {} {} weight {} for invoice {}", 
+                                exchangeTransaction.getMetalType(), exchangeTransaction.getPurity(), 
+                                netWeight, originalInvoice.getInvoiceNumber());
+                    }
+                }
+            }
+            
+            // 3. Revert bank transaction (add back the paid amount to bank balance)
+            if (originalInvoice.getPaidAmount() != null && 
+                originalInvoice.getPaidAmount().compareTo(BigDecimal.ZERO) > 0 &&
+                originalInvoice.getPaymentMethod() != PurchaseInvoice.PaymentMethod.CASH &&
+                originalInvoice.getPaymentMethod() != PurchaseInvoice.PaymentMethod.CREDIT) {
+                
+                // Get the first active bank account (in a real implementation, you'd store which account was used)
+                List<BankAccount> activeBankAccounts = bankAccountService.getAllActiveBankAccounts();
+                if (!activeBankAccounts.isEmpty()) {
+                    BankAccount bankAccount = activeBankAccounts.get(0);
+                    
+                    // Record credit transaction (reverse of original debit)
+                    bankTransactionService.recordCredit(
+                        bankAccount,
+                        originalInvoice.getPaidAmount(),
+                        BankTransaction.TransactionSource.MANUAL_ENTRY,
+                        "PURCHASE_EDIT_REVERSAL",
+                        originalInvoice.getId(),
+                        originalInvoice.getInvoiceNumber(),
+                        originalInvoice.getPaymentReference(),
+                        supplierName,
+                        String.format("Purchase payment reversal due to invoice edit - %s to %s", 
+                            originalInvoice.getInvoiceNumber(), supplierName)
+                    );
+                    
+                    LOG.info("Reverted bank transaction for purchase invoice {} - Amount: {}", 
+                            originalInvoice.getInvoiceNumber(), originalInvoice.getPaidAmount());
+                }
+            }
+            
+            LOG.info("Successfully reverted all effects for purchase invoice: {}", originalInvoice.getInvoiceNumber());
+            
+        } catch (Exception e) {
+            LOG.error("Error reverting purchase invoice effects for: {}", originalInvoice.getInvoiceNumber(), e);
+            throw new RuntimeException("Failed to revert purchase invoice effects: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Update an existing purchase invoice with new transaction data
+     * This method properly handles stock and financial adjustments
+     */
+    @Transactional
+    public PurchaseInvoice updatePurchaseInvoice(Long invoiceId, 
+                                               List<PurchaseTransaction> newPurchaseTransactions,
+                                               List<PurchaseExchangeTransaction> newExchangeTransactions,
+                                               PurchaseInvoice updatedInvoiceData) {
+        try {
+            // Load fresh entity from database
+            Optional<PurchaseInvoice> existingInvoiceOpt = findById(invoiceId);
+            if (existingInvoiceOpt.isEmpty()) {
+                throw new RuntimeException("Purchase invoice not found with ID: " + invoiceId);
+            }
+            
+            PurchaseInvoice existingInvoice = existingInvoiceOpt.get();
+            
+            LOG.info("Starting purchase invoice update for: {}", existingInvoice.getInvoiceNumber());
+            
+            // Step 1: Revert the effects of the original invoice
+            revertPurchaseInvoiceEffects(existingInvoice);
+            
+            // Step 2: Update invoice fields
+            existingInvoice.setSupplier(updatedInvoiceData.getSupplier());
+            existingInvoice.setSupplierInvoiceNumber(updatedInvoiceData.getSupplierInvoiceNumber());
+            existingInvoice.setPurchaseType(updatedInvoiceData.getPurchaseType());
+            existingInvoice.setPaymentMethod(updatedInvoiceData.getPaymentMethod());
+            existingInvoice.setPaymentReference(updatedInvoiceData.getPaymentReference());
+            existingInvoice.setStatus(updatedInvoiceData.getStatus());
+            existingInvoice.setDiscount(updatedInvoiceData.getDiscount());
+            existingInvoice.setGstRate(updatedInvoiceData.getGstRate());
+            existingInvoice.setTransportCharges(updatedInvoiceData.getTransportCharges());
+            existingInvoice.setOtherCharges(updatedInvoiceData.getOtherCharges());
+            existingInvoice.setPaidAmount(updatedInvoiceData.getPaidAmount());
+            existingInvoice.setPendingAmount(updatedInvoiceData.getPendingAmount());
+            existingInvoice.setNotes(updatedInvoiceData.getNotes());
+            
+            // Step 3: Delete old purchase transactions from database
+            List<PurchaseTransaction> oldPurchaseTransactions = existingInvoice.getPurchaseTransactions();
+            if (!oldPurchaseTransactions.isEmpty()) {
+                LOG.info("Deleting {} old purchase transactions for invoice {}", 
+                        oldPurchaseTransactions.size(), existingInvoice.getInvoiceNumber());
+                purchaseTransactionRepository.deleteAll(oldPurchaseTransactions);
+            }
+            existingInvoice.getPurchaseTransactions().clear();
+            
+            // Add new purchase transactions
+            for (PurchaseTransaction transaction : newPurchaseTransactions) {
+                transaction.setId(null); // Ensure new entity
+                transaction.setPurchaseInvoice(existingInvoice);
+                existingInvoice.getPurchaseTransactions().add(transaction);
+            }
+            
+            // Step 4: Delete old exchange transactions from database
+            List<PurchaseExchangeTransaction> oldExchangeTransactions = existingInvoice.getPurchaseExchangeTransactions();
+            if (!oldExchangeTransactions.isEmpty()) {
+                LOG.info("Deleting {} old exchange transactions for invoice {}", 
+                        oldExchangeTransactions.size(), existingInvoice.getInvoiceNumber());
+                purchaseExchangeTransactionRepository.deleteAll(oldExchangeTransactions);
+            }
+            existingInvoice.getPurchaseExchangeTransactions().clear();
+            
+            // Add new exchange transactions
+            for (PurchaseExchangeTransaction exchangeTransaction : newExchangeTransactions) {
+                exchangeTransaction.setId(null); // Ensure new entity
+                exchangeTransaction.setPurchaseInvoice(existingInvoice);
+                existingInvoice.getPurchaseExchangeTransactions().add(exchangeTransaction);
+            }
+            
+            // Step 5: Calculate totals
+            existingInvoice.calculateTotals();
+            
+            // Step 6: Save the updated invoice first
+            PurchaseInvoice savedInvoice = purchaseInvoiceRepository.save(existingInvoice);
+            LOG.info("Updated invoice saved with ID: {}", savedInvoice.getId());
+            
+            // Step 7: Apply the effects of the new invoice (stock addition, bank deduction, etc.)
+            // But only if the invoice status indicates it should affect stock/bank
+            if (savedInvoice.getStatus() != PurchaseInvoice.InvoiceStatus.CANCELLED) {
+                applyUpdatedInvoiceEffects(savedInvoice);
+            }
+            
+            LOG.info("Purchase invoice update completed successfully for: {}", savedInvoice.getInvoiceNumber());
+            return savedInvoice;
+            
+        } catch (Exception e) {
+            LOG.error("Error updating purchase invoice with ID: {}", invoiceId, e);
+            throw new RuntimeException("Failed to update purchase invoice: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Apply the effects of an updated purchase invoice
+     * This includes stock additions, bank deductions, and exchange metal stock reductions
+     */
+    @Transactional
+    public void applyUpdatedInvoiceEffects(PurchaseInvoice updatedInvoice) {
+        String supplierName = updatedInvoice.getSupplier() != null ? 
+                            updatedInvoice.getSupplier().getSupplierFullName() : "Supplier";
+        
+        LOG.info("Applying updated purchase invoice effects for: {}", updatedInvoice.getInvoiceNumber());
+        
+        try {
+            // 1. Process jewelry item stock addition (same as original but with "EDITED" context)
+            for (PurchaseTransaction transaction : updatedInvoice.getPurchaseTransactions()) {
+                if (transaction.getItemType() == PurchaseTransaction.ItemType.NEW_ITEM) {
+                    Integer quantity = transaction.getQuantity() != null ? transaction.getQuantity() : 1;
+                    
+                    if (quantity > 0) {
+                        // Find or create jewelry item
+                        Optional<JewelryItem> existingItem = jewelryItemService.findByItemCode(transaction.getItemCode());
+                        
+                        if (existingItem.isPresent()) {
+                            // Update existing item stock
+                            jewelryItemService.addStock(
+                                existingItem.get().getId(),
+                                quantity,
+                                StockTransaction.TransactionSource.PURCHASE,
+                                "PURCHASE_INVOICE_EDITED",
+                                updatedInvoice.getId(),
+                                updatedInvoice.getInvoiceNumber(),
+                                "Purchase from " + supplierName + " (Invoice Edited)",
+                                "System"
+                            );
+                            LOG.info("Added stock for existing item {} quantity {} from edited invoice {}", 
+                                    transaction.getItemCode(), quantity, updatedInvoice.getInvoiceNumber());
+                        } else {
+                            // Create new jewelry item (same logic as original purchase)
+                            BigDecimal grossWeight = transaction.getGrossWeight() != null ? transaction.getGrossWeight() : BigDecimal.ZERO;
+                            BigDecimal netWeight = transaction.getNetWeight() != null ? transaction.getNetWeight() : BigDecimal.ZERO;
+                            BigDecimal stoneWeight = grossWeight.subtract(netWeight);
+                            if (stoneWeight.compareTo(BigDecimal.ZERO) < 0) {
+                                stoneWeight = BigDecimal.ZERO;
+                            }
+                            
+                            BigDecimal ratePerGram = transaction.getRatePerGram() != null ? transaction.getRatePerGram() : BigDecimal.ZERO;
+                            BigDecimal labourCharges = transaction.getMakingCharges() != null ? transaction.getMakingCharges() : BigDecimal.ZERO;
+                            
+                            JewelryItem newItem = JewelryItem.builder()
+                                .itemCode(transaction.getItemCode())
+                                .itemName(transaction.getItemName())
+                                .category("General")
+                                .metalType(transaction.getMetalType())
+                                .purity(transaction.getPurity() != null ? transaction.getPurity() : new BigDecimal("916"))
+                                .grossWeight(grossWeight)
+                                .netWeight(netWeight)
+                                .stoneWeight(stoneWeight)
+                                .quantity(quantity)
+                                .goldRate(ratePerGram.multiply(BigDecimal.TEN))
+                                .labourCharges(labourCharges)
+                                .totalAmount(transaction.getTotalAmount() != null ? transaction.getTotalAmount() : BigDecimal.ZERO)
+                                .isActive(true)
+                                .createdDate(LocalDateTime.now())
+                                .build();
+                            
+                            JewelryItem savedItem = jewelryItemService.saveJewelryItem(newItem);
+                            
+                            // Record stock transaction
+                            stockTransactionService.recordStockIn(
+                                savedItem,
+                                quantity,
+                                StockTransaction.TransactionSource.PURCHASE,
+                                "PURCHASE_INVOICE_EDITED",
+                                updatedInvoice.getId(),
+                                updatedInvoice.getInvoiceNumber(),
+                                "Initial purchase from " + supplierName + " (Invoice Edited)",
+                                "System"
+                            );
+                            
+                            LOG.info("Created new item {} with quantity {} from edited invoice {}", 
+                                    transaction.getItemCode(), quantity, updatedInvoice.getInvoiceNumber());
+                        }
+                    }
+                }
+            }
+            
+            // 2. Process exchange metal stock reduction
+            if (updatedInvoice.getPurchaseExchangeTransactions() != null && 
+                !updatedInvoice.getPurchaseExchangeTransactions().isEmpty()) {
+                
+                for (PurchaseExchangeTransaction exchangeTransaction : updatedInvoice.getPurchaseExchangeTransactions()) {
+                    BigDecimal netWeight = exchangeTransaction.getNetWeight();
+                    
+                    if (netWeight != null && netWeight.compareTo(BigDecimal.ZERO) > 0) {
+                        // Reduce exchange metal stock
+                        BigDecimal stockPurity = new BigDecimal("0");
+                        exchangeMetalStockService.sellExchangeMetalWeight(
+                            exchangeTransaction.getMetalType(),
+                            stockPurity,
+                            netWeight,
+                            "PURCHASE_INVOICE_EDITED",
+                            updatedInvoice.getId(),
+                            updatedInvoice.getInvoiceNumber(),
+                            supplierName + " (Invoice Edited)"
+                        );
+                        
+                        LOG.info("Reduced exchange metal stock: {} {} weight {} for edited invoice {}", 
+                                exchangeTransaction.getMetalType(), exchangeTransaction.getPurity(), 
+                                netWeight, updatedInvoice.getInvoiceNumber());
+                    }
+                }
+            }
+            
+            // 3. Process bank transaction for the updated payment
+            if (updatedInvoice.getPaidAmount() != null && 
+                updatedInvoice.getPaidAmount().compareTo(BigDecimal.ZERO) > 0 &&
+                updatedInvoice.getPaymentMethod() != PurchaseInvoice.PaymentMethod.CASH &&
+                updatedInvoice.getPaymentMethod() != PurchaseInvoice.PaymentMethod.CREDIT) {
+                
+                // Get the first active bank account
+                List<BankAccount> activeBankAccounts = bankAccountService.getAllActiveBankAccounts();
+                if (!activeBankAccounts.isEmpty()) {
+                    BankAccount bankAccount = activeBankAccounts.get(0);
+                    
+                    // Record debit transaction for the updated payment
+                    bankTransactionService.recordDebit(
+                        bankAccount,
+                        updatedInvoice.getPaidAmount(),
+                        BankTransaction.TransactionSource.PURCHASE_PAYMENT,
+                        "PURCHASE_INVOICE_EDITED",
+                        updatedInvoice.getId(),
+                        updatedInvoice.getInvoiceNumber(),
+                        updatedInvoice.getPaymentReference(),
+                        supplierName,
+                        String.format("Updated payment for purchase invoice %s to %s (Invoice Edited)", 
+                            updatedInvoice.getInvoiceNumber(), supplierName)
+                    );
+                    
+                    LOG.info("Recorded updated bank transaction for purchase invoice {} - Amount: {}", 
+                            updatedInvoice.getInvoiceNumber(), updatedInvoice.getPaidAmount());
+                }
+            }
+            
+            LOG.info("Successfully applied all effects for updated purchase invoice: {}", updatedInvoice.getInvoiceNumber());
+            
+        } catch (Exception e) {
+            LOG.error("Error applying updated purchase invoice effects for: {}", updatedInvoice.getInvoiceNumber(), e);
+            throw new RuntimeException("Failed to apply updated purchase invoice effects: " + e.getMessage(), e);
+        }
     }
     
     /**

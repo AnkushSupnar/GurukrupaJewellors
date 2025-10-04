@@ -224,6 +224,11 @@ public class PurchaseInvoiceController implements Initializable {
     private PurchaseTransaction editingItem = null;
     private PurchaseExchangeTransaction editingExchangeItem = null;
     
+    // Edit mode fields
+    private Stage dialogStage;
+    private boolean isEditMode = false;
+    private PurchaseInvoice invoiceToEdit = null;
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         LOG.info("Initializing PurchaseInvoiceController");
@@ -1370,6 +1375,12 @@ public class PurchaseInvoiceController implements Initializable {
     
     @FXML
     private void handleSave() {
+        // Check if we're in edit mode and delegate to the appropriate method
+        if (isEditMode && invoiceToEdit != null) {
+            handleSaveInvoice();
+            return;
+        }
+        
         try {
             if (!validateForm()) {
                 return;
@@ -2073,30 +2084,64 @@ public class PurchaseInvoiceController implements Initializable {
                 paidAmountFinal = grandTotal;
             }
             
-            // Create purchase invoice entity
-            PurchaseInvoice invoice = PurchaseInvoice.builder()
-                .supplier(selectedSupplier)
-                .supplierInvoiceNumber(txtSupplierInvoice.getText().trim())
-                .purchaseType(chipExchange.isSelected() ? PurchaseType.EXCHANGE_ITEMS : PurchaseType.NEW_STOCK)
-                .invoiceDate(LocalDateTime.now())
-                .paymentMethod(paymentMethod)
-                .paymentReference(paymentReference)
-                .status(invoiceStatus)
-                .discount(discount)
-                .gstRate(new BigDecimal(txtGstRate.getText()))
-                .transportCharges(BigDecimal.ZERO)
-                .otherCharges(BigDecimal.ZERO)
-                .paidAmount(paidAmountFinal)
-                .pendingAmount(isCreditPurchase ? grandTotal : BigDecimal.ZERO)
-                .purchaseTransactions(new ArrayList<>(purchaseItems))
-                .purchaseExchangeTransactions(new ArrayList<>(exchangeItems))
-                .build();
+            // Create or update purchase invoice entity
+            PurchaseInvoice invoice;
             
-            // Save invoice - this will handle stock updates
-            PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoiceWithStockUpdate(invoice);
+            if (isEditMode && invoiceToEdit != null) {
+                // For edit mode, use the dedicated update method
+                // Create updated invoice data object
+                invoice = PurchaseInvoice.builder()
+                    .supplier(selectedSupplier)
+                    .supplierInvoiceNumber(txtSupplierInvoice.getText().trim())
+                    .purchaseType(chipExchange.isSelected() ? PurchaseType.EXCHANGE_ITEMS : PurchaseType.NEW_STOCK)
+                    .paymentMethod(paymentMethod)
+                    .paymentReference(paymentReference)
+                    .status(invoiceStatus)
+                    .discount(discount)
+                    .gstRate(new BigDecimal(txtGstRate.getText()))
+                    .transportCharges(BigDecimal.ZERO)
+                    .otherCharges(BigDecimal.ZERO)
+                    .paidAmount(paidAmountFinal)
+                    .pendingAmount(isCreditPurchase ? grandTotal : BigDecimal.ZERO)
+                    .build();
+            } else {
+                // Create new invoice
+                invoice = PurchaseInvoice.builder()
+                    .supplier(selectedSupplier)
+                    .supplierInvoiceNumber(txtSupplierInvoice.getText().trim())
+                    .purchaseType(chipExchange.isSelected() ? PurchaseType.EXCHANGE_ITEMS : PurchaseType.NEW_STOCK)
+                    .invoiceDate(LocalDateTime.now())
+                    .paymentMethod(paymentMethod)
+                    .paymentReference(paymentReference)
+                    .status(invoiceStatus)
+                    .discount(discount)
+                    .gstRate(new BigDecimal(txtGstRate.getText()))
+                    .transportCharges(BigDecimal.ZERO)
+                    .otherCharges(BigDecimal.ZERO)
+                    .paidAmount(paidAmountFinal)
+                    .pendingAmount(isCreditPurchase ? grandTotal : BigDecimal.ZERO)
+                    .purchaseTransactions(new ArrayList<>(purchaseItems))
+                    .purchaseExchangeTransactions(new ArrayList<>(exchangeItems))
+                    .build();
+            }
             
-            // Create bank transaction for the payment (only if not credit purchase)
-            if (!isCreditPurchase && selectedBankAccount != null) {
+            // Save invoice
+            PurchaseInvoice savedInvoice;
+            if (isEditMode) {
+                // For edit mode, use the dedicated update method
+                savedInvoice = purchaseInvoiceService.updatePurchaseInvoice(
+                    invoiceToEdit.getId(),
+                    new ArrayList<>(purchaseItems),
+                    new ArrayList<>(exchangeItems),
+                    invoice
+                );
+            } else {
+                // For new invoices, use save with stock updates
+                savedInvoice = purchaseInvoiceService.savePurchaseInvoiceWithStockUpdate(invoice);
+            }
+            
+            // Create bank transaction for the payment (only if not credit purchase and not in edit mode)
+            if (!isCreditPurchase && selectedBankAccount != null && !isEditMode) {
                 bankTransactionService.recordDebit(
                     selectedBankAccount,
                     grandTotal,
@@ -2112,17 +2157,25 @@ public class PurchaseInvoiceController implements Initializable {
                 );
             }
             
-            if (isCreditPurchase) {
-                alertNotification.showSuccess("Purchase invoice saved as credit. Payment pending: " + CurrencyFormatter.format(grandTotal));
+            if (isEditMode) {
+                alertNotification.showSuccess("Purchase invoice updated successfully!");
+                // Close dialog if in edit mode
+                if (dialogStage != null) {
+                    dialogStage.close();
+                }
             } else {
-                alertNotification.showSuccess("Purchase invoice saved and payment recorded successfully!");
+                if (isCreditPurchase) {
+                    alertNotification.showSuccess("Purchase invoice saved as credit. Payment pending: " + CurrencyFormatter.format(grandTotal));
+                } else {
+                    alertNotification.showSuccess("Purchase invoice saved and payment recorded successfully!");
+                }
+                
+                // Clear the form for new invoice
+                clearAll();
+                
+                // Update date time display
+                updateDateTime();
             }
-            
-            // Clear the form
-            clearAll();
-            
-            // Update date time display
-            updateDateTime();
             
             // Reload bank accounts to refresh balances
             loadBankAccounts();
@@ -2219,5 +2272,110 @@ public class PurchaseInvoiceController implements Initializable {
         
         // Update summary
         updateSummary();
+    }
+    
+    /**
+     * Set the dialog stage for this controller
+     */
+    public void setDialogStage(Stage dialogStage) {
+        this.dialogStage = dialogStage;
+    }
+    
+    /**
+     * Set the controller to edit mode with an existing purchase invoice
+     */
+    public void setEditMode(PurchaseInvoice invoice) {
+        this.isEditMode = true;
+        this.invoiceToEdit = invoice;
+        
+        // Load invoice data after initialization
+        javafx.application.Platform.runLater(() -> {
+            loadInvoiceDataForEditing();
+        });
+    }
+    
+    /**
+     * Load purchase invoice data into the form for editing
+     */
+    private void loadInvoiceDataForEditing() {
+        if (invoiceToEdit == null) return;
+        
+        try {
+            LOG.info("Loading purchase invoice data for editing: {}", invoiceToEdit.getInvoiceNumber());
+            
+            // Set supplier information
+            Supplier supplier = invoiceToEdit.getSupplier();
+            if (supplier != null && cmbSupplier != null) {
+                cmbSupplier.setValue(supplier);
+            }
+            
+            // Set supplier invoice number  
+            if (txtSupplierInvoice != null) {
+                txtSupplierInvoice.setText(invoiceToEdit.getSupplierInvoiceNumber() != null ? invoiceToEdit.getSupplierInvoiceNumber() : "");
+            }
+            
+            // Set purchase type
+            if (invoiceToEdit.getPurchaseType() != null) {
+                switch (invoiceToEdit.getPurchaseType()) {
+                    case NEW_STOCK:
+                        if (chipPurchase != null) chipPurchase.setSelected(true);
+                        break;
+                    case EXCHANGE_ITEMS:
+                        if (chipExchange != null) chipExchange.setSelected(true);
+                        break;
+                }
+            }
+            
+            // Set payment method
+            if (invoiceToEdit.getPaymentMethod() != null) {
+                if (invoiceToEdit.getPaymentMethod() == PurchaseInvoice.PaymentMethod.CREDIT) {
+                    if (chkCreditPurchase != null) {
+                        chkCreditPurchase.setSelected(true);
+                    }
+                } else {
+                    // For other payment methods (CASH, BANK_TRANSFER), uncheck credit purchase
+                    if (chkCreditPurchase != null) {
+                        chkCreditPurchase.setSelected(false);
+                    }
+                }
+            }
+            
+            // Set financial details
+            if (txtGstRate != null && invoiceToEdit.getGstRate() != null) {
+                txtGstRate.setText(invoiceToEdit.getGstRate().toString());
+            }
+            if (txtDiscount != null && invoiceToEdit.getDiscount() != null) {
+                txtDiscount.setText(invoiceToEdit.getDiscount().toString());
+            }
+            if (txtPaidAmount != null && invoiceToEdit.getPaidAmount() != null) {
+                txtPaidAmount.setText(invoiceToEdit.getPaidAmount().toString());
+            }
+            if (txtPaymentReference != null && invoiceToEdit.getPaymentReference() != null) {
+                txtPaymentReference.setText(invoiceToEdit.getPaymentReference());
+            }
+            
+            // Load purchase transactions
+            if (invoiceToEdit.getPurchaseTransactions() != null) {
+                purchaseItems.clear();
+                purchaseItems.addAll(invoiceToEdit.getPurchaseTransactions());
+            }
+            
+            // Load exchange transactions
+            if (invoiceToEdit.getPurchaseExchangeTransactions() != null) {
+                exchangeItems.clear();
+                exchangeItems.addAll(invoiceToEdit.getPurchaseExchangeTransactions());
+            }
+            
+            // Update summary
+            updateSummary();
+            
+            LOG.info("Purchase invoice data loaded successfully for editing");
+            
+        } catch (Exception e) {
+            LOG.error("Error loading purchase invoice data for editing", e);
+            if (alertNotification != null) {
+                alertNotification.showError("Error loading purchase invoice data: " + e.getMessage());
+            }
+        }
     }
 }

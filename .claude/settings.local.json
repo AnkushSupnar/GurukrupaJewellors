@@ -17,7 +17,8 @@
       "Bash(./gradlew:*)",
       "Bash(./mvnw:*)",
       "Bash(rg:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
