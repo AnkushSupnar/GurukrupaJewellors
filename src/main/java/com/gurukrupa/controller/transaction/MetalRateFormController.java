@@ -1,4 +1,4 @@
-package com.gurukrupa.controller.settings;
+package com.gurukrupa.controller.transaction;
 
 import com.gurukrupa.config.SpringFXMLLoader;
 import com.gurukrupa.data.entities.LoginUser;
@@ -103,7 +103,7 @@ public class MetalRateFormController implements Initializable {
         
         // Initialize back button if it exists
         if (btnBack != null) {
-            btnBack.setOnAction(e -> navigateBackToSettingsMenu());
+            btnBack.setOnAction(e -> navigateBackToTransactionMenu());
         }
     }
     
@@ -406,12 +406,16 @@ public class MetalRateFormController implements Initializable {
         });
     }
     
-    private void navigateBackToSettingsMenu() {
+    private void navigateBackToTransactionMenu() {
         try {
+            // Since Metal Rates is now in Transaction menu, navigate back to Transaction menu
             BorderPane dashboard = (BorderPane) btnBack.getScene().getRoot();
-            Parent settingsMenu = springFXMLLoader.load("/fxml/settings/SettingsMenu.fxml");
-            dashboard.setCenter(settingsMenu);
-            logger.info("Navigated back to Settings Menu");
+            Parent transactionMenu = springFXMLLoader.load("/fxml/transaction/TransactionMenu.fxml");
+            dashboard.setCenter(transactionMenu);
+            logger.info("Navigated back to Transaction Menu");
+        } catch (ClassCastException e) {
+            logger.error("Error navigating back - not in dashboard layout: {}", e.getMessage());
+            alert.showError("Cannot navigate back - this form is opened in dialog mode");
         } catch (Exception e) {
             logger.error("Error navigating back: {}", e.getMessage());
             alert.showError("Error navigating back: " + e.getMessage());

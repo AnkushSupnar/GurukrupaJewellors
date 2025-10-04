@@ -55,11 +55,6 @@ public class JewelryItemMenuController implements Initializable {
     @FXML
     private Button btnViewMetals;
     
-    // Metal Rates Management
-    @FXML
-    private Button btnUpdateRates;
-    @FXML
-    private Button btnViewRates;
     
     // Categories Management
     @FXML
@@ -131,8 +126,6 @@ public class JewelryItemMenuController implements Initializable {
         btnViewMetals.setOnAction(event -> openMetalForm());
         
         // Metal Rates Management
-        btnUpdateRates.setOnAction(event -> showNotImplemented("Update Metal Rates"));
-        btnViewRates.setOnAction(event -> showNotImplemented("View Rates History"));
         
         // Categories Management
         btnAddCategory.setOnAction(event -> openCategoryForm());
@@ -148,7 +141,6 @@ public class JewelryItemMenuController implements Initializable {
         setupPrimaryButtonHover(btnAddItem);
         setupPrimaryButtonHover(btnAddCustomer);
         setupPrimaryButtonHover(btnAddMetal);
-        setupPrimaryButtonHover(btnUpdateRates);
         setupPrimaryButtonHover(btnAddCategory);
         setupPrimaryButtonHover(btnAddSupplier);
         
@@ -156,7 +148,6 @@ public class JewelryItemMenuController implements Initializable {
         setupSecondaryButtonHover(btnViewItems, "#1976D2");
         setupSecondaryButtonHover(btnViewCustomers, "#388E3C");
         setupSecondaryButtonHover(btnViewMetals, "#F57C00");
-        setupSecondaryButtonHover(btnViewRates, "#7B1FA2");
         setupSecondaryButtonHover(btnViewCategories, "#00796B");
         setupSecondaryButtonHover(btnViewSuppliers, "#C62828");
     }

@@ -111,7 +111,7 @@ public enum FxmlView {
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/settings/MetalRateFrame.fxml";
+            return "/fxml/transaction/MetalRateFrame.fxml";
         }
     },
     VIEW_BILLS {

@@ -69,6 +69,12 @@ public class TransactionMenuController implements Initializable {
     
     @FXML
     private Label lblMonthCollected;
+
+    @FXML
+    private Button btnMetalRates;
+
+    @FXML
+    private Button btnViewRates;
     
     private final NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     @Override
@@ -81,7 +87,9 @@ public class TransactionMenuController implements Initializable {
             // TODO: Implement view purchases functionality
         });
         btnRefresh.setOnAction(e -> loadStatistics());
-        
+        btnMetalRates.setOnAction(e -> openMetalRatesDialog());
+        btnViewRates.setOnAction(e -> openMetalRatesDialog()); // Same dialog for now
+
         // Load statistics on initialization
         Platform.runLater(this::loadStatistics);
     }
@@ -243,6 +251,40 @@ public class TransactionMenuController implements Initializable {
             
         } catch (Exception e) {
             LOG.error("Error opening purchase invoice dialog: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void openMetalRatesDialog() {
+        LOG.info("Opening Metal Rates dialog");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+
+            // Load the FXML and get both the root and controller
+            Map.Entry<Parent, MetalRateFormController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.METAL_RATE_FORM.getFxmlFile(), MetalRateFormController.class);
+
+            Parent root = entry.getKey();
+            MetalRateFormController controller = entry.getValue();
+
+            // Set up the dialog stage in controller to hide back button
+            controller.setDialogStage(dialog);
+
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Metal Rate Management - Gurukrupa Jewelry");
+            dialog.setResizable(true);
+            dialog.setMaximized(true); // Open maximized for better visibility
+
+            // Show the dialog
+            dialog.show();
+
+            LOG.info("Metal Rates dialog opened successfully");
+
+        } catch (Exception e) {
+            LOG.error("Error opening metal rates dialog: {}", e.getMessage());
             e.printStackTrace();
         }
     }

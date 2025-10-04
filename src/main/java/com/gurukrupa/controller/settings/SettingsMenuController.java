@@ -38,8 +38,6 @@ public class SettingsMenuController implements Initializable {
     @FXML
     private Button btnAddMetal;
     
-    @FXML
-    private Button btnMetalRate;
     
     @FXML
     private Button btnAppSettings;
@@ -72,7 +70,6 @@ public class SettingsMenuController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         // Set up button actions
         btnAddMetal.setOnAction(event -> openMetalManagement());
-        btnMetalRate.setOnAction(event -> openMetalRateManagement());
         btnAppSettings.setOnAction(event -> openAppSettings());
         btnConfigureTax.setOnAction(event -> openTaxConfiguration());
         btnBackup.setOnAction(event -> performBackup());
@@ -172,27 +169,6 @@ public class SettingsMenuController implements Initializable {
         alert.showSuccess("User Management feature will be available soon!");
     }
     
-    private void openMetalRateManagement() {
-        try {
-            logger.info("Opening Metal Rate Management");
-            
-            // Get the dashboard's center panel through the parent hierarchy
-            BorderPane dashboard = (BorderPane) btnMetalRate.getScene().getRoot();
-            
-            // Load the FXML
-            Parent metalRateForm = stageManager.getSpringFXMLLoader().load("/fxml/settings/MetalRateFrame.fxml");
-            
-            // Set the form in the center of the dashboard
-            dashboard.setCenter(metalRateForm);
-            
-            logger.info("Metal Rate Management loaded in dashboard successfully");
-            
-        } catch (Exception e) {
-            logger.error("Error opening Metal Rate Management: {}", e.getMessage());
-            e.printStackTrace();
-            alert.showError("Error opening Metal Rate Management: " + e.getMessage());
-        }
-    }
     
     private void openBankAccountForm() {
         try {
