@@ -233,6 +233,9 @@ public class PurchaseInvoiceController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         LOG.info("Initializing PurchaseInvoiceController");
         
+        // Initialize to new invoice mode by default
+        setNewInvoiceMode();
+        
         setupTableColumns();
         setupComboBoxes();
         setupListeners();
@@ -1375,11 +1378,15 @@ public class PurchaseInvoiceController implements Initializable {
     
     @FXML
     private void handleSave() {
+        LOG.info("handleSave() called - isEditMode: {}, invoiceToEdit: {}", isEditMode, invoiceToEdit != null ? invoiceToEdit.getId() : "null");
         // Check if we're in edit mode and delegate to the appropriate method
         if (isEditMode && invoiceToEdit != null) {
+            LOG.info("Delegating to handleSaveInvoice() for edit mode");
             handleSaveInvoice();
             return;
         }
+        
+        LOG.info("Processing as new invoice in handleSave()");
         
         try {
             if (!validateForm()) {
@@ -2011,6 +2018,7 @@ public class PurchaseInvoiceController implements Initializable {
     
     @FXML
     private void handleSaveInvoice() {
+        LOG.info("handleSaveInvoice() called - isEditMode: {}, invoiceToEdit: {}", isEditMode, invoiceToEdit != null ? invoiceToEdit.getId() : "null");
         // Validate required fields
         Supplier selectedSupplier = cmbSupplier.getValue();
         if (selectedSupplier == null) {
@@ -2128,6 +2136,7 @@ public class PurchaseInvoiceController implements Initializable {
             // Save invoice
             PurchaseInvoice savedInvoice;
             if (isEditMode) {
+                LOG.info("Using UPDATE mode for invoice ID: {}", invoiceToEdit != null ? invoiceToEdit.getId() : "null");
                 // For edit mode, use the dedicated update method
                 savedInvoice = purchaseInvoiceService.updatePurchaseInvoice(
                     invoiceToEdit.getId(),
@@ -2136,6 +2145,7 @@ public class PurchaseInvoiceController implements Initializable {
                     invoice
                 );
             } else {
+                LOG.info("Using NEW SAVE mode for purchase invoice");
                 // For new invoices, use save with stock updates
                 savedInvoice = purchaseInvoiceService.savePurchaseInvoiceWithStockUpdate(invoice);
             }
@@ -2157,28 +2167,38 @@ public class PurchaseInvoiceController implements Initializable {
                 );
             }
             
+            // Show success message first (before any other operations that might fail)
             if (isEditMode) {
-                alertNotification.showSuccess("Purchase invoice updated successfully!");
-                // Close dialog if in edit mode
-                if (dialogStage != null) {
-                    dialogStage.close();
-                }
+                alertNotification.showSuccess("Purchase invoice " + savedInvoice.getInvoiceNumber() + " updated successfully!");
             } else {
                 if (isCreditPurchase) {
                     alertNotification.showSuccess("Purchase invoice saved as credit. Payment pending: " + CurrencyFormatter.format(grandTotal));
                 } else {
                     alertNotification.showSuccess("Purchase invoice saved and payment recorded successfully!");
                 }
-                
-                // Clear the form for new invoice
-                clearAll();
-                
-                // Update date time display
-                updateDateTime();
             }
             
-            // Reload bank accounts to refresh balances
-            loadBankAccounts();
+            // Perform post-save operations (these can fail without affecting the success message)
+            try {
+                if (isEditMode) {
+                    // Close dialog if in edit mode
+                    if (dialogStage != null) {
+                        dialogStage.close();
+                    }
+                } else {
+                    // Clear the form for new invoice
+                    clearAll();
+                    
+                    // Update date time display
+                    updateDateTime();
+                }
+                
+                // Reload bank accounts to refresh balances
+                loadBankAccounts();
+                
+            } catch (Exception postSaveException) {
+                LOG.warn("Error in post-save operations (success message already shown): " + postSaveException.getMessage(), postSaveException);
+            }
             
         } catch (Exception e) {
             LOG.error("Error saving purchase invoice", e);
@@ -2285,6 +2305,7 @@ public class PurchaseInvoiceController implements Initializable {
      * Set the controller to edit mode with an existing purchase invoice
      */
     public void setEditMode(PurchaseInvoice invoice) {
+        LOG.info("Setting edit mode for invoice ID: {}", invoice != null ? invoice.getId() : "null");
         this.isEditMode = true;
         this.invoiceToEdit = invoice;
         
@@ -2292,6 +2313,15 @@ public class PurchaseInvoiceController implements Initializable {
         javafx.application.Platform.runLater(() -> {
             loadInvoiceDataForEditing();
         });
+    }
+    
+    /**
+     * Reset the controller to new invoice mode
+     */
+    public void setNewInvoiceMode() {
+        LOG.info("Resetting to new invoice mode");
+        this.isEditMode = false;
+        this.invoiceToEdit = null;
     }
     
     /**
