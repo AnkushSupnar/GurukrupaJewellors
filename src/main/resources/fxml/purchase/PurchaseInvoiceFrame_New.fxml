@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+            prefHeight="750.0" prefWidth="1450.0"
+            style="-fx-background-color: #ECEFF1;"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.gurukrupa.controller.purchase.PurchaseInvoiceController_New">
+
+   <fx:define>
+      <ToggleGroup fx:id="modeToggleGroup" />
+   </fx:define>
+
+   <!-- LEFT PANEL - Metal Stock Summary -->
+   <left>
+      <VBox prefWidth="320.0" style="-fx-background-color: #FFFFFF; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 3, 0);">
+         <!-- Header -->
+         <HBox alignment="CENTER" prefHeight="60.0" style="-fx-background-color: linear-gradient(to right, #6A1B9A, #8E24AA); -fx-padding: 16;">
+            <FontAwesomeIcon fill="#FFFFFF" glyphName="CUBES" size="2em">
+               <HBox.margin><Insets right="12.0" /></HBox.margin>
+            </FontAwesomeIcon>
+            <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 18px;" text="Metal Stock" textFill="#FFFFFF" />
+         </HBox>
+
+         <!-- Metal Stock Cards -->
+         <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+            <VBox fx:id="metalStockContainer" spacing="12.0" style="-fx-padding: 16;">
+               <!-- Metal stock cards will be added dynamically -->
+            </VBox>
+         </ScrollPane>
+
+         <!-- Refresh Button -->
+         <HBox alignment="CENTER" spacing="12.0" style="-fx-padding: 16; -fx-background-color: #F5F5F5; -fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;">
+            <Button fx:id="btnRefreshStock" onAction="#handleRefreshStock"
+                    style="-fx-background-color: #6A1B9A; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 20; -fx-cursor: hand;"
+                    text="REFRESH STOCK">
+               <graphic>
+                  <FontAwesomeIcon fill="#FFFFFF" glyphName="REFRESH" size="1.1em" />
+               </graphic>
+            </Button>
+         </HBox>
+      </VBox>
+   </left>
+
+   <!-- CENTER PANEL - Main Content -->
+   <center>
+      <VBox spacing="0" style="-fx-background-color: transparent;">
+
+         <!-- Header Card -->
+         <VBox spacing="16.0" style="-fx-background-color: #FFFFFF; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 2);">
+            <VBox.margin><Insets bottom="16.0" left="16.0" right="16.0" top="16.0" /></VBox.margin>
+
+            <!-- Title Row -->
+            <HBox alignment="CENTER_LEFT" spacing="16.0">
+               <VBox spacing="4.0">
+                  <Label style="-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 22px; -fx-text-fill: #212121;" text="Metal Purchase Invoice" />
+                  <Label fx:id="lblInvoiceNumber" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-text-fill: #757575;" text="Invoice #: PI-20250101-0001" />
+               </VBox>
+               <Region HBox.hgrow="ALWAYS" />
+               <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                  <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #757575;" text="Invoice Date" />
+                  <TextField fx:id="txtInvoiceDate" editable="false" prefWidth="180.0"
+                            style="-fx-background-color: #F5F5F5; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: transparent;" />
+               </VBox>
+            </HBox>
+
+            <!-- Supplier Details Row -->
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+               <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                  <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="SUPPLIER *" />
+                  <HBox fx:id="supplierSearchContainer" maxWidth="Infinity" />
+               </VBox>
+               <VBox spacing="4.0" prefWidth="200.0">
+                  <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="SUPPLIER INVOICE #" />
+                  <TextField fx:id="txtSupplierInvoice" promptText="Supplier invoice number"
+                            style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+               </VBox>
+            </HBox>
+         </VBox>
+
+         <!-- Mode Toggle -->
+         <HBox alignment="CENTER" spacing="0" style="-fx-background-color: transparent; -fx-padding: 16 16 12 16;">
+            <ToggleButton fx:id="chipPurchase" selected="true" toggleGroup="$modeToggleGroup"
+                         style="-fx-background-color: #6A1B9A; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 12 32; -fx-background-radius: 25 0 0 25; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(106,27,154,0.3), 8, 0, 0, 2);"
+                         text="PURCHASE METAL">
+               <graphic>
+                  <FontAwesomeIcon fill="#FFFFFF" glyphName="PLUS_CIRCLE" size="1.2em" />
+               </graphic>
+            </ToggleButton>
+            <ToggleButton fx:id="chipExchange" toggleGroup="$modeToggleGroup"
+                         style="-fx-background-color: #E0E0E0; -fx-text-fill: #616161; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 12 32; -fx-background-radius: 0 25 25 0; -fx-cursor: hand;"
+                         text="EXCHANGE METAL">
+               <graphic>
+                  <FontAwesomeIcon fill="#616161" glyphName="EXCHANGE" size="1.2em" />
+               </graphic>
+            </ToggleButton>
+         </HBox>
+
+         <!-- Content Area with Panels -->
+         <StackPane VBox.vgrow="ALWAYS">
+            <padding><Insets bottom="16.0" left="16.0" right="16.0" top="0" /></padding>
+
+            <!-- PURCHASE METAL PANEL -->
+            <VBox fx:id="purchasePanel" spacing="16.0" visible="true" managed="true">
+
+               <!-- Purchase Entry Form Card -->
+               <VBox spacing="16.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 3);">
+
+                  <!-- Form Title -->
+                  <HBox alignment="CENTER_LEFT">
+                     <FontAwesomeIcon fill="#6A1B9A" glyphName="SHOPPING_CART" size="1.3em">
+                        <HBox.margin><Insets right="10.0" /></HBox.margin>
+                     </FontAwesomeIcon>
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 16px; -fx-text-fill: #424242;" text="Add Metal Purchase" />
+                  </HBox>
+
+                  <!-- Input Fields Row 1 -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <VBox spacing="6.0" prefWidth="180.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="METAL TYPE *" />
+                        <ComboBox fx:id="cmbPurchaseMetalType" maxWidth="Infinity" promptText="Select Metal"
+                                 style="-fx-background-color: white; -fx-background-radius: 6; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-padding: 6; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="120.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="PURITY *" />
+                        <TextField fx:id="txtPurchasePurity" promptText="916"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="140.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="GROSS WEIGHT (g) *" />
+                        <TextField fx:id="txtPurchaseGrossWeight" promptText="0.000"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="130.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="SELLER % *" />
+                        <TextField fx:id="txtSellerPercentage" text="97.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="140.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #4CAF50;" text="NET WEIGHT (g)" />
+                        <TextField fx:id="txtPurchaseNetWeight" editable="false" promptText="0.000"
+                                  style="-fx-background-color: #E8F5E9; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-border-color: #4CAF50; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-text-fill: #2E7D32;" />
+                     </VBox>
+                  </HBox>
+
+                  <!-- Input Fields Row 2 -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <VBox spacing="6.0" prefWidth="160.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="RATE (per gram) *" />
+                        <TextField fx:id="txtPurchaseRate" promptText="0.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="180.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #1976D2;" text="TOTAL AMOUNT" />
+                        <TextField fx:id="txtPurchaseAmount" editable="false" promptText="₹ 0.00"
+                                  style="-fx-background-color: #E3F2FD; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 15px; -fx-border-color: #1976D2; -fx-border-radius: 6; -fx-border-width: 2; -fx-text-fill: #0D47A1;" />
+                     </VBox>
+
+                     <Region HBox.hgrow="ALWAYS" />
+                  </HBox>
+
+                  <!-- Action Buttons -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <Button fx:id="btnAddPurchase" onAction="#handleAddPurchase"
+                            style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(76,175,80,0.3), 8, 0, 0, 2);"
+                            text="ADD TO BILL">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="PLUS" size="1.1em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnEditPurchase" onAction="#handleEditPurchase"
+                            style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(33,150,243,0.3), 8, 0, 0, 2);"
+                            text="EDIT">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="EDIT" size="1.0em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnDeletePurchase" onAction="#handleDeletePurchase"
+                            style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(244,67,54,0.3), 8, 0, 0, 2);"
+                            text="DELETE">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="TRASH" size="1.0em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnClearPurchase" onAction="#handleClearPurchase"
+                            style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand;"
+                            text="CLEAR">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="ERASER" size="1.0em" /></graphic>
+                     </Button>
+                  </HBox>
+               </VBox>
+
+               <!-- Purchase Table Card -->
+               <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 3);" VBox.vgrow="ALWAYS">
+                  <HBox alignment="CENTER_LEFT">
+                     <FontAwesomeIcon fill="#6A1B9A" glyphName="LIST" size="1.2em">
+                        <HBox.margin><Insets right="10.0" /></HBox.margin>
+                     </FontAwesomeIcon>
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 15px; -fx-text-fill: #424242;" text="Purchase Items" />
+                     <Region HBox.hgrow="ALWAYS" />
+                     <Label fx:id="lblPurchaseItemCount" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575;" text="0 items" />
+                  </HBox>
+
+                  <TableView fx:id="purchaseMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6;">
+                     <columns>
+                        <TableColumn fx:id="colPurchaseSno" prefWidth="50.0" text="#" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colPurchaseMetalType" prefWidth="140.0" text="Metal Type" />
+                        <TableColumn fx:id="colPurchasePurity" prefWidth="90.0" text="Purity" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colPurchaseGrossWeight" prefWidth="130.0" text="Gross Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseSellerPct" prefWidth="110.0" text="Seller %" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseNetWeight" prefWidth="130.0" text="Net Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseRate" prefWidth="130.0" text="Rate/g" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseAmount" prefWidth="160.0" text="Amount" style="-fx-alignment: CENTER-RIGHT;" />
+                     </columns>
+                  </TableView>
+               </VBox>
+            </VBox>
+
+            <!-- EXCHANGE METAL PANEL -->
+            <VBox fx:id="exchangePanel" spacing="16.0" visible="false" managed="false">
+
+               <!-- Exchange Entry Form Card -->
+               <VBox spacing="16.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 3);">
+
+                  <!-- Form Title -->
+                  <HBox alignment="CENTER_LEFT">
+                     <FontAwesomeIcon fill="#FF6F00" glyphName="EXCHANGE" size="1.3em">
+                        <HBox.margin><Insets right="10.0" /></HBox.margin>
+                     </FontAwesomeIcon>
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 16px; -fx-text-fill: #424242;" text="Add Exchange Metal" />
+                  </HBox>
+
+                  <!-- Input Fields Row 1 -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="ITEM DESCRIPTION *" />
+                        <TextField fx:id="txtExchangeItemName" promptText="e.g., Old gold bangles"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="160.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="METAL TYPE *" />
+                        <ComboBox fx:id="cmbExchangeMetalType" maxWidth="Infinity" promptText="Select Metal"
+                                 style="-fx-background-color: white; -fx-background-radius: 6; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-padding: 6; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="110.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="PURITY *" />
+                        <TextField fx:id="txtExchangePurity" text="916"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+                  </HBox>
+
+                  <!-- Input Fields Row 2 -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <VBox spacing="6.0" prefWidth="140.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="GROSS WEIGHT (g) *" />
+                        <TextField fx:id="txtExchangeGrossWeight" promptText="0.000"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="130.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="FINE % *" />
+                        <TextField fx:id="txtFinePercentage" text="80.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="140.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #FF6F00;" text="NET WEIGHT (g)" />
+                        <TextField fx:id="txtExchangeNetWeight" editable="false" promptText="0.000"
+                                  style="-fx-background-color: #FFF3E0; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-border-color: #FF6F00; -fx-border-radius: 6; -fx-border-width: 1.5; -fx-text-fill: #E65100;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="140.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="RATE (per gram) *" />
+                        <TextField fx:id="txtExchangeRate" promptText="0.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="160.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #D32F2F;" text="EXCHANGE AMOUNT" />
+                        <TextField fx:id="txtExchangeAmount" editable="false" promptText="₹ 0.00"
+                                  style="-fx-background-color: #FFEBEE; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 15px; -fx-border-color: #D32F2F; -fx-border-radius: 6; -fx-border-width: 2; -fx-text-fill: #B71C1C;" />
+                     </VBox>
+                  </HBox>
+
+                  <!-- Action Buttons -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <Button fx:id="btnAddExchange" onAction="#handleAddExchange"
+                            style="-fx-background-color: #FF6F00; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(255,111,0,0.3), 8, 0, 0, 2);"
+                            text="ADD EXCHANGE">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="PLUS" size="1.1em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnEditExchange" onAction="#handleEditExchange"
+                            style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(33,150,243,0.3), 8, 0, 0, 2);"
+                            text="EDIT">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="EDIT" size="1.0em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnDeleteExchange" onAction="#handleDeleteExchange"
+                            style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(244,67,54,0.3), 8, 0, 0, 2);"
+                            text="DELETE">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="TRASH" size="1.0em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnClearExchange" onAction="#handleClearExchange"
+                            style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand;"
+                            text="CLEAR">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="ERASER" size="1.0em" /></graphic>
+                     </Button>
+                  </HBox>
+               </VBox>
+
+               <!-- Exchange Table Card -->
+               <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 3);" VBox.vgrow="ALWAYS">
+                  <HBox alignment="CENTER_LEFT">
+                     <FontAwesomeIcon fill="#FF6F00" glyphName="LIST" size="1.2em">
+                        <HBox.margin><Insets right="10.0" /></HBox.margin>
+                     </FontAwesomeIcon>
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 15px; -fx-text-fill: #424242;" text="Exchange Items" />
+                     <Region HBox.hgrow="ALWAYS" />
+                     <Label fx:id="lblExchangeItemCount" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575;" text="0 items" />
+                  </HBox>
+
+                  <TableView fx:id="exchangeMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6;">
+                     <columns>
+                        <TableColumn fx:id="colExchangeSno" prefWidth="50.0" text="#" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colExchangeItemName" prefWidth="210.0" text="Description" />
+                        <TableColumn fx:id="colExchangeMetalType" prefWidth="130.0" text="Metal Type" />
+                        <TableColumn fx:id="colExchangePurity" prefWidth="90.0" text="Purity" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colExchangeGrossWeight" prefWidth="120.0" text="Gross Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colExchangeFine" prefWidth="100.0" text="Fine %" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colExchangeNetWeight" prefWidth="120.0" text="Net Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colExchangeRate" prefWidth="110.0" text="Rate/g" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colExchangeAmount" prefWidth="130.0" text="Amount" style="-fx-alignment: CENTER-RIGHT;" />
+                     </columns>
+                  </TableView>
+               </VBox>
+            </VBox>
+         </StackPane>
+      </VBox>
+   </center>
+
+   <!-- RIGHT PANEL - Summary & Payment -->
+   <right>
+      <VBox prefWidth="380.0" style="-fx-background-color: #FFFFFF; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, -3, 0);">
+
+         <!-- Header -->
+         <HBox alignment="CENTER" prefHeight="60.0" style="-fx-background-color: linear-gradient(to right, #1976D2, #2196F3); -fx-padding: 16;">
+            <FontAwesomeIcon fill="#FFFFFF" glyphName="CALCULATOR" size="2em">
+               <HBox.margin><Insets right="12.0" /></HBox.margin>
+            </FontAwesomeIcon>
+            <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 18px;" text="Bill Summary" textFill="#FFFFFF" />
+         </HBox>
+
+         <!-- Summary Content -->
+         <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+            <VBox spacing="16.0" style="-fx-padding: 20;">
+
+               <!-- Purchase Summary Card -->
+               <VBox spacing="10.0" style="-fx-background-color: #E8F5E9; -fx-background-radius: 10; -fx-padding: 16; -fx-border-color: #4CAF50; -fx-border-radius: 10; -fx-border-width: 2;">
+                  <HBox alignment="CENTER_LEFT">
+                     <FontAwesomeIcon fill="#2E7D32" glyphName="SHOPPING_CART" size="1.1em">
+                        <HBox.margin><Insets right="8.0" /></HBox.margin>
+                     </FontAwesomeIcon>
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #2E7D32;" text="Purchase Items" />
+                     <Region HBox.hgrow="ALWAYS" />
+                     <Label fx:id="lblPurchaseCount" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #2E7D32;" text="(0 items)" />
+                  </HBox>
+                  <HBox alignment="CENTER">
+                     <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #2E7D32;" text="Total:" HBox.hgrow="ALWAYS" />
+                     <Label fx:id="lblPurchaseTotal" style="-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 20px; -fx-text-fill: #1B5E20;" text="₹ 0.00" />
+                  </HBox>
+               </VBox>
+
+               <!-- Exchange Summary Card -->
+               <VBox spacing="10.0" style="-fx-background-color: #FFF3E0; -fx-background-radius: 10; -fx-padding: 16; -fx-border-color: #FF6F00; -fx-border-radius: 10; -fx-border-width: 2;">
+                  <HBox alignment="CENTER_LEFT">
+                     <FontAwesomeIcon fill="#E65100" glyphName="EXCHANGE" size="1.1em">
+                        <HBox.margin><Insets right="8.0" /></HBox.margin>
+                     </FontAwesomeIcon>
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #E65100;" text="Exchange Items" />
+                     <Region HBox.hgrow="ALWAYS" />
+                     <Label fx:id="lblExchangeCount" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #E65100;" text="(0 items)" />
+                  </HBox>
+                  <HBox alignment="CENTER">
+                     <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #E65100;" text="Total:" HBox.hgrow="ALWAYS" />
+                     <Label fx:id="lblExchangeTotal" style="-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 20px; -fx-text-fill: #BF360C;" text="₹ 0.00" />
+                  </HBox>
+               </VBox>
+
+               <!-- Bill Calculation Card -->
+               <VBox spacing="12.0" style="-fx-background-color: #F5F5F5; -fx-background-radius: 10; -fx-padding: 16;">
+                  <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #424242;" text="BILL CALCULATION" />
+
+                  <VBox spacing="8.0">
+                     <HBox alignment="CENTER">
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #616161;" text="Subtotal:" HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblSubtotal" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #212121;" text="₹ 0.00" />
+                     </HBox>
+
+                     <HBox alignment="CENTER" spacing="8.0">
+                        <CheckBox fx:id="chkTaxApplicable" selected="true" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px;" text="GST (3%)" textFill="#616161" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblGST" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #212121;" text="₹ 0.00" />
+                     </HBox>
+
+                     <HBox alignment="CENTER">
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #616161;" text="Net Total:" HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblNetTotal" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #212121;" text="₹ 0.00" />
+                     </HBox>
+
+                     <HBox alignment="CENTER">
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #E65100;" text="Less Exchange:" HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblExchangeDeduction" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #E65100;" text="- ₹ 0.00" />
+                     </HBox>
+
+                     <HBox alignment="CENTER" spacing="8.0">
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #616161;" text="Discount:" HBox.hgrow="ALWAYS" />
+                        <TextField fx:id="txtDiscount" prefWidth="100.0" text="0.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 4; -fx-padding: 5; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-border-color: #BDBDBD; -fx-border-radius: 4; -fx-border-width: 1;" />
+                     </HBox>
+
+                     <Separator style="-fx-background-color: #BDBDBD;" />
+
+                     <HBox alignment="CENTER" style="-fx-padding: 8 0 0 0;">
+                        <Label style="-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 15px; -fx-text-fill: #1976D2;" text="NET PAYABLE:" HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblGrandTotal" style="-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 22px; -fx-text-fill: #0D47A1;" text="₹ 0.00" />
+                     </HBox>
+                  </VBox>
+               </VBox>
+
+               <!-- Payment Details Card -->
+               <VBox spacing="12.0" style="-fx-background-color: #E3F2FD; -fx-background-radius: 10; -fx-padding: 16; -fx-border-color: #1976D2; -fx-border-radius: 10; -fx-border-width: 1.5;">
+                  <HBox alignment="CENTER_LEFT">
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #0D47A1;" text="PAYMENT DETAILS" HBox.hgrow="ALWAYS" />
+                     <CheckBox fx:id="chkCreditPurchase" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px;" text="Credit" textFill="#1976D2" />
+                  </HBox>
+
+                  <VBox spacing="6.0">
+                     <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #424242;" text="BANK ACCOUNT" />
+                     <ComboBox fx:id="cmbBankAccount" maxWidth="Infinity" promptText="Select Bank"
+                              style="-fx-background-color: white; -fx-background-radius: 6; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-padding: 6;" />
+                  </VBox>
+
+                  <HBox spacing="8.0">
+                     <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #424242;" text="PAID AMOUNT" />
+                        <TextField fx:id="txtPaidAmount" promptText="0.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 7; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1;" />
+                     </VBox>
+                     <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #C62828;" text="BALANCE" />
+                        <Label fx:id="lblPendingAmount" alignment="CENTER" maxWidth="Infinity"
+                              style="-fx-background-color: #FFEBEE; -fx-background-radius: 6; -fx-padding: 7; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 13px; -fx-text-fill: #C62828;" text="₹ 0.00" />
+                     </VBox>
+                  </HBox>
+               </VBox>
+
+               <!-- Action Buttons -->
+               <VBox spacing="10.0" style="-fx-padding: 8 0 0 0;">
+                  <Button fx:id="btnSave" onAction="#handleSave" maxWidth="Infinity"
+                         style="-fx-background-color: linear-gradient(to right, #1976D2, #2196F3); -fx-text-fill: white; -fx-font-family: 'Segoe UI Bold'; -fx-font-size: 15px; -fx-padding: 14; -fx-background-radius: 8; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(25,118,210,0.4), 12, 0, 0, 4);"
+                         text="SAVE INVOICE">
+                     <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="SAVE" size="1.3em" /></graphic>
+                  </Button>
+
+                  <HBox spacing="8.0">
+                     <Button fx:id="btnPrint" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                            style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 12px; -fx-padding: 10; -fx-background-radius: 6; -fx-cursor: hand;"
+                            text="PRINT">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="PRINT" size="1.0em" /></graphic>
+                     </Button>
+                     <Button fx:id="btnClear" onAction="#handleClearAll" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                            style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 12px; -fx-padding: 10; -fx-background-radius: 6; -fx-cursor: hand;"
+                            text="CLEAR ALL">
+                        <graphic><FontAwesomeIcon fill="#FFFFFF" glyphName="TIMES_CIRCLE" size="1.0em" /></graphic>
+                     </Button>
+                  </HBox>
+               </VBox>
+            </VBox>
+         </ScrollPane>
+      </VBox>
+   </right>
+</BorderPane>
