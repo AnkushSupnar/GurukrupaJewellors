@@ -56,17 +56,22 @@ public class PurchaseInvoice {
     @Column(length = 100)
     private String paymentReference;
     
-    // Transactions
+    // Metal Purchase Transactions (replaces old item-based transactions)
     @OneToMany(mappedBy = "purchaseInvoice", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnoreProperties({"purchaseInvoice"})
     @Builder.Default
-    private List<PurchaseTransaction> purchaseTransactions = new ArrayList<>();
-    
-    // Exchange transactions
+    private List<PurchaseMetalTransaction> purchaseMetalTransactions = new ArrayList<>();
+
+    // Exchange transactions (metal given to supplier)
     @OneToMany(mappedBy = "purchaseInvoice", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnoreProperties({"purchaseInvoice"})
     @Builder.Default
     private List<PurchaseExchangeTransaction> purchaseExchangeTransactions = new ArrayList<>();
+
+    // Legacy field for backward compatibility
+    @Deprecated
+    @Transient
+    private List<PurchaseTransaction> purchaseTransactions;
     
     // Financial details
     @Column(nullable = false, precision = 15, scale = 2)
@@ -81,10 +86,14 @@ public class PurchaseInvoice {
     @Builder.Default
     private BigDecimal netTotal = BigDecimal.ZERO;
     
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isTaxApplicable = true; // Checkbox for tax calculation
+
     @Column(nullable = false, precision = 5, scale = 2)
     @Builder.Default
     private BigDecimal gstRate = new BigDecimal("3.00");
-    
+
     @Column(nullable = false, precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal gstAmount = BigDecimal.ZERO;
@@ -166,12 +175,16 @@ public class PurchaseInvoice {
     
     // Calculate totals
     public void calculateTotals() {
-        // Calculate subtotal from transactions
-        subtotal = purchaseTransactions.stream()
-                .map(PurchaseTransaction::getTotalAmount)
-                .filter(amount -> amount != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+        // Calculate subtotal from metal purchase transactions
+        if (purchaseMetalTransactions != null && !purchaseMetalTransactions.isEmpty()) {
+            subtotal = purchaseMetalTransactions.stream()
+                    .map(PurchaseMetalTransaction::getTotalAmount)
+                    .filter(amount -> amount != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+            subtotal = BigDecimal.ZERO;
+        }
+
         // Calculate exchange amount from exchange transactions
         if (purchaseExchangeTransactions != null && !purchaseExchangeTransactions.isEmpty()) {
             exchangeAmount = purchaseExchangeTransactions.stream()
@@ -181,23 +194,42 @@ public class PurchaseInvoice {
         } else {
             exchangeAmount = BigDecimal.ZERO;
         }
-        
+
         // Calculate net total (subtotal - discount + additional charges)
         netTotal = subtotal.subtract(discount != null ? discount : BigDecimal.ZERO)
                           .add(transportCharges != null ? transportCharges : BigDecimal.ZERO)
                           .add(otherCharges != null ? otherCharges : BigDecimal.ZERO);
-        
-        // Calculate GST
-        if (gstRate != null && gstRate.compareTo(BigDecimal.ZERO) > 0) {
+
+        // Calculate GST only if tax is applicable
+        if (isTaxApplicable != null && isTaxApplicable &&
+            gstRate != null && gstRate.compareTo(BigDecimal.ZERO) > 0) {
             gstAmount = netTotal.multiply(gstRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         } else {
             gstAmount = BigDecimal.ZERO;
         }
-        
+
         // Calculate grand total (including GST but subtracting exchange amount)
         grandTotal = netTotal.add(gstAmount).subtract(exchangeAmount);
-        
+
         // Calculate pending amount
         pendingAmount = grandTotal.subtract(paidAmount != null ? paidAmount : BigDecimal.ZERO);
+    }
+
+    /**
+     * Legacy method for backward compatibility
+     * @deprecated Use purchaseMetalTransactions instead
+     */
+    @Deprecated
+    public List<PurchaseTransaction> getPurchaseTransactions() {
+        return purchaseTransactions != null ? purchaseTransactions : new ArrayList<>();
+    }
+
+    /**
+     * Legacy method for backward compatibility
+     * @deprecated Use purchaseMetalTransactions instead
+     */
+    @Deprecated
+    public void setPurchaseTransactions(List<PurchaseTransaction> purchaseTransactions) {
+        this.purchaseTransactions = purchaseTransactions;
     }
 }

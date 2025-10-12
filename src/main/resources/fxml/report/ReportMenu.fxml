@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.report.ReportMenuController">
+   <top>
+      <!-- Header Section -->
+      <HBox alignment="CENTER_LEFT" minHeight="60.0" prefHeight="80.0" style="-fx-background-color: #4CAF50; -fx-padding: 15 20;">
+         <children>
+            <FontAwesomeIcon fill="#FFFFFF" glyphName="BAR_CHART" size="2.5em">
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+            </FontAwesomeIcon>
+            <VBox spacing="2.0">
+               <children>
+                  <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" text="Reports" textFill="#FFFFFF">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+                  <Label style="-fx-font-family: 'Segoe UI';" text="Generate and view various business reports" textFill="#E8F5E9">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                  </Label>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </top>
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent;">
+         <content>
+            <VBox spacing="16.0" style="-fx-padding: 20;" minWidth="300.0">
+               <children>
+                  
+                  <!-- Customer Reports Card -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <!-- Icon Container -->
+                              <VBox alignment="CENTER" style="-fx-background-color: #E8F5E9; -fx-background-radius: 12; -fx-padding: 12; -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 60; -fx-pref-height: 60; -fx-max-width: 70; -fx-max-height: 70;">
+                                 <children>
+                                    <FontAwesomeIcon fill="#4CAF50" glyphName="USERS" size="1.8em" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Content Area -->
+                              <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Customer Reports" textFill="#212121" />
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="View customer wise transaction reports, outstanding balances, and payment history" textFill="#616161" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Action Buttons -->
+                              <HBox spacing="12.0">
+                                 <children>
+                                    <Button fx:id="btnCustomerReport" onAction="#handleCustomerReport" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;" text="VIEW REPORT">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="EXTERNAL_LINK" size="1.0em" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Sales Reports Card -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <!-- Icon Container -->
+                              <VBox alignment="CENTER" style="-fx-background-color: #E3F2FD; -fx-background-radius: 12; -fx-padding: 12; -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 60; -fx-pref-height: 60; -fx-max-width: 70; -fx-max-height: 70;">
+                                 <children>
+                                    <FontAwesomeIcon fill="#2196F3" glyphName="LINE_CHART" size="1.8em" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Content Area -->
+                              <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Sales Reports" textFill="#212121" />
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Analyze sales performance, trends, and revenue insights" textFill="#616161" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Action Buttons -->
+                              <HBox spacing="12.0">
+                                 <children>
+                                    <Button fx:id="btnSalesReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Inventory Reports Card -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <!-- Icon Container -->
+                              <VBox alignment="CENTER" style="-fx-background-color: #FFF3E0; -fx-background-radius: 12; -fx-padding: 12; -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 60; -fx-pref-height: 60; -fx-max-width: 70; -fx-max-height: 70;">
+                                 <children>
+                                    <FontAwesomeIcon fill="#FF9800" glyphName="CUBES" size="1.8em" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Content Area -->
+                              <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Inventory Reports" textFill="#212121" />
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Track stock levels, item movement, and inventory valuation" textFill="#616161" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Action Buttons -->
+                              <HBox spacing="12.0">
+                                 <children>
+                                    <Button fx:id="btnInventoryReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Financial Reports Card -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <!-- Icon Container -->
+                              <VBox alignment="CENTER" style="-fx-background-color: #F3E5F5; -fx-background-radius: 12; -fx-padding: 12; -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 60; -fx-pref-height: 60; -fx-max-width: 70; -fx-max-height: 70;">
+                                 <children>
+                                    <FontAwesomeIcon fill="#9C27B0" glyphName="CREDIT_CARD" size="1.8em" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Content Area -->
+                              <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Financial Reports" textFill="#212121" />
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Review profit &amp; loss, cash flow, and financial statements" textFill="#616161" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Action Buttons -->
+                              <HBox spacing="12.0">
+                                 <children>
+                                    <Button fx:id="btnFinancialReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Tax Reports Card -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <!-- Icon Container -->
+                              <VBox alignment="CENTER" style="-fx-background-color: #FFEBEE; -fx-background-radius: 12; -fx-padding: 12; -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 60; -fx-pref-height: 60; -fx-max-width: 70; -fx-max-height: 70;">
+                                 <children>
+                                    <FontAwesomeIcon fill="#F44336" glyphName="FILE_TEXT" size="1.8em" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Content Area -->
+                              <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Tax Reports" textFill="#212121" />
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Generate GST reports, tax summaries, and compliance documents" textFill="#616161" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Action Buttons -->
+                              <HBox spacing="12.0">
+                                 <children>
+                                    <Button fx:id="btnTaxReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Add spacing at bottom for better scroll experience -->
+                  <Region prefHeight="15.0" minHeight="10.0" />
+                  
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>

@@ -33,6 +33,7 @@ public class DashboardController implements Initializable {
     @FXML private Label lblCurrentMenu;
     @FXML private BorderPane mainPane;
     @FXML private HBox menuDashboard;
+    @FXML private HBox menuPurchase;
     @FXML private HBox menuTransaction;
     @FXML private HBox menuCreate;
     @FXML private HBox menuInventary;
@@ -56,6 +57,7 @@ public class DashboardController implements Initializable {
         // Initialize menu items list
         menuItems = new ArrayList<>();
         menuItems.add(menuDashboard);
+        menuItems.add(menuPurchase);
         menuItems.add(menuTransaction);
         menuItems.add(menuMaster);
         menuItems.add(menuReport);
@@ -78,9 +80,15 @@ public class DashboardController implements Initializable {
             pane =loader.getPage("/fxml/dashboard/Dashboard.fxml");
             mainPane.setCenter(pane);
         });
-        
+
+        menuPurchase.setOnMouseClicked(e -> {
+            setSelectedMenu(menuPurchase, "Purchase");
+            pane = loader.getPage("/fxml/purchase/PurchaseMenu.fxml");
+            mainPane.setCenter(pane);
+        });
+
         menuTransaction.setOnMouseClicked(e -> {
-            setSelectedMenu(menuTransaction, "Transaction");
+            setSelectedMenu(menuTransaction, "Daily Billing");
             pane =loader.getPage("/fxml/transaction/TransactionMenu.fxml");
             mainPane.setCenter(pane);
         });
@@ -91,8 +99,8 @@ public class DashboardController implements Initializable {
 
         menuReport.setOnMouseClicked(e->{
             setSelectedMenu(menuReport, "Reports");
-         //   pane =loader.getPage("/fxml/report/ReportMenu.fxml");
-           // mainPane.setCenter(pane);
+            pane = loader.getPage("/fxml/report/ReportMenu.fxml");
+            mainPane.setCenter(pane);
         });
         menuMaster.setOnMouseClicked(e->{
             setSelectedMenu(menuMaster, "Master Data");

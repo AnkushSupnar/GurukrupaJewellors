@@ -18,7 +18,12 @@
       "Bash(./mvnw:*)",
       "Bash(rg:*)",
       "Bash(find:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(mkdir:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(mvn compile:*)",
+      "WebSearch",
+      "Bash(javac:*)"
     ],
     "deny": []
   }

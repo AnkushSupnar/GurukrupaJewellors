@@ -1,13 +1,10 @@
 package com.gurukrupa;
 
-import com.gurukrupa.data.entities.ShopInfo;
-import com.gurukrupa.data.service.LoginUserService;
 import com.gurukrupa.data.service.ShopService;
 import com.gurukrupa.view.FxmlView;
 import com.gurukrupa.view.StageManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.report.CustomerReportController">
+   <fx:define>
+      <ToggleGroup fx:id="statusToggleGroup" />
+   </fx:define>
+   
+   <top>
+      <!-- Header Section -->
+      <VBox>
+         <children>
+            <!-- Title Header -->
+            <HBox alignment="CENTER_LEFT" minHeight="60.0" prefHeight="70.0" style="-fx-background-color: #4CAF50; -fx-padding: 12 16;">
+               <children>
+                  <Button fx:id="btnBack" onAction="#handleBack" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                     <graphic>
+                        <FontAwesomeIcon fill="#FFFFFF" glyphName="ARROW_LEFT" size="1.3em" />
+                     </graphic>
+                     <HBox.margin>
+                        <Insets right="12.0" />
+                     </HBox.margin>
+                  </Button>
+                  <FontAwesomeIcon fill="#FFFFFF" glyphName="USERS" size="2.0em">
+                     <HBox.margin>
+                        <Insets right="12.0" />
+                     </HBox.margin>
+                  </FontAwesomeIcon>
+                  <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" text="Customer Reports" textFill="#FFFFFF">
+                           <font>
+                              <Font size="20.0" />
+                           </font>
+                        </Label>
+                        <Label style="-fx-font-family: 'Segoe UI';" text="Analyze customer transactions and payment patterns" textFill="#E8F5E9" wrapText="true">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            
+            <!-- Filter Section -->
+            <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-padding: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 2);">
+               <children>
+                  <!-- Customer Selection Row -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Customer:" textFill="#424242" />
+                        <HBox fx:id="customerSearchBox" minWidth="180.0" prefWidth="220.0" maxWidth="300.0" />
+                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Mobile:" textFill="#424242" />
+                        <TextField fx:id="txtMobileSearch" minWidth="120.0" prefWidth="140.0" maxWidth="180.0" promptText="Mobile Number" style="-fx-font-family: 'Segoe UI';" />
+                        <Button fx:id="btnSearchCustomer" onAction="#handleSearchCustomer" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6;" text="Search">
+                           <graphic>
+                              <FontAwesomeIcon fill="#FFFFFF" glyphName="SEARCH" size="0.9em" />
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
+                  
+                  <!-- Date Range and Status Row -->
+                  <VBox spacing="12.0">
+                     <children>
+                        <!-- Date Range -->
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="From:" textFill="#424242" />
+                              <DatePicker fx:id="dpFromDate" minWidth="120.0" prefWidth="130.0" maxWidth="150.0" style="-fx-font-family: 'Segoe UI';" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="To:" textFill="#424242" />
+                              <DatePicker fx:id="dpToDate" minWidth="120.0" prefWidth="130.0" maxWidth="150.0" style="-fx-font-family: 'Segoe UI';" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnGenerateReport" onAction="#handleGenerateReport" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 16; -fx-background-radius: 6;" text="Generate">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="REFRESH" size="0.9em" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                        
+                        <!-- Status Filter Toggles -->
+                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                           <children>
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Status:" textFill="#424242" />
+                              <ToggleButton fx:id="btnAllStatus" style="-fx-background-color: #E3F2FD; -fx-text-fill: #1976D2; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6;" text="All" toggleGroup="$statusToggleGroup" />
+                              <ToggleButton fx:id="btnPaidStatus" style="-fx-background-color: #E8F5E9; -fx-text-fill: #388E3C; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6;" text="Paid" toggleGroup="$statusToggleGroup" />
+                              <ToggleButton fx:id="btnUnpaidStatus" style="-fx-background-color: #FFEBEE; -fx-text-fill: #D32F2F; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6;" text="Unpaid" toggleGroup="$statusToggleGroup" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </top>
+   
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent;">
+         <content>
+            <VBox spacing="16.0" style="-fx-padding: 16;" minWidth="300.0">
+               <children>
+                  
+                  <!-- Customer Statistics Cards -->
+                  <HBox spacing="12.0">
+                     <children>
+                        <!-- Total Transactions Card -->
+                        <VBox alignment="CENTER" spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 16; -fx-min-width: 140;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <FontAwesomeIcon fill="#2196F3" glyphName="SHOPPING_CART" size="2.0em" />
+                              <Label fx:id="lblTotalTransactions" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 20px;" text="0" textFill="#2196F3" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 11px;" text="Total Transactions" textFill="#616161" textAlignment="CENTER" wrapText="true" />
+                           </children>
+                        </VBox>
+                        
+                        <!-- Total Amount Card -->
+                        <VBox alignment="CENTER" spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 16; -fx-min-width: 140;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <FontAwesomeIcon fill="#4CAF50" glyphName="MONEY" size="2.0em" />
+                              <Label fx:id="lblTotalAmount" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 18px;" text="₹0.00" textFill="#4CAF50" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 11px;" text="Total Amount" textFill="#616161" textAlignment="CENTER" wrapText="true" />
+                           </children>
+                        </VBox>
+                        
+                        <!-- Paid Amount Card -->
+                        <VBox alignment="CENTER" spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 16; -fx-min-width: 140;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <FontAwesomeIcon fill="#FF9800" glyphName="CHECK_CIRCLE" size="2.0em" />
+                              <Label fx:id="lblPaidAmount" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 18px;" text="₹0.00" textFill="#FF9800" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 11px;" text="Paid Amount" textFill="#616161" textAlignment="CENTER" wrapText="true" />
+                           </children>
+                        </VBox>
+                        
+                        <!-- Pending Amount Card -->
+                        <VBox alignment="CENTER" spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 16; -fx-min-width: 140;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <FontAwesomeIcon fill="#F44336" glyphName="CLOCK_ALT" size="2.0em" />
+                              <Label fx:id="lblPendingAmount" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 18px;" text="₹0.00" textFill="#F44336" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 11px;" text="Pending Amount" textFill="#616161" textAlignment="CENTER" wrapText="true" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  
+                  <!-- Customer Details Card -->
+                  <VBox fx:id="customerDetailsCard" spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" visible="false" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <FontAwesomeIcon fill="#4CAF50" glyphName="USER" size="1.3em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Customer Details" textFill="#424242" />
+                           </children>
+                        </HBox>
+                        
+                        <VBox spacing="16.0">
+                           <children>
+                              <!-- First Row -->
+                              <HBox spacing="24.0">
+                                 <children>
+                                    <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12px;" text="Customer Name:" textFill="#757575" />
+                                          <Label fx:id="lblCustomerName" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="-" textFill="#212121" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12px;" text="Mobile Number:" textFill="#757575" />
+                                          <Label fx:id="lblCustomerMobile" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="-" textFill="#212121" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              
+                              <!-- Second Row -->
+                              <HBox spacing="24.0">
+                                 <children>
+                                    <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12px;" text="Alt. Mobile:" textFill="#757575" />
+                                          <Label fx:id="lblCustomerEmail" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="-" textFill="#212121" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 12px;" text="Address:" textFill="#757575" />
+                                          <Label fx:id="lblCustomerAddress" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;" text="-" textFill="#212121" wrapText="true" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Transaction History Table -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" maxWidth="Infinity">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <FontAwesomeIcon fill="#4CAF50" glyphName="LIST" size="1.3em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Transaction History" textFill="#424242" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnExportReport" onAction="#handleExportReport" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6;" text="Export">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="DOWNLOAD" size="0.9em" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                        
+                        <TableView fx:id="tableTransactions" minHeight="300.0" prefHeight="350.0" style="-fx-background-color: transparent;">
+                           <columns>
+                              <TableColumn fx:id="colDate" minWidth="100.0" prefWidth="110.0" text="Date" />
+                              <TableColumn fx:id="colInvoiceNumber" minWidth="110.0" prefWidth="120.0" text="Invoice No." />
+                              <TableColumn fx:id="colType" minWidth="70.0" prefWidth="80.0" text="Type" />
+                              <TableColumn fx:id="colDescription" minWidth="140.0" prefWidth="160.0" text="Description" />
+                              <TableColumn fx:id="colTotalAmount" minWidth="100.0" prefWidth="110.0" text="Total" />
+                              <TableColumn fx:id="colPaidAmount" minWidth="90.0" prefWidth="100.0" text="Paid" />
+                              <TableColumn fx:id="colPendingAmount" minWidth="100.0" prefWidth="110.0" text="Pending" />
+                              <TableColumn fx:id="colStatus" minWidth="70.0" prefWidth="80.0" text="Status" />
+                              <TableColumn fx:id="colActions" minWidth="80.0" prefWidth="90.0" text="Actions" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Add spacing at bottom -->
+                  <Region prefHeight="15.0" minHeight="10.0" />
+                  
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>

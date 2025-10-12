@@ -194,14 +194,24 @@ public enum FxmlView {
             return "/fxml/master/AddSupplier.fxml";
         }
     },
-    PURCHASE_INVOICE {
+    PURCHASE_MENU {
         @Override
         String getTitle() {
-            return "Purchase Invoice";
+            return "Purchase Management";
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/transaction/PurchaseInvoiceFrame.fxml";
+            return "/fxml/purchase/PurchaseMenu.fxml";
+        }
+    },
+    PURCHASE_INVOICE {
+        @Override
+        String getTitle() {
+            return "Purchase Invoice - Metal Based";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/purchase/PurchaseInvoiceFrame_New.fxml";
         }
     },
     CATEGORY_FORM {
@@ -212,6 +222,26 @@ public enum FxmlView {
         @Override
         public String getFxmlFile() {
             return "/fxml/master/Categories.fxml";
+        }
+    },
+    REPORT_MENU {
+        @Override
+        String getTitle() {
+            return "Reports";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/report/ReportMenu.fxml";
+        }
+    },
+    CUSTOMER_REPORT {
+        @Override
+        String getTitle() {
+            return "Customer Reports";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/report/CustomerReport.fxml";
         }
     }
     ;

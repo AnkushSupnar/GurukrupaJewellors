@@ -39,19 +39,13 @@ public class TransactionMenuController implements Initializable {
     
     @Autowired
     private BillService billService;
-    
-    @FXML
-    private Button btnPurchaseInvoice;
-    
+
     @FXML
     private Button btnBilling;
-    
+
     @FXML
     private Button btnViewBills;
-    
-    @FXML
-    private Button btnViewPurchases;
-    
+
     @FXML
     private Button btnRefresh;
     
@@ -79,10 +73,8 @@ public class TransactionMenuController implements Initializable {
     private final NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        btnPurchaseInvoice.setOnAction(e -> openPurchaseInvoiceDialog());
         btnBilling.setOnAction(e -> openBillingDialog());
         btnViewBills.setOnAction(e -> openViewBillsDialog());
-        btnViewPurchases.setOnAction(e -> openViewPurchasesDialog());
         btnRefresh.setOnAction(e -> loadStatistics());
         btnMetalRates.setOnAction(e -> openMetalRatesDialog());
         btnViewRates.setOnAction(e -> openMetalRatesDialog()); // Same dialog for now
@@ -215,69 +207,6 @@ public class TransactionMenuController implements Initializable {
             
         } catch (Exception e) {
             LOG.error("Error opening view bills dialog: {}", e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
-    private void openPurchaseInvoiceDialog() {
-        LOG.info("Opening Purchase Invoice dialog");
-        try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
-            
-            // Load the FXML and get both the root and controller
-            Map.Entry<Parent, PurchaseInvoiceController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.PURCHASE_INVOICE.getFxmlFile(), PurchaseInvoiceController.class);
-            
-            Parent root = entry.getKey();
-            
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Purchase Invoice - Gurukrupa Jewelry");
-            dialog.setResizable(true);
-            dialog.setMaximized(true); // Open maximized for better visibility
-            
-            // Show the dialog
-            dialog.show();
-            
-            // Refresh statistics when dialog is closed
-            dialog.setOnHidden(event -> loadStatistics());
-            
-            LOG.info("Purchase Invoice dialog opened successfully");
-            
-        } catch (Exception e) {
-            LOG.error("Error opening purchase invoice dialog: {}", e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void openViewPurchasesDialog() {
-        LOG.info("Opening View Purchases dialog");
-        try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
-            
-            // Load the FXML and get both the root and controller
-            Map.Entry<Parent, ViewPurchasesController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.VIEW_PURCHASES.getFxmlFile(), ViewPurchasesController.class);
-            
-            Parent root = entry.getKey();
-            
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("View Purchases - Gurukrupa Jewelry");
-            dialog.setResizable(true);
-            dialog.setMaximized(true);
-            
-            // Show the dialog
-            dialog.show();
-            
-            LOG.info("View Purchases dialog opened successfully");
-            
-        } catch (Exception e) {
-            LOG.error("Error opening view purchases dialog: {}", e.getMessage());
             e.printStackTrace();
         }
     }

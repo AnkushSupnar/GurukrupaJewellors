@@ -20,15 +20,8 @@
             <children>
                 <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
                     <content>
-                        <VBox spacing="8.0" style="-fx-padding: 24 16 24 16; -fx-background-color: #FFFFFF;">
+                        <VBox spacing="8.0" style="-fx-padding: 20 16 24 16; -fx-background-color: #FFFFFF;">
                             <children>
-                                <!-- Navigation Section Header -->
-                                <Label text="NAVIGATION" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 14px; -fx-text-fill: #757575;">
-                                    <VBox.margin>
-                                        <Insets bottom="20.0" left="20.0" top="16.0" />
-                                    </VBox.margin>
-                                </Label>
-                                
                                 <!-- Dashboard Menu -->
                                 <HBox fx:id="menuDashboard" alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #2196F3; -fx-background-radius: 12; -fx-cursor: hand;">
                                     <children>
@@ -43,22 +36,40 @@
                                         <Insets bottom="12.0" left="12.0" right="20.0" top="12.0" />
                                     </padding>
                                     <VBox.margin>
-                                        <Insets bottom="6.0" left="8.0" right="8.0" />
+                                        <Insets bottom="6.0" left="8.0" right="8.0" top="8.0" />
                                     </VBox.margin>
                                     <effect>
                                         <DropShadow color="#2196F366" radius="12.0" offsetY="3.0" />
                                     </effect>
                                 </HBox>
-                                
-                                <!-- Transaction Menu -->
+
+                                <!-- Purchase Menu -->
+                                <HBox fx:id="menuPurchase" alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #FAFAFA; -fx-background-radius: 12; -fx-cursor: hand;">
+                                    <children>
+                                        <StackPane prefWidth="50.0" alignment="CENTER">
+                                            <children>
+                                                <FontAwesomeIcon fill="#616161" glyphName="TRUCK" size="2.0em" />
+                                            </children>
+                                        </StackPane>
+                                        <Text fontSmoothingType="LCD" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" fill="#424242" text="Purchase" />
+                                    </children>
+                                    <padding>
+                                        <Insets bottom="12.0" left="12.0" right="20.0" top="12.0" />
+                                    </padding>
+                                    <VBox.margin>
+                                        <Insets bottom="6.0" left="8.0" right="8.0" />
+                                    </VBox.margin>
+                                </HBox>
+
+                                <!-- Daily Billing Menu -->
                                 <HBox fx:id="menuTransaction" alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #FAFAFA; -fx-background-radius: 12; -fx-cursor: hand;">
                                     <children>
                                         <StackPane prefWidth="50.0" alignment="CENTER">
                                             <children>
-                                                <FontAwesomeIcon fill="#616161" glyphName="EXCHANGE" size="2.0em" />
+                                                <FontAwesomeIcon fill="#616161" glyphName="SHOPPING_CART" size="2.0em" />
                                             </children>
                                         </StackPane>
-                                        <Text fontSmoothingType="LCD" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" fill="#424242" text="Transaction" />
+                                        <Text fontSmoothingType="LCD" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" fill="#424242" text="Daily Billing" />
                                     </children>
                                     <padding>
                                         <Insets bottom="12.0" left="12.0" right="20.0" top="12.0" />
