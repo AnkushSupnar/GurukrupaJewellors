@@ -44,9 +44,20 @@ public class PurchaseInvoiceController_New implements Initializable {
 
     // ==================== FXML Components ====================
 
-    // Left Panel - Metal Stock
-    @FXML private VBox metalStockContainer;
-    @FXML private Button btnRefreshStock;
+    // Left Panel - Previous Bills
+    @FXML private HBox billSupplierSearchContainer;
+    @FXML private DatePicker datePickerFrom;
+    @FXML private DatePicker datePickerTo;
+    @FXML private Button btnSearchBills;
+    @FXML private Button btnClearSearch;
+    @FXML private Label lblBillsCount;
+    @FXML private Label lblBillsTotal;
+    @FXML private ListView<PurchaseInvoice> billsList;
+    @FXML private Button btnLoadBill;
+    @FXML private Button btnViewBill;
+
+    // AutoCompleteTextField for bill supplier search
+    private AutoCompleteTextField<Supplier> billSupplierSearch;
 
     // Header
     @FXML private Label lblInvoiceNumber;
@@ -157,10 +168,12 @@ public class PurchaseInvoiceController_New implements Initializable {
     private final ObservableList<Supplier> suppliers = FXCollections.observableArrayList();
     private final ObservableList<Metal> metals = FXCollections.observableArrayList();
     private final ObservableList<BankAccount> bankAccounts = FXCollections.observableArrayList();
+    private final ObservableList<PurchaseInvoice> previousBills = FXCollections.observableArrayList();
 
     // Editing mode tracking
     private PurchaseMetalTransaction editingPurchaseTransaction = null;
     private PurchaseExchangeTransaction editingExchangeTransaction = null;
+    private PurchaseInvoice currentEditingInvoice = null; // Track invoice being edited
 
     // ==================== Initialization ====================
 
@@ -172,6 +185,7 @@ public class PurchaseInvoiceController_New implements Initializable {
         setupTables();
         setupComboBoxes();
         setupSupplierSearch();
+        setupBillsPanel();
         setupCalculations();
         loadInitialData();
 
@@ -561,8 +575,8 @@ public class PurchaseInvoiceController_New implements Initializable {
                 // Generate invoice number
                 lblInvoiceNumber.setText("Invoice #: " + purchaseInvoiceService.generateInvoiceNumber());
 
-                // Load metal stock
-                refreshMetalStock();
+                // Load previous bills
+                loadPreviousBills();
 
             } catch (Exception e) {
                 LOG.error("Error loading initial data", e);
@@ -859,11 +873,58 @@ public class PurchaseInvoiceController_New implements Initializable {
     }
 
     /**
-     * Handle refresh stock
+     * Handle search bills
      */
     @FXML
-    private void handleRefreshStock() {
-        refreshMetalStock();
+    private void handleSearchBills() {
+        searchBills();
+    }
+
+    /**
+     * Handle clear search
+     */
+    @FXML
+    private void handleClearSearch() {
+        billSupplierSearch.clear();
+        datePickerFrom.setValue(null);
+        datePickerTo.setValue(null);
+        loadPreviousBills();
+    }
+
+    /**
+     * Handle load bill
+     */
+    @FXML
+    private void handleLoadBill() {
+        PurchaseInvoice selected = billsList.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            alertNotification.showError("Please select a bill to load");
+            return;
+        }
+
+        try {
+            // Load invoice data into the form
+            loadInvoiceIntoForm(selected);
+            alertNotification.showSuccess("Bill loaded successfully");
+        } catch (Exception e) {
+            LOG.error("Error loading bill", e);
+            alertNotification.showError("Failed to load bill: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle view bill
+     */
+    @FXML
+    private void handleViewBill() {
+        PurchaseInvoice selected = billsList.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            alertNotification.showError("Please select a bill to view");
+            return;
+        }
+
+        // TODO: Open a dialog to view bill details
+        alertNotification.showSuccess("View bill: " + selected.getInvoiceNumber());
     }
 
     /**
@@ -883,6 +944,46 @@ public class PurchaseInvoiceController_New implements Initializable {
                 return;
             }
 
+            // Check if we're editing or creating new
+            boolean isEditMode = (currentEditingInvoice != null);
+            PurchaseInvoice savedInvoice;
+
+            if (isEditMode) {
+                // UPDATE MODE: Revert old stock, update invoice, add new stock
+                savedInvoice = handleUpdateInvoice();
+            } else {
+                // CREATE MODE: Create new invoice and add to stock
+                savedInvoice = handleCreateInvoice();
+            }
+
+            if (savedInvoice != null) {
+                alertNotification.showSuccess(
+                    (isEditMode ? "Purchase invoice updated" : "Purchase invoice saved") +
+                    " successfully!\nInvoice #: " + savedInvoice.getInvoiceNumber());
+
+                LOG.info("{} purchase invoice: {}",
+                    (isEditMode ? "Updated" : "Saved"), savedInvoice.getInvoiceNumber());
+
+                // Refresh previous bills list
+                loadPreviousBills();
+
+                // Clear all
+                handleClearAll();
+            }
+
+        } catch (Exception e) {
+            LOG.error("Error saving purchase invoice", e);
+            alertNotification.showError("Failed to save invoice: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Create new purchase invoice and add to stock
+     */
+    private PurchaseInvoice handleCreateInvoice() {
+        try {
+            BigDecimal discount = parseBigDecimal(txtDiscount.getText());
+
             // Create invoice
             PurchaseInvoice invoice = PurchaseInvoice.builder()
                     .supplier(supplierSearch.getSelectedItem())
@@ -892,7 +993,7 @@ public class PurchaseInvoiceController_New implements Initializable {
                     .status(PurchaseInvoice.InvoiceStatus.CONFIRMED)
                     .purchaseMetalTransactions(new ArrayList<>(purchaseTransactions))
                     .purchaseExchangeTransactions(new ArrayList<>(exchangeTransactions))
-                    .discount(parseBigDecimal(txtDiscount.getText()))
+                    .discount(discount != null ? discount : BigDecimal.ZERO)
                     .isTaxApplicable(chkTaxApplicable.isSelected())
                     .gstRate(new BigDecimal("3.00"))
                     .build();
@@ -903,22 +1004,138 @@ public class PurchaseInvoiceController_New implements Initializable {
                 invoice.setPaidAmount(BigDecimal.ZERO);
             } else {
                 invoice.setPaymentMethod(PurchaseInvoice.PaymentMethod.BANK_TRANSFER);
-                invoice.setPaidAmount(parseBigDecimal(txtPaidAmount.getText()));
+                BigDecimal paidAmount = parseBigDecimal(txtPaidAmount.getText());
+                invoice.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
             }
 
             // Save invoice
             PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoice(invoice);
 
-            alertNotification.showSuccess("Purchase invoice saved successfully!\nInvoice #: " + savedInvoice.getInvoiceNumber());
+            // Add purchased metal to stock
+            addPurchasedMetalToStock(savedInvoice);
 
-            LOG.info("Saved purchase invoice: {}", savedInvoice.getInvoiceNumber());
-
-            // Clear all
-            handleClearAll();
+            return savedInvoice;
 
         } catch (Exception e) {
-            LOG.error("Error saving purchase invoice", e);
-            alertNotification.showError("Failed to save invoice: " + e.getMessage());
+            LOG.error("Error creating purchase invoice", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Update existing purchase invoice with stock reversal
+     */
+    private PurchaseInvoice handleUpdateInvoice() {
+        try {
+            // Step 1: Revert old stock quantities
+            revertStockFromInvoice(currentEditingInvoice);
+
+            // Step 2: Update invoice details
+            BigDecimal discount = parseBigDecimal(txtDiscount.getText());
+
+            currentEditingInvoice.setSupplier(supplierSearch.getSelectedItem());
+            currentEditingInvoice.setSupplierInvoiceNumber(txtSupplierInvoice.getText().trim());
+            currentEditingInvoice.setDiscount(discount != null ? discount : BigDecimal.ZERO);
+            currentEditingInvoice.setIsTaxApplicable(chkTaxApplicable.isSelected());
+
+            // Set payment details
+            if (chkCreditPurchase.isSelected()) {
+                currentEditingInvoice.setPaymentMethod(PurchaseInvoice.PaymentMethod.CREDIT);
+                currentEditingInvoice.setPaidAmount(BigDecimal.ZERO);
+            } else {
+                currentEditingInvoice.setPaymentMethod(PurchaseInvoice.PaymentMethod.BANK_TRANSFER);
+                BigDecimal paidAmount = parseBigDecimal(txtPaidAmount.getText());
+                currentEditingInvoice.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
+            }
+
+            // Update transactions - clear old and add new
+            currentEditingInvoice.getPurchaseMetalTransactions().clear();
+            currentEditingInvoice.getPurchaseMetalTransactions().addAll(purchaseTransactions);
+
+            currentEditingInvoice.getPurchaseExchangeTransactions().clear();
+            currentEditingInvoice.getPurchaseExchangeTransactions().addAll(exchangeTransactions);
+
+            // Save updated invoice
+            PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoice(currentEditingInvoice);
+
+            // Step 3: Add new stock quantities
+            addPurchasedMetalToStock(savedInvoice);
+
+            return savedInvoice;
+
+        } catch (Exception e) {
+            LOG.error("Error updating purchase invoice", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Add purchased metal to stock
+     */
+    private void addPurchasedMetalToStock(PurchaseInvoice invoice) {
+        try {
+            for (PurchaseMetalTransaction transaction : invoice.getPurchaseMetalTransactions()) {
+                // Add metal to purchase stock
+                purchaseMetalStockService.addPurchasedMetal(
+                        transaction.getMetal(),
+                        transaction.getGrossWeight(),
+                        transaction.getNetWeightCharged(),
+                        invoice.getInvoiceNumber(),
+                        "Purchase from " + invoice.getSupplier().getSupplierFullName()
+                );
+
+                LOG.info("Added to stock: {} {} - Gross: {}g, Net: {}g - Invoice: {}",
+                        transaction.getMetalType(),
+                        transaction.getPurity(),
+                        transaction.getGrossWeight(),
+                        transaction.getNetWeightCharged(),
+                        invoice.getInvoiceNumber());
+            }
+        } catch (Exception e) {
+            LOG.error("Error adding purchased metal to stock", e);
+            throw new RuntimeException("Failed to update stock: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Revert stock quantities from an invoice (for update/delete scenarios)
+     */
+    private void revertStockFromInvoice(PurchaseInvoice invoice) {
+        try {
+            for (PurchaseMetalTransaction transaction : invoice.getPurchaseMetalTransactions()) {
+                // Find the stock entry and subtract the quantities
+                Metal metal = transaction.getMetal();
+                if (metal != null) {
+                    PurchaseMetalStock stock = purchaseMetalStockService
+                            .getStock(metal.getMetalType(), transaction.getPurity())
+                            .orElse(null);
+
+                    if (stock != null) {
+                        // Subtract the quantities that were previously added
+                        BigDecimal grossToRevert = transaction.getGrossWeight();
+                        BigDecimal netToRevert = transaction.getNetWeightCharged();
+
+                        stock.setTotalGrossWeight(stock.getTotalGrossWeight().subtract(grossToRevert));
+                        stock.setTotalNetWeight(stock.getTotalNetWeight().subtract(netToRevert));
+                        stock.setAvailableWeight(stock.getAvailableWeight().subtract(netToRevert));
+
+                        purchaseMetalStockService.save(stock);
+
+                        LOG.info("Reverted stock: {} {} - Gross: {}g, Net: {}g - Invoice: {}",
+                                transaction.getMetalType(),
+                                transaction.getPurity(),
+                                grossToRevert,
+                                netToRevert,
+                                invoice.getInvoiceNumber());
+                    } else {
+                        LOG.warn("Stock entry not found for reversal: {} {}",
+                                metal.getMetalType(), transaction.getPurity());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Error reverting stock from invoice", e);
+            throw new RuntimeException("Failed to revert stock: " + e.getMessage(), e);
         }
     }
 
@@ -939,7 +1156,12 @@ public class PurchaseInvoiceController_New implements Initializable {
         chkCreditPurchase.setSelected(false);
         chkTaxApplicable.setSelected(true);
 
+        // Reset editing mode
+        currentEditingInvoice = null;
+
+        // Reset invoice number label style
         lblInvoiceNumber.setText("Invoice #: " + purchaseInvoiceService.generateInvoiceNumber());
+        lblInvoiceNumber.setStyle("-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 16px; -fx-text-fill: #6A1B9A;");
 
         calculateTotals();
     }
@@ -966,15 +1188,17 @@ public class PurchaseInvoiceController_New implements Initializable {
     }
 
     /**
-     * Calculate purchase amount
+     * Calculate purchase amount (rate is per 10 grams)
      */
     private void calculatePurchaseAmount() {
         try {
             BigDecimal netWeight = parseBigDecimal(txtPurchaseNetWeight.getText());
-            BigDecimal rate = parseBigDecimal(txtPurchaseRate.getText());
+            BigDecimal ratePer10g = parseBigDecimal(txtPurchaseRate.getText());
 
-            if (netWeight != null && rate != null) {
-                BigDecimal amount = netWeight.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+            if (netWeight != null && ratePer10g != null) {
+                // Formula: amount = (netWeight / 10) * ratePer10g
+                BigDecimal amount = netWeight.multiply(ratePer10g)
+                        .divide(new BigDecimal("10"), 2, RoundingMode.HALF_UP);
                 txtPurchaseAmount.setText(CurrencyFormatter.format(amount));
             }
         } catch (Exception e) {
@@ -1002,15 +1226,17 @@ public class PurchaseInvoiceController_New implements Initializable {
     }
 
     /**
-     * Calculate exchange amount
+     * Calculate exchange amount (rate is per 10 grams)
      */
     private void calculateExchangeAmount() {
         try {
             BigDecimal netWeight = parseBigDecimal(txtExchangeNetWeight.getText());
-            BigDecimal rate = parseBigDecimal(txtExchangeRate.getText());
+            BigDecimal ratePer10g = parseBigDecimal(txtExchangeRate.getText());
 
-            if (netWeight != null && rate != null) {
-                BigDecimal amount = netWeight.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+            if (netWeight != null && ratePer10g != null) {
+                // Formula: amount = (netWeight / 10) * ratePer10g
+                BigDecimal amount = netWeight.multiply(ratePer10g)
+                        .divide(new BigDecimal("10"), 2, RoundingMode.HALF_UP);
                 txtExchangeAmount.setText(CurrencyFormatter.format(amount));
             }
         } catch (Exception e) {
@@ -1131,55 +1357,215 @@ public class PurchaseInvoiceController_New implements Initializable {
     }
 
     /**
-     * Refresh metal stock display
+     * Setup bills panel with supplier search and date pickers
      */
-    private void refreshMetalStock() {
-        Platform.runLater(() -> {
-            try {
-                metalStockContainer.getChildren().clear();
+    private void setupBillsPanel() {
+        // Create AutoCompleteTextField for bill supplier search
+        billSupplierSearch = new AutoCompleteTextField<>(
+                suppliers,
+                new StringConverter<>() {
+                    @Override
+                    public String toString(Supplier supplier) {
+                        return supplier == null ? "" : supplier.getSupplierFullName();
+                    }
 
-                List<PurchaseMetalStock> stockList = purchaseMetalStockService.getAllAvailableStock();
+                    @Override
+                    public Supplier fromString(String string) {
+                        return null;
+                    }
+                },
+                searchText -> suppliers.stream()
+                        .filter(supplier -> supplier.getSupplierFullName().toLowerCase().contains(searchText.toLowerCase()) ||
+                                (supplier.getSupplierName() != null && supplier.getSupplierName().toLowerCase().contains(searchText.toLowerCase())) ||
+                                (supplier.getMobile() != null && supplier.getMobile().contains(searchText)))
+                        .collect(java.util.stream.Collectors.toList())
+        );
 
-                if (stockList.isEmpty()) {
-                    Label noStock = new Label("No metal stock available");
-                    noStock.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575; -fx-padding: 16;");
-                    metalStockContainer.getChildren().add(noStock);
-                    return;
+        billSupplierSearch.setPromptText("Search supplier...");
+        billSupplierSearchContainer.getChildren().add(billSupplierSearch.getNode());
+        HBox.setHgrow(billSupplierSearch.getNode(), javafx.scene.layout.Priority.ALWAYS);
+
+        // Setup bills ListView with custom cell factory
+        billsList.setItems(previousBills);
+        billsList.setCellFactory(param -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(PurchaseInvoice item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    VBox vbox = new VBox(4);
+                    vbox.setStyle("-fx-padding: 8; -fx-background-color: #FAFAFA; -fx-background-radius: 6; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6;");
+
+                    // Invoice number and date
+                    HBox headerBox = new HBox(8);
+                    headerBox.setAlignment(Pos.CENTER_LEFT);
+                    Label invoiceLabel = new Label(item.getInvoiceNumber());
+                    invoiceLabel.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #1976D2;");
+                    Label dateLabel = new Label(item.getInvoiceDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+                    dateLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #757575;");
+                    headerBox.getChildren().addAll(invoiceLabel, dateLabel);
+
+                    // Supplier name
+                    Label supplierLabel = new Label(item.getSupplier().getSupplierFullName());
+                    supplierLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #424242;");
+
+                    // Amount
+                    Label amountLabel = new Label("Amount: " + CurrencyFormatter.format(item.getGrandTotal()));
+                    amountLabel.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 12px; -fx-text-fill: #4CAF50;");
+
+                    vbox.getChildren().addAll(headerBox, supplierLabel, amountLabel);
+                    setGraphic(vbox);
                 }
-
-                for (PurchaseMetalStock stock : stockList) {
-                    VBox stockCard = createMetalStockCard(stock);
-                    metalStockContainer.getChildren().add(stockCard);
-                }
-
-            } catch (Exception e) {
-                LOG.error("Error refreshing metal stock", e);
             }
         });
     }
 
     /**
-     * Create metal stock card
+     * Load previous bills
      */
-    private VBox createMetalStockCard(PurchaseMetalStock stock) {
-        VBox card = new VBox(8);
-        card.setStyle("-fx-background-color: #F5F5F5; -fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #BDBDBD; -fx-border-radius: 8; -fx-border-width: 1;");
+    private void loadPreviousBills() {
+        Platform.runLater(() -> {
+            try {
+                List<PurchaseInvoice> bills = purchaseInvoiceService.getAllInvoices();
+                previousBills.setAll(bills);
+                lblBillsCount.setText("All Bills");
+                lblBillsTotal.setText(bills.size() + " bills");
 
-        // Metal name
-        Label lblMetal = new Label(stock.getMetalType() + " " + stock.getPurity());
-        lblMetal.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-text-fill: #424242;");
+                LOG.info("Loaded {} previous bills", bills.size());
+            } catch (Exception e) {
+                LOG.error("Error loading previous bills", e);
+                alertNotification.showError("Failed to load bills: " + e.getMessage());
+            }
+        });
+    }
 
-        // Available weight
-        HBox weightBox = new HBox(5);
-        weightBox.setAlignment(Pos.CENTER_LEFT);
-        Label lblAvailLabel = new Label("Available:");
-        lblAvailLabel.setStyle("-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #616161;");
-        Label lblAvailWeight = new Label(WeightFormatter.format(stock.getAvailableWeight()) + " g");
-        lblAvailWeight.setStyle("-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 12px; -fx-text-fill: #2E7D32;");
-        weightBox.getChildren().addAll(lblAvailLabel, lblAvailWeight);
+    /**
+     * Search bills by supplier and/or date range
+     */
+    private void searchBills() {
+        Platform.runLater(() -> {
+            try {
+                Supplier selectedSupplier = billSupplierSearch.getSelectedItem();
+                java.time.LocalDate fromDate = datePickerFrom.getValue();
+                java.time.LocalDate toDate = datePickerTo.getValue();
 
-        card.getChildren().addAll(lblMetal, weightBox);
-        return card;
+                List<PurchaseInvoice> filteredBills;
+
+                if (selectedSupplier != null && fromDate != null && toDate != null) {
+                    // Search by supplier and date range - get date range first, then filter by supplier
+                    filteredBills = purchaseInvoiceService.findByDateRange(
+                            fromDate.atStartOfDay(),
+                            toDate.atTime(23, 59, 59)
+                    );
+                    // Filter by supplier
+                    Long supplierId = selectedSupplier.getId();
+                    filteredBills = filteredBills.stream()
+                            .filter(inv -> inv.getSupplier().getId().equals(supplierId))
+                            .collect(java.util.stream.Collectors.toList());
+                } else if (selectedSupplier != null) {
+                    // Search by supplier only
+                    filteredBills = purchaseInvoiceService.findBySupplier(selectedSupplier.getId());
+                } else if (fromDate != null && toDate != null) {
+                    // Search by date range only
+                    filteredBills = purchaseInvoiceService.findByDateRange(
+                            fromDate.atStartOfDay(),
+                            toDate.atTime(23, 59, 59)
+                    );
+                } else {
+                    // No filters, load all
+                    loadPreviousBills();
+                    return;
+                }
+
+                previousBills.setAll(filteredBills);
+                lblBillsCount.setText("Search Results");
+                lblBillsTotal.setText(filteredBills.size() + " bills");
+
+                LOG.info("Search returned {} bills", filteredBills.size());
+            } catch (Exception e) {
+                LOG.error("Error searching bills", e);
+                alertNotification.showError("Failed to search bills: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Load invoice data into the form for editing
+     */
+    private void loadInvoiceIntoForm(PurchaseInvoice invoice) {
+        // Clear existing data
+        handleClearAll();
+
+        // Set editing mode
+        currentEditingInvoice = invoice;
+
+        // Update invoice number label to show we're editing
+        lblInvoiceNumber.setText("Invoice #: " + invoice.getInvoiceNumber() + " (EDIT MODE)");
+        lblInvoiceNumber.setStyle("-fx-font-family: 'Segoe UI Bold'; -fx-font-size: 16px; -fx-text-fill: #FF6F00;");
+
+        // Set supplier
+        supplierSearch.setSelectedItem(invoice.getSupplier());
+
+        // Set supplier invoice number
+        txtSupplierInvoice.setText(invoice.getSupplierInvoiceNumber());
+
+        // Load purchase transactions - create new instances to avoid modifying originals
+        if (invoice.getPurchaseMetalTransactions() != null) {
+            for (PurchaseMetalTransaction txn : invoice.getPurchaseMetalTransactions()) {
+                PurchaseMetalTransaction newTxn = PurchaseMetalTransaction.builder()
+                        .metal(txn.getMetal())
+                        .metalType(txn.getMetalType())
+                        .purity(txn.getPurity())
+                        .grossWeight(txn.getGrossWeight())
+                        .sellerPercentage(txn.getSellerPercentage())
+                        .netWeightCharged(txn.getNetWeightCharged())
+                        .ratePerGram(txn.getRatePerGram())
+                        .totalAmount(txn.getTotalAmount())
+                        .build();
+                purchaseTransactions.add(newTxn);
+            }
+        }
+
+        // Load exchange transactions - create new instances
+        if (invoice.getPurchaseExchangeTransactions() != null) {
+            for (PurchaseExchangeTransaction txn : invoice.getPurchaseExchangeTransactions()) {
+                PurchaseExchangeTransaction newTxn = PurchaseExchangeTransaction.builder()
+                        .itemName(txn.getItemName())
+                        .metalType(txn.getMetalType())
+                        .purity(txn.getPurity())
+                        .grossWeight(txn.getGrossWeight())
+                        .finePercentage(txn.getFinePercentage())
+                        .netWeight(txn.getNetWeight())
+                        .ratePerGram(txn.getRatePerGram())
+                        .totalAmount(txn.getTotalAmount())
+                        .build();
+                exchangeTransactions.add(newTxn);
+            }
+        }
+
+        // Set discount
+        if (invoice.getDiscount() != null) {
+            txtDiscount.setText(invoice.getDiscount().toString());
+        }
+
+        // Set tax
+        chkTaxApplicable.setSelected(invoice.getIsTaxApplicable());
+
+        // Set payment details
+        if (invoice.getPaymentMethod() == PurchaseInvoice.PaymentMethod.CREDIT) {
+            chkCreditPurchase.setSelected(true);
+        } else {
+            chkCreditPurchase.setSelected(false);
+            txtPaidAmount.setText(invoice.getPaidAmount().toString());
+        }
+
+        // Calculate totals
+        calculateTotals();
+
+        LOG.info("Loaded invoice {} into form for editing", invoice.getInvoiceNumber());
     }
 
     /**

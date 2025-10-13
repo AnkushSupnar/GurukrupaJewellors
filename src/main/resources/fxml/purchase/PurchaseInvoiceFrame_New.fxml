@@ -17,31 +17,90 @@
       <ToggleGroup fx:id="modeToggleGroup" />
    </fx:define>
 
-   <!-- LEFT PANEL - Metal Stock Summary -->
+   <!-- LEFT PANEL - Previous Bills -->
    <left>
-      <VBox prefWidth="320.0" style="-fx-background-color: #FFFFFF; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 3, 0);">
+      <VBox prefWidth="350.0" style="-fx-background-color: #FFFFFF; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 3, 0);">
          <!-- Header -->
-         <HBox alignment="CENTER" prefHeight="60.0" style="-fx-background-color: linear-gradient(to right, #6A1B9A, #8E24AA); -fx-padding: 16;">
-            <FontAwesomeIcon fill="#FFFFFF" glyphName="CUBES" size="2em">
+         <HBox alignment="CENTER" prefHeight="60.0" style="-fx-background-color: linear-gradient(to right, #1976D2, #2196F3); -fx-padding: 16;">
+            <FontAwesomeIcon fill="#FFFFFF" glyphName="FILE_TEXT" size="2em">
                <HBox.margin><Insets right="12.0" /></HBox.margin>
             </FontAwesomeIcon>
-            <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 18px;" text="Metal Stock" textFill="#FFFFFF" />
+            <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 18px;" text="Previous Bills" textFill="#FFFFFF" />
          </HBox>
 
-         <!-- Metal Stock Cards -->
-         <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-            <VBox fx:id="metalStockContainer" spacing="12.0" style="-fx-padding: 16;">
-               <!-- Metal stock cards will be added dynamically -->
+         <!-- Search Filters -->
+         <VBox spacing="12.0" style="-fx-padding: 16; -fx-background-color: #F5F5F5; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
+            <!-- Search by Supplier -->
+            <VBox spacing="6.0">
+               <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="SEARCH BY SUPPLIER" />
+               <HBox fx:id="billSupplierSearchContainer" maxWidth="Infinity" />
             </VBox>
-         </ScrollPane>
 
-         <!-- Refresh Button -->
-         <HBox alignment="CENTER" spacing="12.0" style="-fx-padding: 16; -fx-background-color: #F5F5F5; -fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;">
-            <Button fx:id="btnRefreshStock" onAction="#handleRefreshStock"
-                    style="-fx-background-color: #6A1B9A; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 20; -fx-cursor: hand;"
-                    text="REFRESH STOCK">
+            <!-- Date Range Search -->
+            <VBox spacing="6.0">
+               <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="DATE RANGE" />
+               <HBox spacing="8.0">
+                  <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                     <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 10px; -fx-text-fill: #757575;" text="From" />
+                     <DatePicker fx:id="datePickerFrom" maxWidth="Infinity"
+                                style="-fx-background-color: white; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px;" />
+                  </VBox>
+                  <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                     <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 10px; -fx-text-fill: #757575;" text="To" />
+                     <DatePicker fx:id="datePickerTo" maxWidth="Infinity"
+                                style="-fx-background-color: white; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px;" />
+                  </VBox>
+               </HBox>
+            </VBox>
+
+            <!-- Search Buttons -->
+            <HBox spacing="8.0">
+               <Button fx:id="btnSearchBills" onAction="#handleSearchBills" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                       style="-fx-background-color: #1976D2; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-padding: 8 12; -fx-background-radius: 6; -fx-cursor: hand;"
+                       text="SEARCH">
+                  <graphic>
+                     <FontAwesomeIcon fill="#FFFFFF" glyphName="SEARCH" size="1.0em" />
+                  </graphic>
+               </Button>
+               <Button fx:id="btnClearSearch" onAction="#handleClearSearch"
+                       style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-padding: 8 12; -fx-background-radius: 6; -fx-cursor: hand;"
+                       text="CLEAR">
+                  <graphic>
+                     <FontAwesomeIcon fill="#FFFFFF" glyphName="TIMES" size="1.0em" />
+                  </graphic>
+               </Button>
+            </HBox>
+         </VBox>
+
+         <!-- Bills List -->
+         <VBox VBox.vgrow="ALWAYS">
+            <!-- Results Info -->
+            <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-padding: 12 16; -fx-background-color: #FAFAFA;">
+               <Label fx:id="lblBillsCount" style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 12px; -fx-text-fill: #424242;" text="All Bills" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="lblBillsTotal" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-text-fill: #757575;" text="0 bills" />
+            </HBox>
+
+            <!-- Bills ListView -->
+            <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+               <ListView fx:id="billsList" style="-fx-background-color: white; -fx-border-width: 0;" VBox.vgrow="ALWAYS" />
+            </ScrollPane>
+         </VBox>
+
+         <!-- Quick Actions -->
+         <HBox alignment="CENTER" spacing="8.0" style="-fx-padding: 12; -fx-background-color: #F5F5F5; -fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;">
+            <Button fx:id="btnLoadBill" onAction="#handleLoadBill" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 12px; -fx-padding: 10 16; -fx-background-radius: 6; -fx-cursor: hand;"
+                    text="LOAD">
                <graphic>
-                  <FontAwesomeIcon fill="#FFFFFF" glyphName="REFRESH" size="1.1em" />
+                  <FontAwesomeIcon fill="#FFFFFF" glyphName="UPLOAD" size="1.0em" />
+               </graphic>
+            </Button>
+            <Button fx:id="btnViewBill" onAction="#handleViewBill"
+                    style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 12px; -fx-padding: 10 16; -fx-background-radius: 6; -fx-cursor: hand;"
+                    text="VIEW">
+               <graphic>
+                  <FontAwesomeIcon fill="#FFFFFF" glyphName="EYE" size="1.0em" />
                </graphic>
             </Button>
          </HBox>
@@ -156,7 +215,7 @@
                   <!-- Input Fields Row 2 -->
                   <HBox alignment="CENTER_LEFT" spacing="12.0">
                      <VBox spacing="6.0" prefWidth="160.0">
-                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="RATE (per gram) *" />
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="RATE (per 10g) *" />
                         <TextField fx:id="txtPurchaseRate" promptText="0.00"
                                   style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
                      </VBox>
@@ -214,7 +273,7 @@
                         <TableColumn fx:id="colPurchaseGrossWeight" prefWidth="130.0" text="Gross Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
                         <TableColumn fx:id="colPurchaseSellerPct" prefWidth="110.0" text="Seller %" style="-fx-alignment: CENTER-RIGHT;" />
                         <TableColumn fx:id="colPurchaseNetWeight" prefWidth="130.0" text="Net Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
-                        <TableColumn fx:id="colPurchaseRate" prefWidth="130.0" text="Rate/g" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseRate" prefWidth="130.0" text="Rate/10g" style="-fx-alignment: CENTER-RIGHT;" />
                         <TableColumn fx:id="colPurchaseAmount" prefWidth="160.0" text="Amount" style="-fx-alignment: CENTER-RIGHT;" />
                      </columns>
                   </TableView>
@@ -277,7 +336,7 @@
                      </VBox>
 
                      <VBox spacing="6.0" prefWidth="140.0">
-                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="RATE (per gram) *" />
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="RATE (per 10g) *" />
                         <TextField fx:id="txtExchangeRate" promptText="0.00"
                                   style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
                      </VBox>
@@ -334,7 +393,7 @@
                         <TableColumn fx:id="colExchangeGrossWeight" prefWidth="120.0" text="Gross Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
                         <TableColumn fx:id="colExchangeFine" prefWidth="100.0" text="Fine %" style="-fx-alignment: CENTER-RIGHT;" />
                         <TableColumn fx:id="colExchangeNetWeight" prefWidth="120.0" text="Net Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
-                        <TableColumn fx:id="colExchangeRate" prefWidth="110.0" text="Rate/g" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colExchangeRate" prefWidth="110.0" text="Rate/10g" style="-fx-alignment: CENTER-RIGHT;" />
                         <TableColumn fx:id="colExchangeAmount" prefWidth="130.0" text="Amount" style="-fx-alignment: CENTER-RIGHT;" />
                      </columns>
                   </TableView>

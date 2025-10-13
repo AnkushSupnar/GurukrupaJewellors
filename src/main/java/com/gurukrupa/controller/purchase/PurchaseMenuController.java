@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -40,6 +41,9 @@ public class PurchaseMenuController implements Initializable {
 
     @Autowired
     private PurchaseInvoiceService_New purchaseInvoiceService;
+
+    @Autowired
+    private com.gurukrupa.config.SpringFXMLLoader springFXMLLoader;
 
     // Button controls
     @FXML
@@ -217,34 +221,24 @@ public class PurchaseMenuController implements Initializable {
     }
 
     /**
-     * Open Add Supplier dialog
+     * Open Add Supplier form in the Home center
      */
     private void openAddSupplierDialog() {
-        LOG.info("Opening Add Supplier dialog");
+        LOG.info("Opening Add Supplier form");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnAddSupplier.getScene().getRoot();
 
             // Load the FXML
-            Parent root = stageManager.getSpringFXMLLoader()
-                    .load(FxmlView.ADD_SUPPLIER.getFxmlFile());
+            Parent supplierForm = springFXMLLoader.load(FxmlView.ADD_SUPPLIER.getFxmlFile());
 
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Add Supplier - Gurukrupa Jewelry");
-            dialog.setResizable(true);
+            // Set the supplier form in the center of the dashboard
+            dashboard.setCenter(supplierForm);
 
-            // Show the dialog
-            dialog.show();
-
-            // Refresh statistics when dialog is closed
-            dialog.setOnHidden(event -> loadStatistics());
-
-            LOG.info("Add Supplier dialog opened successfully");
+            LOG.info("Supplier form loaded in dashboard successfully");
 
         } catch (Exception e) {
-            LOG.error("Error opening add supplier dialog: {}", e.getMessage());
+            LOG.error("Error opening supplier form: {}", e.getMessage());
             e.printStackTrace();
         }
     }
