@@ -1,244 +1,211 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.transaction.TransactionMenuController">
-    <children>
-        <VBox spacing="35.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="30.0" AnchorPane.bottomAnchor="30.0">
-            <children>
-                <!-- Transaction Cards Row -->
-                <HBox spacing="40.0" alignment="CENTER">
+<BorderPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.transaction.TransactionMenuController">
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <content>
+                <VBox spacing="20.0" style="-fx-padding: 30;">
                     <children>
-                        <!-- Daily Billing Card -->
-                        <VBox prefHeight="280.0" prefWidth="350.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);">
+                        <!-- Transaction Operations Section -->
+                        <VBox spacing="16.0">
                             <children>
-                                <VBox alignment="CENTER" style="-fx-background-color: linear-gradient(to bottom right, #1E88E5, #1565C0); -fx-background-radius: 15 15 0 0; -fx-padding: 25;">
+                                <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Transaction Operations" textFill="#424242" />
+
+                                <!-- Daily Billing Card -->
+                                <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;">
                                     <children>
-                                        <FontAwesomeIcon fill="#FFFFFF" glyphName="SHOPPING_CART" size="3em" />
-                                        <Label text="Daily Billing" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" textFill="#FFFFFF">
-                                            <font>
-                                                <Font size="22.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="10.0" bottom="3.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label text="Sales &amp; Invoicing" style="-fx-font-family: 'Segoe UI';" textFill="rgba(255,255,255,0.9)">
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                        </Label>
+                                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                            <children>
+                                                <VBox style="-fx-background-color: #E3F2FD; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                                    <children>
+                                                        <FontAwesomeIcon fill="#1E88E5" glyphName="SHOPPING_CART" size="2.0em" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Daily Billing" textFill="#212121" />
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Create customer bills and manage sales transactions for jewelry and ornaments" textFill="#616161" wrapText="true" />
+                                                    </children>
+                                                </VBox>
+                                                <HBox spacing="12.0">
+                                                    <children>
+                                                        <Button fx:id="btnBilling" style="-fx-background-color: #1E88E5; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(30,136,229,0.3), 4, 0, 0, 2);" text="CREATE BILL">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                        <Button fx:id="btnViewBills" style="-fx-background-color: transparent; -fx-text-fill: #1E88E5; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-border-color: #1E88E5; -fx-border-radius: 8; -fx-border-width: 1.5;" text="VIEW ALL">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </HBox>
                                     </children>
                                 </VBox>
-                                
-                                <VBox spacing="15.0" alignment="CENTER" style="-fx-padding: 20;">
+
+                                <!-- Stock Items Entry Card -->
+                                <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;">
                                     <children>
-                                        <Label text="Create customer bills and manage transactions" 
-                                               wrapText="true" textAlignment="CENTER" style="-fx-font-family: 'Segoe UI';" textFill="#616161">
-                                            <font>
-                                                <Font size="13.0" />
-                                            </font>
-                                        </Label>
-                                        
-                                        <Button fx:id="btnBilling" prefWidth="200.0" prefHeight="40.0" text="CREATE NEW BILL" 
-                                                style="-fx-background-color: #1E88E5; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-background-radius: 25; -fx-cursor: hand;">
-                                            <graphic>
-                                                <FontAwesomeIcon fill="#FFFFFF" glyphName="PLUS_CIRCLE" size="1.3em" />
-                                            </graphic>
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                        </Button>
-                                        
-                                        <Button fx:id="btnViewBills" prefWidth="200.0" prefHeight="40.0" text="VIEW BILLS" 
-                                                style="-fx-background-color: transparent; -fx-text-fill: #1E88E5; -fx-border-color: #1E88E5; -fx-border-width: 2; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 20; -fx-border-radius: 20; -fx-cursor: hand;">
-                                            <graphic>
-                                                <FontAwesomeIcon fill="#1E88E5" glyphName="LIST_ALT" size="1.2em" />
-                                            </graphic>
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                        </Button>
+                                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                            <children>
+                                                <VBox style="-fx-background-color: #EDE7F6; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                                    <children>
+                                                        <FontAwesomeIcon fill="#6A1B9A" glyphName="CUBES" size="2.0em" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Stock Items Entry" textFill="#212121" />
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Convert purchased metal into jewelry items for stock and sales inventory" textFill="#616161" wrapText="true" />
+                                                    </children>
+                                                </VBox>
+                                                <HBox spacing="12.0">
+                                                    <children>
+                                                        <Button fx:id="btnStockEntry" style="-fx-background-color: #6A1B9A; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(106,27,154,0.3), 4, 0, 0, 2);" text="ADD ITEMS">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                        <Button fx:id="btnViewStock" style="-fx-background-color: transparent; -fx-text-fill: #6A1B9A; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-border-color: #6A1B9A; -fx-border-radius: 8; -fx-border-width: 1.5;" text="VIEW ENTRIES">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <!-- Metal Rates Card -->
+                                <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                            <children>
+                                                <VBox style="-fx-background-color: #FFF3E0; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                                    <children>
+                                                        <FontAwesomeIcon fill="#FFB300" glyphName="BALANCE_SCALE" size="2.0em" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Metal Rates" textFill="#212121" />
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Update and manage daily metal rates for accurate pricing calculations in billing" textFill="#616161" wrapText="true" />
+                                                    </children>
+                                                </VBox>
+                                                <HBox spacing="12.0">
+                                                    <children>
+                                                        <Button fx:id="btnMetalRates" style="-fx-background-color: #FFB300; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(255,179,0,0.3), 4, 0, 0, 2);" text="UPDATE RATES">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                        <Button fx:id="btnViewRates" style="-fx-background-color: transparent; -fx-text-fill: #FFB300; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-border-color: #FFB300; -fx-border-radius: 8; -fx-border-width: 1.5;" text="VIEW HISTORY">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </HBox>
                                     </children>
                                 </VBox>
                             </children>
                         </VBox>
 
-                        <!-- Metal Rates Card -->
-                        <VBox prefHeight="280.0" prefWidth="350.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);">
+                        <!-- Transaction Statistics Section -->
+                        <VBox spacing="16.0">
                             <children>
-                                <VBox alignment="CENTER" style="-fx-background-color: linear-gradient(to bottom right, #FFB300, #FF8F00); -fx-background-radius: 15 15 0 0; -fx-padding: 25;">
+                                <HBox alignment="CENTER_LEFT" spacing="12.0">
                                     <children>
-                                        <FontAwesomeIcon fill="#FFFFFF" glyphName="BALANCE_SCALE" size="3em" />
-                                        <Label text="Metal Rates" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" textFill="#FFFFFF">
-                                            <font>
-                                                <Font size="22.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="10.0" bottom="3.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label text="Daily Rate Management" style="-fx-font-family: 'Segoe UI';" textFill="rgba(255,255,255,0.9)">
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                        </Label>
-                                    </children>
-                                </VBox>
-
-                                <VBox spacing="15.0" alignment="CENTER" style="-fx-padding: 20;">
-                                    <children>
-                                        <Label text="Update daily metal rates for accurate pricing calculations"
-                                               wrapText="true" textAlignment="CENTER" style="-fx-font-family: 'Segoe UI';" textFill="#616161">
-                                            <font>
-                                                <Font size="13.0" />
-                                            </font>
-                                        </Label>
-
-                                        <Button fx:id="btnMetalRates" prefWidth="200.0" prefHeight="40.0" text="UPDATE RATES"
-                                                style="-fx-background-color: #FFB300; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-background-radius: 25; -fx-cursor: hand;">
+                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Transaction Statistics" textFill="#424242" />
+                                        <Button fx:id="btnRefresh" style="-fx-background-color: transparent; -fx-cursor: hand;">
                                             <graphic>
-                                                <FontAwesomeIcon fill="#FFFFFF" glyphName="EDIT" size="1.3em" />
+                                                <FontAwesomeIcon fill="#757575" glyphName="REFRESH" size="1.2em" />
                                             </graphic>
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                        </Button>
-
-                                        <Button fx:id="btnViewRates" prefWidth="200.0" prefHeight="40.0" text="VIEW HISTORY"
-                                                style="-fx-background-color: transparent; -fx-text-fill: #FFB300; -fx-border-color: #FFB300; -fx-border-width: 2; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 20; -fx-border-radius: 20; -fx-cursor: hand;">
-                                            <graphic>
-                                                <FontAwesomeIcon fill="#FFB300" glyphName="HISTORY" size="1.2em" />
-                                            </graphic>
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
                                         </Button>
                                     </children>
-                                </VBox>
+                                </HBox>
+
+                                <HBox spacing="20.0">
+                                    <children>
+                                        <!-- Today's Sales Card -->
+                                        <VBox spacing="8.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                                    <children>
+                                                        <VBox style="-fx-background-color: #E8F5E9; -fx-background-radius: 8; -fx-padding: 10; -fx-pref-width: 40; -fx-pref-height: 40; -fx-alignment: CENTER;">
+                                                            <children>
+                                                                <FontAwesomeIcon fill="#2E7D32" glyphName="RUPEE" size="1.5em" />
+                                                            </children>
+                                                        </VBox>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 14px;" text="Today's Sales" textFill="#424242" />
+                                                    </children>
+                                                </HBox>
+                                                <Label fx:id="lblTodaySales" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 24px;" text="₹0.00" textFill="#212121" />
+                                                <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Collected" textFill="#757575" />
+                                                <Label fx:id="lblTodayCollected" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="₹0.00" textFill="#2E7D32" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Today's Bills Card -->
+                                        <VBox spacing="8.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                                    <children>
+                                                        <VBox style="-fx-background-color: #FFF3E0; -fx-background-radius: 8; -fx-padding: 10; -fx-pref-width: 40; -fx-pref-height: 40; -fx-alignment: CENTER;">
+                                                            <children>
+                                                                <FontAwesomeIcon fill="#F57C00" glyphName="FILE_TEXT" size="1.5em" />
+                                                            </children>
+                                                        </VBox>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 14px;" text="Today's Bills" textFill="#424242" />
+                                                    </children>
+                                                </HBox>
+                                                <Label fx:id="lblTodayBills" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 32px;" text="0" textFill="#212121" />
+                                                <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Bills Created" textFill="#757575" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- This Month Card -->
+                                        <VBox spacing="8.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                                    <children>
+                                                        <VBox style="-fx-background-color: #E3F2FD; -fx-background-radius: 8; -fx-padding: 10; -fx-pref-width: 40; -fx-pref-height: 40; -fx-alignment: CENTER;">
+                                                            <children>
+                                                                <FontAwesomeIcon fill="#1976D2" glyphName="CALENDAR" size="1.5em" />
+                                                            </children>
+                                                        </VBox>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 14px;" text="This Month Total" textFill="#424242" />
+                                                    </children>
+                                                </HBox>
+                                                <Label fx:id="lblMonthSales" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 24px;" text="₹0.00" textFill="#212121" />
+                                                <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Collected" textFill="#757575" />
+                                                <Label fx:id="lblMonthCollected" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="₹0.00" textFill="#1976D2" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
                             </children>
                         </VBox>
-                    </children>
-                </HBox>
-                
-                <!-- Quick Statistics Section -->
-                <VBox spacing="20.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 20; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);">
-                    <children>
-                        <HBox alignment="CENTER_LEFT">
-                            <children>
-                                <Label text="Quick Statistics" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-text-fill: #333333;">
-                                    <font>
-                                        <Font size="22.0" />
-                                    </font>
-                                </Label>
-                                <HBox HBox.hgrow="ALWAYS" />
-                                <Button fx:id="btnRefresh" style="-fx-background-color: transparent; -fx-cursor: hand;">
-                                    <graphic>
-                                        <FontAwesomeIcon fill="#666666" glyphName="REFRESH" size="1.5em" />
-                                    </graphic>
-                                </Button>
-                            </children>
-                        </HBox>
-                        
-                        <HBox spacing="25.0" alignment="CENTER">
-                            <children>
-                                <!-- Today's Sales -->
-                                <VBox alignment="CENTER" style="-fx-background-color: #E8F5E9; -fx-background-radius: 15; -fx-padding: 25; -fx-min-width: 220;">
-                                    <children>
-                                        <FontAwesomeIcon fill="#2E7D32" glyphName="RUPEE" size="2.5em" />
-                                        <Label text="Today's Total" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#1B5E20">
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="10.0" bottom="2.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label fx:id="lblTodaySales" text="₹0.00" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" textFill="#1B5E20">
-                                            <font>
-                                                <Font size="22.0" />
-                                            </font>
-                                        </Label>
-                                        <Label text="Collected" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#388E3C">
-                                            <font>
-                                                <Font size="12.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="5.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label fx:id="lblTodayCollected" text="₹0.00" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#388E3C">
-                                            <font>
-                                                <Font size="16.0" />
-                                            </font>
-                                        </Label>
-                                    </children>
-                                </VBox>
-                                
-                                <!-- Today's Bills -->
-                                <VBox alignment="CENTER" style="-fx-background-color: #FFF3E0; -fx-background-radius: 15; -fx-padding: 25; -fx-min-width: 220;">
-                                    <children>
-                                        <FontAwesomeIcon fill="#F57C00" glyphName="FILE_TEXT" size="2.5em" />
-                                        <Label text="Today's Bills" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#E65100">
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="10.0" bottom="5.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label fx:id="lblTodayBills" text="0" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" textFill="#E65100">
-                                            <font>
-                                                <Font size="24.0" />
-                                            </font>
-                                        </Label>
-                                    </children>
-                                </VBox>
-                                
-                                <!-- This Month -->
-                                <VBox alignment="CENTER" style="-fx-background-color: #E3F2FD; -fx-background-radius: 15; -fx-padding: 25; -fx-min-width: 220;">
-                                    <children>
-                                        <FontAwesomeIcon fill="#1976D2" glyphName="CALENDAR" size="2.5em" />
-                                        <Label text="This Month Total" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#0D47A1">
-                                            <font>
-                                                <Font size="14.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="10.0" bottom="2.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label fx:id="lblMonthSales" text="₹0.00" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700;" textFill="#0D47A1">
-                                            <font>
-                                                <Font size="22.0" />
-                                            </font>
-                                        </Label>
-                                        <Label text="Collected" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 500;" textFill="#1565C0">
-                                            <font>
-                                                <Font size="12.0" />
-                                            </font>
-                                            <VBox.margin>
-                                                <Insets top="5.0" />
-                                            </VBox.margin>
-                                        </Label>
-                                        <Label fx:id="lblMonthCollected" text="₹0.00" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600;" textFill="#1565C0">
-                                            <font>
-                                                <Font size="16.0" />
-                                            </font>
-                                        </Label>
-                                    </children>
-                                </VBox>
-                            </children>
-                        </HBox>
                     </children>
                 </VBox>
-            </children>
-        </VBox>
-    </children>
-</AnchorPane>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

@@ -214,6 +214,16 @@ public enum FxmlView {
             return "/fxml/purchase/PurchaseInvoiceFrame_New.fxml";
         }
     },
+    STOCK_ENTRY {
+        @Override
+        String getTitle() {
+            return "Stock Items Entry";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/stock/StockEntryFrame.fxml";
+        }
+    },
     CATEGORY_FORM {
         @Override
         String getTitle() {
