@@ -24,16 +24,22 @@ public class JewelryItem {
     
     @Column(unique = true, nullable = false)
     private String itemCode;
-    
+
     @Column(nullable = false)
     private String itemName;
-    
+
     @Column(nullable = false)
     private String category; // Ring, Necklace, Earrings, Bracelet, Pendant, etc.
-    
+
+    // Reference to Metal master data
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "metal_id")
+    private Metal metal; // Reference to the metal from metals table
+
+    // Keep these for backward compatibility and quick access (denormalized from Metal)
     @Column(nullable = false)
     private String metalType; // This will now store the metal name from Metal table
-    
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal purity; // 22k, 18k, 14k, etc. (stored as decimal like 22.00, 18.00)
     

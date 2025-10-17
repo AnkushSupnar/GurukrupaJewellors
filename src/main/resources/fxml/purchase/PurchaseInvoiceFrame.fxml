@@ -11,7 +11,7 @@
             style="-fx-background-color: #ECEFF1;"
             xmlns="http://javafx.com/javafx/23.0.1"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.gurukrupa.controller.purchase.PurchaseInvoiceController_New">
+            fx:controller="com.gurukrupa.controller.purchase.PurchaseInvoiceController">
 
    <fx:define>
       <ToggleGroup fx:id="modeToggleGroup" />
@@ -265,7 +265,7 @@
                      <Label fx:id="lblPurchaseItemCount" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575;" text="0 items" />
                   </HBox>
 
-                  <TableView fx:id="purchaseMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6;">
+                  <TableView fx:id="purchaseMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6; -fx-font-size: 14px;">
                      <columns>
                         <TableColumn fx:id="colPurchaseSno" prefWidth="50.0" text="#" style="-fx-alignment: CENTER;" />
                         <TableColumn fx:id="colPurchaseMetalType" prefWidth="140.0" text="Metal Type" />
@@ -384,7 +384,7 @@
                      <Label fx:id="lblExchangeItemCount" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #757575;" text="0 items" />
                   </HBox>
 
-                  <TableView fx:id="exchangeMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6;">
+                  <TableView fx:id="exchangeMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6; -fx-font-size: 14px;">
                      <columns>
                         <TableColumn fx:id="colExchangeSno" prefWidth="50.0" text="#" style="-fx-alignment: CENTER;" />
                         <TableColumn fx:id="colExchangeItemName" prefWidth="210.0" text="Description" />

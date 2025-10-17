@@ -2,6 +2,7 @@ package com.gurukrupa.controller.master;
 
 import com.gurukrupa.data.entities.Category;
 import com.gurukrupa.data.entities.JewelryItem;
+import com.gurukrupa.data.entities.Metal;
 import com.gurukrupa.data.service.CategoryService;
 import com.gurukrupa.data.service.JewelryItemService;
 import com.gurukrupa.data.service.MetalService;
@@ -449,11 +450,20 @@ public class JewelryItemFormController implements Initializable {
     }
     
     private JewelryItem createJewelryItemFromForm() {
+        // Look up Metal entity by name
+        String metalName = cmbMetalType.getValue();
+        Metal metal = metalService.getMetalByName(metalName).orElse(null);
+
+        if (metal == null) {
+            logger.warn("Metal not found for name: {}", metalName);
+        }
+
         return JewelryItem.builder()
             .itemCode(txtItemCode.getText().trim())
             .itemName(txtItemName.getText().trim())
             .category(cmbCategory.getValue())
-            .metalType(cmbMetalType.getValue())
+            .metal(metal) // Set Metal entity reference
+            .metalType(metalName) // Set denormalized field (metal name)
             .purity(parseDecimal(txtPurity.getText()))
             .grossWeight(parseDecimal(txtGrossWeight.getText()))
             .stoneWeight(parseDecimal(txtStoneWeight.getText()))
@@ -470,10 +480,19 @@ public class JewelryItemFormController implements Initializable {
     }
     
     private void updateJewelryItemFromForm(JewelryItem item) {
+        // Look up Metal entity by name
+        String metalName = cmbMetalType.getValue();
+        Metal metal = metalService.getMetalByName(metalName).orElse(null);
+
+        if (metal == null) {
+            logger.warn("Metal not found for name: {}", metalName);
+        }
+
         item.setItemCode(txtItemCode.getText().trim());
         item.setItemName(txtItemName.getText().trim());
         item.setCategory(cmbCategory.getValue());
-        item.setMetalType(cmbMetalType.getValue());
+        item.setMetal(metal); // Set Metal entity reference
+        item.setMetalType(metalName); // Set denormalized field (metal name)
         item.setPurity(parseDecimal(txtPurity.getText()));
         item.setGrossWeight(parseDecimal(txtGrossWeight.getText()));
         item.setStoneWeight(parseDecimal(txtStoneWeight.getText()));

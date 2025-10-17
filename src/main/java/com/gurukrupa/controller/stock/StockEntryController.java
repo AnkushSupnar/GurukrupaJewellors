@@ -52,6 +52,9 @@ public class StockEntryController implements Initializable {
     private JewelryItemService jewelryItemService;
 
     @Autowired
+    private MetalService metalService;
+
+    @Autowired
     private SpringFXMLLoader fxmlLoader;
 
     // ===== Left Panel - Previous Entries =====
@@ -113,6 +116,9 @@ public class StockEntryController implements Initializable {
     private StockEntryMaster currentEntry;
     private Map<String, BigDecimal> availableMetalStock = new HashMap<>();
     private Map<String, BigDecimal> consumedMetalStock = new HashMap<>();
+
+    // Flag to prevent infinite loop when programmatically updating item selection
+    private boolean isUpdatingItemSelection = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -217,6 +223,12 @@ public class StockEntryController implements Initializable {
 
         // Handle selection
         itemSearchField.selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            // Prevent infinite loop: ignore programmatic selection updates
+            if (isUpdatingItemSelection) {
+                log.debug("Ignoring programmatic item selection update");
+                return;
+            }
+
             if (newVal != null) {
                 selectJewelryItem(newVal.getItemCode());
             }
@@ -233,59 +245,54 @@ public class StockEntryController implements Initializable {
      * IMPORTANT: Only show items matching the metal types available in the invoice
      */
     private void rebuildItemAutocomplete() {
+        log.debug("rebuildItemAutocomplete called. selectedPurchaseInvoice: {}, availableMetalStock size: {}",
+                selectedPurchaseInvoice != null ? selectedPurchaseInvoice.getInvoiceNumber() : "null",
+                availableMetalStock.size());
+
         if (selectedPurchaseInvoice == null || availableMetalStock.isEmpty()) {
             itemSearchField.getTextField().setDisable(true);
             itemSearchField.setPromptText("Select purchase invoice first...");
+            log.debug("Item search field disabled - no invoice or no metal stock available");
             return;
         }
 
         // Get all active items
         List<JewelryItem> allItems = jewelryItemService.getAllActiveItems();
+        log.debug("Retrieved {} total active jewelry items", allItems.size());
 
         // Get available metal types from selected invoice
         Set<String> availableMetalKeys = availableMetalStock.keySet();
+        log.info("Available metal keys from invoice: {}", availableMetalKeys);
 
         // Filter items to only show those matching available metal types
+        // Uses Metal entity reference if available, otherwise falls back to string comparison
+        log.info("=== Filtering Jewelry Items ===");
         List<JewelryItem> matchingItems = allItems.stream()
                 .filter(item -> {
-                    if (!item.getIsActive()) return false;
+                    if (!item.getIsActive()) {
+                        log.info("Skipping inactive item: {}", item.getItemCode());
+                        return false;
+                    }
 
-                    // Create metal key for this item - use stripTrailingZeros for consistent comparison
-                    String itemMetalKey = item.getMetalType() + " " + item.getPurity().stripTrailingZeros().toPlainString();
+                    // Log item details
+                    log.info("Checking item: {} ({})", item.getItemCode(), item.getItemName());
+                    log.info("  Item Metal Entity: {}, MetalType: '{}', Purity: {}",
+                            item.getMetal() != null ?
+                                ("ID=" + item.getMetal().getId() + ", Name=" + item.getMetal().getMetalName()) : "NULL",
+                            item.getMetalType(),
+                            item.getPurity());
 
-                    log.debug("Checking item {} with metal key: '{}' against available keys: {}",
-                            item.getItemCode(), itemMetalKey, availableMetalKeys);
+                    // Generate metal key for this item using same logic as service layer
+                    String itemMetalKey = getMetalKey(item.getMetal(), item.getMetalType(), item.getPurity());
+
+                    boolean matches = availableMetalKeys.contains(itemMetalKey);
+                    log.info("  Generated Item Metal Key: '{}' - Matches Available Keys: {}", itemMetalKey, matches);
 
                     // Check if this item's metal type is available in the invoice
-                    // Need to check with both original and stripped trailing zeros
-                    if (availableMetalKeys.contains(itemMetalKey)) {
-                        return true;
-                    }
-
-                    // Also check against normalized versions of available keys
-                    for (String availableKey : availableMetalKeys) {
-                        // Extract metal type and purity from available key
-                        String[] parts = availableKey.split(" ");
-                        if (parts.length >= 2) {
-                            String availableMetalType = parts[0];
-                            String availablePurity = parts[1];
-                            try {
-                                // Normalize both purities for comparison
-                                BigDecimal availablePurityNum = new BigDecimal(availablePurity);
-                                String normalizedAvailable = availableMetalType + " " +
-                                        availablePurityNum.stripTrailingZeros().toPlainString();
-                                if (itemMetalKey.equals(normalizedAvailable)) {
-                                    return true;
-                                }
-                            } catch (NumberFormatException e) {
-                                log.warn("Could not parse purity from key: {}", availableKey);
-                            }
-                        }
-                    }
-
-                    return false;
+                    return matches;
                 })
                 .collect(Collectors.toList());
+        log.info("=== Item Filtering Complete ===");
 
         log.info("Filtering {} total items. Found {} matching items for metals: {}",
                 allItems.size(), matchingItems.size(), availableMetalKeys);
@@ -326,8 +333,17 @@ public class StockEntryController implements Initializable {
 
         // Handle selection
         newItemSearchField.selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            // Prevent infinite loop: ignore programmatic selection updates
+            if (isUpdatingItemSelection) {
+                log.debug("Ignoring programmatic item selection update");
+                return;
+            }
+
             if (newVal != null) {
+                log.debug("Item selected from autocomplete: {} - {}", newVal.getItemCode(), newVal.getItemName());
                 selectJewelryItem(newVal.getItemCode());
+            } else {
+                log.debug("Item selection cleared (newVal is null)");
             }
         });
 
@@ -444,14 +460,17 @@ public class StockEntryController implements Initializable {
     // ===== Purchase Invoice Selection =====
 
     private void selectPurchaseInvoice(String invoiceNumber) {
+        log.debug("selectPurchaseInvoice called with invoiceNumber: {}", invoiceNumber);
         Optional<PurchaseInvoice> invoiceOpt = purchaseInvoiceService.findByInvoiceNumber(invoiceNumber);
 
         if (invoiceOpt.isPresent()) {
             PurchaseInvoice invoice = invoiceOpt.get();
+            log.debug("Found purchase invoice: {}", invoice.getInvoiceNumber());
 
             // IMPORTANT: Validate that invoice hasn't been used
             String validationError = stockEntryService.validatePurchaseInvoice(invoice);
             if (validationError != null) {
+                log.warn("Invoice validation failed: {}", validationError);
                 AlertNotification.showWarning("Invoice Already Used", validationError);
                 invoiceSearchField.clear();
                 return;
@@ -459,35 +478,65 @@ public class StockEntryController implements Initializable {
 
             selectedPurchaseInvoice = invoice;
             currentEntry.setPurchaseInvoice(invoice);
+            log.debug("Purchase invoice set to current entry");
 
             // Update UI
             if (invoice.getSupplier() != null) {
                 lblSupplierName.setText(invoice.getSupplier().getSupplierName());
+                log.debug("Supplier: {}", invoice.getSupplier().getSupplierName());
             }
             lblInvoiceDate.setText(invoice.getInvoiceDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
             // Calculate and display available metal stock
             calculateAvailableMetalStock();
             displayMetalStock();
+            log.debug("Metal stock calculated and displayed");
 
             // Rebuild item autocomplete to show only matching metal types
+            log.debug("Rebuilding item autocomplete...");
             rebuildItemAutocomplete();
 
-            log.info("Selected purchase invoice: {}", invoiceNumber);
+            log.info("Selected purchase invoice: {} with {} metal types available",
+                    invoiceNumber, availableMetalStock.size());
+        } else {
+            log.warn("Purchase invoice not found: {}", invoiceNumber);
         }
     }
 
     private void calculateAvailableMetalStock() {
         availableMetalStock.clear();
+        log.info("=== Calculating Available Metal Stock ===");
 
         if (selectedPurchaseInvoice != null) {
+            log.info("Purchase Invoice: {}", selectedPurchaseInvoice.getInvoiceNumber());
+
+            // Log all metal transactions in the invoice
+            if (selectedPurchaseInvoice.getPurchaseMetalTransactions() != null) {
+                log.info("Found {} metal transactions in invoice:",
+                        selectedPurchaseInvoice.getPurchaseMetalTransactions().size());
+
+                for (PurchaseMetalTransaction transaction : selectedPurchaseInvoice.getPurchaseMetalTransactions()) {
+                    log.info("  Transaction: Metal Entity: {}, MetalType: '{}', Purity: {}, GrossWeight: {}",
+                            transaction.getMetal() != null ?
+                                ("ID=" + transaction.getMetal().getId() + ", Name=" + transaction.getMetal().getMetalName()) : "NULL",
+                            transaction.getMetalType(),
+                            transaction.getPurity(),
+                            transaction.getGrossWeight());
+                }
+            }
+
             // Get remaining metal available (already accounts for previous consumptions)
             Map<String, BigDecimal> remainingMetal = stockEntryService.getRemainingMetalForInvoice(selectedPurchaseInvoice);
             availableMetalStock.putAll(remainingMetal);
+
+            log.info("Available metal stock keys: {}", availableMetalStock.keySet());
+        } else {
+            log.info("No purchase invoice selected");
         }
 
         // Reset consumed stock for current entry
         consumedMetalStock.clear();
+        log.info("=== Available Metal Stock Calculation Complete ===");
     }
 
     private void displayMetalStock() {
@@ -511,7 +560,10 @@ public class StockEntryController implements Initializable {
         Map<String, BigDecimal> totalAvailable = new HashMap<>();
         if (selectedPurchaseInvoice.getPurchaseMetalTransactions() != null) {
             for (PurchaseMetalTransaction transaction : selectedPurchaseInvoice.getPurchaseMetalTransactions()) {
-                String key = transaction.getMetalType() + " " + transaction.getPurity();
+                // Use consistent metal key generation
+                String key = getMetalKey(transaction.getMetal(),
+                        transaction.getMetalType(),
+                        transaction.getPurity());
                 BigDecimal current = totalAvailable.getOrDefault(key, BigDecimal.ZERO);
                 totalAvailable.put(key, current.add(transaction.getGrossWeight()));
             }
@@ -525,7 +577,9 @@ public class StockEntryController implements Initializable {
 
             VBox metalBox = new VBox(3);
 
-            Label titleLabel = new Label(metalKey);
+            // Display human-readable metal name
+            String displayName = getMetalDisplayName(metalKey);
+            Label titleLabel = new Label(displayName);
             titleLabel.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #2E7D32;");
 
             Label infoLabel = new Label(String.format("Remaining: %s / %s",
@@ -550,29 +604,45 @@ public class StockEntryController implements Initializable {
     // ===== Jewelry Item Selection =====
 
     private void selectJewelryItem(String itemCode) {
+        log.debug("selectJewelryItem called with itemCode: {}", itemCode);
         Optional<JewelryItem> itemOpt = jewelryItemService.findByItemCode(itemCode);
 
         if (itemOpt.isPresent()) {
             selectedJewelryItem = itemOpt.get();
+            log.debug("Found jewelry item: {} - {}", selectedJewelryItem.getItemCode(), selectedJewelryItem.getItemName());
 
-            // Update UI
+            // Update UI labels
             lblItemName.setText(selectedJewelryItem.getItemName());
             lblItemCategory.setText(selectedJewelryItem.getCategory());
             lblItemMetal.setText(selectedJewelryItem.getMetalType() + " " + selectedJewelryItem.getPurity());
             lblItemWeight.setText(WeightFormatter.format(selectedJewelryItem.getNetWeight()));
 
+            // IMPORTANT: Update the autocomplete field to show the selected item
+            // Set flag to prevent infinite loop with the listener
+            isUpdatingItemSelection = true;
+            try {
+                itemSearchField.setSelectedItem(selectedJewelryItem);
+                log.debug("Set selected item in autocomplete field: {}", selectedJewelryItem.getItemCode());
+            } finally {
+                isUpdatingItemSelection = false;
+            }
+
             txtQuantity.setText("1");
             txtItemRemarks.clear();
 
-            log.info("Selected jewelry item: {}", itemCode);
+            log.info("Selected jewelry item: {} - {}", itemCode, selectedJewelryItem.getItemName());
+        } else {
+            log.warn("Jewelry item not found for itemCode: {}", itemCode);
         }
     }
 
     private void loadItemForEditing(StockEntryItem item) {
+        log.debug("loadItemForEditing called for item: {}", item.getJewelryItem().getItemCode());
         selectedJewelryItem = item.getJewelryItem();
         selectJewelryItem(item.getJewelryItem().getItemCode());
         txtQuantity.setText(String.valueOf(item.getQuantity()));
         txtItemRemarks.setText(item.getRemarks());
+        log.debug("Item loaded for editing with quantity: {}", item.getQuantity());
     }
 
     // ===== Action Handlers =====
@@ -619,44 +689,33 @@ public class StockEntryController implements Initializable {
             }
 
             // IMPORTANT: Validate that item's metal type matches available metals
-            // Normalize the metal key for consistent comparison
-            String itemMetalKey = selectedJewelryItem.getMetalType() + " " +
-                    selectedJewelryItem.getPurity().stripTrailingZeros().toPlainString();
+            // Use consistent metal key generation
+            String itemMetalKey = getMetalKey(selectedJewelryItem.getMetal(),
+                    selectedJewelryItem.getMetalType(),
+                    selectedJewelryItem.getPurity());
 
-            // Find matching metal in available stock (with normalization)
-            String matchingKey = null;
-            for (String availableKey : availableMetalStock.keySet()) {
-                String[] parts = availableKey.split(" ");
-                if (parts.length >= 2) {
-                    try {
-                        BigDecimal availablePurity = new BigDecimal(parts[1]);
-                        String normalizedAvailable = parts[0] + " " +
-                                availablePurity.stripTrailingZeros().toPlainString();
-                        if (itemMetalKey.equals(normalizedAvailable)) {
-                            matchingKey = availableKey;
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        log.warn("Could not parse purity from key: {}", availableKey);
-                    }
-                }
-            }
+            // Check if metal is available in stock
+            if (!availableMetalStock.containsKey(itemMetalKey)) {
+                // Get display names for error message
+                String itemDisplayName = getMetalDisplayName(itemMetalKey);
+                List<String> availableDisplayNames = availableMetalStock.keySet().stream()
+                        .map(this::getMetalDisplayName)
+                        .collect(Collectors.toList());
 
-            if (matchingKey == null) {
                 AlertNotification.showWarning("Metal Type Mismatch",
                     String.format("Cannot add this item. Item metal type '%s' does not match any available metal in the selected purchase invoice.\n\n" +
                                 "Available metals: %s",
-                                itemMetalKey,
-                                String.join(", ", availableMetalStock.keySet())));
+                                itemDisplayName,
+                                String.join(", ", availableDisplayNames)));
                 return;
             }
 
             // Calculate total weight needed for this item
             BigDecimal itemTotalWeight = selectedJewelryItem.getNetWeight().multiply(BigDecimal.valueOf(quantity));
 
-            // Check if there's enough metal available (use the matching key from available stock)
-            BigDecimal currentAvailable = availableMetalStock.get(matchingKey);
-            BigDecimal currentConsumed = consumedMetalStock.getOrDefault(matchingKey, BigDecimal.ZERO);
+            // Check if there's enough metal available
+            BigDecimal currentAvailable = availableMetalStock.get(itemMetalKey);
+            BigDecimal currentConsumed = consumedMetalStock.getOrDefault(itemMetalKey, BigDecimal.ZERO);
             BigDecimal remainingAfterAdd = currentAvailable.subtract(currentConsumed).subtract(itemTotalWeight);
 
             if (remainingAfterAdd.compareTo(BigDecimal.ZERO) < 0) {
@@ -683,7 +742,7 @@ public class StockEntryController implements Initializable {
 
             currentItems.add(newItem);
             log.info("Added item to stock entry: {} (Metal: {}, Weight: {})",
-                    selectedJewelryItem.getItemCode(), matchingKey, WeightFormatter.format(itemTotalWeight));
+                    selectedJewelryItem.getItemCode(), itemMetalKey, WeightFormatter.format(itemTotalWeight));
 
             updateSummary();
             clearItemSelection();
@@ -861,6 +920,7 @@ public class StockEntryController implements Initializable {
     }
 
     private void clearItemSelection() {
+        log.debug("clearItemSelection called");
         selectedJewelryItem = null;
         itemSearchField.clear();
         lblItemName.setText("-");
@@ -870,6 +930,7 @@ public class StockEntryController implements Initializable {
         txtQuantity.setText("1");
         txtItemRemarks.clear();
         itemsTable.getSelectionModel().clearSelection();
+        log.debug("Item selection cleared");
     }
 
     private void updateSummary() {
@@ -896,34 +957,15 @@ public class StockEntryController implements Initializable {
         for (StockEntryItem item : currentItems) {
             JewelryItem jewelry = item.getJewelryItem();
 
-            // Normalize the metal key to match available stock format
-            String itemMetalKey = jewelry.getMetalType() + " " +
-                    jewelry.getPurity().stripTrailingZeros().toPlainString();
+            // Use consistent metal key generation
+            String itemMetalKey = getMetalKey(jewelry.getMetal(),
+                    jewelry.getMetalType(),
+                    jewelry.getPurity());
 
-            // Find the matching key in available stock
-            String matchingKey = null;
-            for (String availableKey : availableMetalStock.keySet()) {
-                String[] parts = availableKey.split(" ");
-                if (parts.length >= 2) {
-                    try {
-                        BigDecimal availablePurity = new BigDecimal(parts[1]);
-                        String normalizedAvailable = parts[0] + " " +
-                                availablePurity.stripTrailingZeros().toPlainString();
-                        if (itemMetalKey.equals(normalizedAvailable)) {
-                            matchingKey = availableKey;
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        log.warn("Could not parse purity from key: {}", availableKey);
-                    }
-                }
-            }
-
-            // Use the matching key from available stock for consistency
-            String key = matchingKey != null ? matchingKey : itemMetalKey;
-            BigDecimal consumed = consumedMetalStock.getOrDefault(key, BigDecimal.ZERO);
+            // Add to consumed metal
+            BigDecimal consumed = consumedMetalStock.getOrDefault(itemMetalKey, BigDecimal.ZERO);
             consumed = consumed.add(item.getTotalNetWeight());
-            consumedMetalStock.put(key, consumed);
+            consumedMetalStock.put(itemMetalKey, consumed);
         }
 
         // Display consumption
@@ -948,7 +990,9 @@ public class StockEntryController implements Initializable {
             BigDecimal remaining = available.subtract(consumed);
 
             VBox vbox = new VBox(4);
-            Label metalLabel = new Label(entry.getKey());
+            // Display human-readable metal name
+            String displayName = getMetalDisplayName(entry.getKey());
+            Label metalLabel = new Label(displayName);
             metalLabel.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #2E7D32;");
 
             Label detailsLabel = new Label(String.format("Used: %s / %s",
@@ -963,5 +1007,49 @@ public class StockEntryController implements Initializable {
             vbox.getChildren().addAll(metalLabel, detailsLabel, remainingLabel);
             metalConsumptionList.getChildren().add(vbox);
         }
+    }
+
+    /**
+     * Generate consistent metal key for matching
+     * Uses Metal entity ID if available, otherwise creates key from metalType and purity
+     * This mirrors the logic in StockEntryService
+     */
+    private String getMetalKey(Metal metal, String metalType, BigDecimal purity) {
+        String key;
+        if (metal != null && metal.getId() != null) {
+            // Use Metal ID as key for exact matching
+            key = "M-" + metal.getId();
+            log.info("Generated metal key from Metal entity: {} (Metal ID: {}, Name: {})",
+                    key, metal.getId(), metal.getMetalName());
+        } else {
+            // Fallback to denormalized fields with normalized purity
+            String normalizedPurity = purity.stripTrailingZeros().toPlainString();
+            key = metalType + " " + normalizedPurity;
+            log.info("Generated metal key from denormalized fields: {} (metalType: '{}', purity: {} -> normalized: '{}')",
+                    key, metalType, purity, normalizedPurity);
+        }
+        return key;
+    }
+
+    /**
+     * Get display name for metal key
+     * Converts metal key to human-readable format
+     */
+    private String getMetalDisplayName(String metalKey) {
+        if (metalKey.startsWith("M-")) {
+            // Extract Metal ID and look up the metal
+            try {
+                Long metalId = Long.parseLong(metalKey.substring(2));
+                Optional<Metal> metalOpt = metalService.getMetalById(metalId);
+                if (metalOpt.isPresent()) {
+                    Metal metal = metalOpt.get();
+                    return metal.getMetalName(); // e.g., "Gold 22K"
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid metal key format: {}", metalKey);
+            }
+        }
+        // Return the key as-is if it's in "Type Purity" format
+        return metalKey;
     }
 }

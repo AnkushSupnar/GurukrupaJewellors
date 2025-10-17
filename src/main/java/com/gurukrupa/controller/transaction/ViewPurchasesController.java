@@ -1,5 +1,6 @@
 package com.gurukrupa.controller.transaction;
 
+import com.gurukrupa.controller.purchase.PurchaseInvoiceController;
 import com.gurukrupa.data.entities.PurchaseInvoice;
 import com.gurukrupa.data.entities.Supplier;
 import com.gurukrupa.data.service.PurchaseInvoiceService;
@@ -375,8 +376,13 @@ public class ViewPurchasesController implements Initializable {
                 Optional<PurchaseInvoice> invoiceOpt = purchaseInvoiceService.findByInvoiceNumber(invoiceNo);
                 purchases = invoiceOpt.map(List::of).orElse(new ArrayList<>());
             } else {
-                // Search by supplier name
-                purchases = purchaseInvoiceService.findInvoicesBySupplierName(supplierName);
+                // Search by supplier name - filter from all invoices
+                String searchName = supplierName.toLowerCase();
+                purchases = purchaseInvoiceService.getAllInvoices().stream()
+                    .filter(p -> p.getSupplier() != null &&
+                                 p.getSupplier().getSupplierName() != null &&
+                                 p.getSupplier().getSupplierName().toLowerCase().contains(searchName))
+                    .collect(java.util.stream.Collectors.toList());
             }
             
             if (!purchases.isEmpty()) {
@@ -449,7 +455,13 @@ public class ViewPurchasesController implements Initializable {
             
             if (rbAllPurchases.isSelected()) {
                 if (selectedSupplier != null) {
-                    purchases = purchaseInvoiceService.findInvoicesBySupplierName(selectedSupplier);
+                    // Filter by selected supplier name
+                    String searchName = selectedSupplier.toLowerCase();
+                    purchases = purchaseInvoiceService.getAllInvoices().stream()
+                        .filter(p -> p.getSupplier() != null &&
+                                     p.getSupplier().getSupplierName() != null &&
+                                     p.getSupplier().getSupplierName().toLowerCase().contains(searchName))
+                        .collect(java.util.stream.Collectors.toList());
                 } else {
                     purchases = purchaseInvoiceService.getAllInvoices();
                 }
@@ -506,7 +518,13 @@ public class ViewPurchasesController implements Initializable {
                 }
             } else {
                 if (selectedSupplier != null) {
-                    purchases = purchaseInvoiceService.findInvoicesBySupplierName(selectedSupplier);
+                    // Filter by selected supplier name
+                    String searchName = selectedSupplier.toLowerCase();
+                    purchases = purchaseInvoiceService.getAllInvoices().stream()
+                        .filter(p -> p.getSupplier() != null &&
+                                     p.getSupplier().getSupplierName() != null &&
+                                     p.getSupplier().getSupplierName().toLowerCase().contains(searchName))
+                        .collect(java.util.stream.Collectors.toList());
                 } else {
                     purchases = purchaseInvoiceService.getAllInvoices();
                 }
@@ -586,11 +604,10 @@ public class ViewPurchasesController implements Initializable {
             
             Parent root = entry.getKey();
             PurchaseInvoiceController controller = entry.getValue();
-            
-            // Set the invoice for editing
-            controller.setEditMode(invoice);
-            controller.setDialogStage(purchaseStage);
-            
+
+            // Load the invoice into the form for editing
+            controller.loadInvoiceIntoForm(invoice);
+
             // Set up the dialog
             purchaseStage.setScene(new Scene(root));
             purchaseStage.setTitle("Edit Purchase Invoice - " + invoice.getInvoiceNumber());

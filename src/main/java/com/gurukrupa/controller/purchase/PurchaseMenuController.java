@@ -1,6 +1,7 @@
 package com.gurukrupa.controller.purchase;
 
-import com.gurukrupa.data.service.PurchaseInvoiceService_New;
+
+import com.gurukrupa.data.service.PurchaseInvoiceService;
 import com.gurukrupa.view.FxmlView;
 import com.gurukrupa.view.StageManager;
 import javafx.animation.RotateTransition;
@@ -34,13 +35,12 @@ import java.util.ResourceBundle;
 @Component
 public class PurchaseMenuController implements Initializable {
     private static final Logger LOG = LoggerFactory.getLogger(PurchaseMenuController.class);
-
     @Autowired
     @Lazy
     private StageManager stageManager;
 
     @Autowired
-    private PurchaseInvoiceService_New purchaseInvoiceService;
+    private PurchaseInvoiceService purchaseInvoiceService;
 
     @Autowired
     private com.gurukrupa.config.SpringFXMLLoader springFXMLLoader;
@@ -164,8 +164,8 @@ public class PurchaseMenuController implements Initializable {
             dialog.initOwner(stageManager.getPrimaryStage());
 
             // Load the FXML and get both the root and controller
-            Map.Entry<Parent, PurchaseInvoiceController_New> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.PURCHASE_INVOICE.getFxmlFile(), PurchaseInvoiceController_New.class);
+            Map.Entry<Parent, PurchaseInvoiceController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.PURCHASE_INVOICE.getFxmlFile(), PurchaseInvoiceController.class);
 
             Parent root = entry.getKey();
 

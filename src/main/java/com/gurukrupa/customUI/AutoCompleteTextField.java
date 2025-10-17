@@ -32,42 +32,37 @@ import java.util.stream.Collectors;
  */
 public class AutoCompleteTextField<T> {
 
-    // ========== Material Design Professional Color Palette ==========
-    // Primary Colors
-    private static final String PRIMARY_COLOR = "#1976D2";        // Material Blue 700
-    private static final String PRIMARY_LIGHT = "#42A5F5";        // Material Blue 400
-    private static final String PRIMARY_DARK = "#0D47A1";         // Material Blue 900
-    private static final String ACCENT_COLOR = "#1E88E5";         // Material Blue 600
+    // ========== Professional Grayscale Color Palette ==========
+    // Clean, minimal design with only gray, white, and black
 
     // Background Colors
-    private static final String BACKGROUND_DEFAULT = "#FAFAFA";   // Material Grey 50
-    private static final String BACKGROUND_FOCUS = "#FFFFFF";     // White
-    private static final String BACKGROUND_HOVER = "#E3F2FD";     // Material Blue 50
-    private static final String BACKGROUND_HOVER_LIGHT = "#F5F5F5"; // Material Grey 100
-    private static final String BACKGROUND_SELECTED = "#1976D2";  // Material Blue 700
+    private static final String BACKGROUND_DEFAULT = "#FFFFFF";     // Pure White
+    private static final String BACKGROUND_FOCUS = "#FFFFFF";       // Pure White
+    private static final String BACKGROUND_HOVER = "#F5F5F5";       // Very Light Gray
+    private static final String BACKGROUND_SELECTED = "#E0E0E0";    // Light Gray - Selected Item
+    private static final String BACKGROUND_POPUP = "#FFFFFF";       // Pure White
 
     // Border Colors
-    private static final String BORDER_DEFAULT = "#BDBDBD";       // Material Grey 400
-    private static final String BORDER_FOCUS = "#1976D2";         // Material Blue 700
-    private static final String BORDER_HOVER = "#90CAF9";         // Material Blue 200
-    private static final String BORDER_ERROR = "#D32F2F";         // Material Red 700
+    private static final String BORDER_DEFAULT = "#CCCCCC";         // Medium Light Gray
+    private static final String BORDER_FOCUS = "#757575";           // Medium Gray - Focused
+    private static final String BORDER_HOVER = "#999999";           // Medium Dark Gray
 
     // Text Colors
-    private static final String TEXT_PRIMARY = "#212121";         // Material Grey 900
-    private static final String TEXT_SECONDARY = "#757575";       // Material Grey 600
-    private static final String TEXT_HINT = "#9E9E9E";            // Material Grey 500
-    private static final String TEXT_ON_PRIMARY = "#FFFFFF";      // White
-    private static final String TEXT_DISABLED = "#BDBDBD";        // Material Grey 400
+    private static final String TEXT_PRIMARY = "#212121";           // Almost Black - Primary Text
+    private static final String TEXT_SECONDARY = "#757575";         // Medium Gray - Secondary Text
+    private static final String TEXT_HINT = "#BDBDBD";              // Light Gray - Placeholder
+    private static final String TEXT_ON_SELECTED = "#000000";       // Pure Black - Selected Item Text
+    private static final String TEXT_DISABLED = "#CCCCCC";          // Light Gray - Disabled
 
     // Icon Colors
-    private static final String ICON_DEFAULT = "#757575";         // Material Grey 600
-    private static final String ICON_HOVER = "#424242";           // Material Grey 800
-    private static final String ICON_ACTIVE = "#1976D2";          // Material Blue 700
+    private static final String ICON_DEFAULT = "#999999";           // Medium Gray
+    private static final String ICON_HOVER = "#616161";             // Dark Gray
+    private static final String ICON_ACTIVE = "#424242";            // Very Dark Gray
 
-    // Shadow Effects
-    private static final String SHADOW_DEFAULT = "rgba(0, 0, 0, 0.12)";
-    private static final String SHADOW_FOCUS = "rgba(25, 118, 210, 0.2)";
-    private static final String SHADOW_POPUP = "rgba(0, 0, 0, 0.16)";
+    // Shadow Effects - Subtle and professional
+    private static final String SHADOW_DEFAULT = "rgba(0, 0, 0, 0.08)";
+    private static final String SHADOW_FOCUS = "rgba(0, 0, 0, 0.12)";
+    private static final String SHADOW_POPUP = "rgba(0, 0, 0, 0.15)";
 
     @Getter
     private final TextField textField;
@@ -221,12 +216,17 @@ public class AutoCompleteTextField<T> {
         HBox.setHgrow(textField, Priority.ALWAYS);
         textField.setMaxWidth(Double.MAX_VALUE);
 
-        // Add hover effect to clear button with smooth transition
+        // Add hover effect to clear button with smooth grayscale transition
         clearButton.setOnMouseEntered(e -> {
             clearIcon.setFill(Color.web(ICON_HOVER));
             clearButton.setStyle(
-                clearButton.getStyle() +
-                "-fx-background-color: " + BACKGROUND_HOVER_LIGHT + ";"
+                "-fx-background-color: " + BACKGROUND_HOVER + "; " +
+                "-fx-cursor: hand; " +
+                "-fx-padding: 0; " +
+                "-fx-min-width: 32; " +
+                "-fx-pref-width: 32; " +
+                "-fx-max-width: 32; " +
+                "-fx-background-radius: 16;"
             );
         });
         clearButton.setOnMouseExited(e -> {
@@ -284,17 +284,17 @@ public class AutoCompleteTextField<T> {
      */
     public HBox getNode() {
         if (container.getChildren().isEmpty()) {
-            // Create wrapper for visual consistency
+            // Create wrapper for visual consistency - clean grayscale design
             wrapper = new HBox();
             wrapper.setAlignment(Pos.CENTER_LEFT);
             wrapper.setStyle(
                 "-fx-background-color: " + BACKGROUND_DEFAULT + "; " +
-                "-fx-background-radius: 10px; " +
-                "-fx-border-radius: 10px; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-border-radius: 8px; " +
                 "-fx-border-color: " + BORDER_DEFAULT + "; " +
                 "-fx-border-width: 1px; " +
                 "-fx-padding: 2px 8px 2px 8px; " +
-                "-fx-effect: dropshadow(gaussian, " + SHADOW_DEFAULT + ", 2, 0.0, 0, 1);"
+                "-fx-effect: dropshadow(gaussian, " + SHADOW_DEFAULT + ", 3, 0.0, 0, 1);"
             );
 
             // Make wrapper expand to fill available space
@@ -319,27 +319,27 @@ public class AutoCompleteTextField<T> {
             container.getChildren().addAll(iconContainer, textField, clearButton);
             wrapper.getChildren().add(container);
 
-            // Add focus listener to wrapper for border color change with smooth transitions
+            // Add focus listener to wrapper for border color change - professional grayscale
             textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
                 if (isNowFocused) {
                     wrapper.setStyle(
                         "-fx-background-color: " + BACKGROUND_FOCUS + "; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 8px; " +
+                        "-fx-border-radius: 8px; " +
                         "-fx-border-color: " + BORDER_FOCUS + "; " +
                         "-fx-border-width: 2px; " +
                         "-fx-padding: 1px 7px 1px 7px; " +
-                        "-fx-effect: dropshadow(gaussian, " + SHADOW_FOCUS + ", 8, 0.0, 0, 2);"
+                        "-fx-effect: dropshadow(gaussian, " + SHADOW_FOCUS + ", 6, 0.0, 0, 1);"
                     );
                 } else {
                     wrapper.setStyle(
                         "-fx-background-color: " + BACKGROUND_DEFAULT + "; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 8px; " +
+                        "-fx-border-radius: 8px; " +
                         "-fx-border-color: " + BORDER_DEFAULT + "; " +
                         "-fx-border-width: 1px; " +
                         "-fx-padding: 2px 8px 2px 8px; " +
-                        "-fx-effect: dropshadow(gaussian, " + SHADOW_DEFAULT + ", 2, 0.0, 0, 1);"
+                        "-fx-effect: dropshadow(gaussian, " + SHADOW_DEFAULT + ", 3, 0.0, 0, 1);"
                     );
                 }
             });
@@ -478,10 +478,35 @@ public class AutoCompleteTextField<T> {
             }
 
             int index = i;
+
+            // Make label fill entire width
+            entryLabel.setMaxWidth(Double.MAX_VALUE);
+            entryLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
             CustomMenuItem item = new CustomMenuItem(entryLabel, true);
             item.setOnAction(evt -> selectSuggestion(index));
 
-            // Add hover effect
+            // CRITICAL: Completely remove default MenuItem styling - force transparent background
+            // This prevents ANY blue color from showing through
+            item.setStyle(
+                "-fx-background-color: transparent !important; " +
+                "-fx-background: transparent !important; " +
+                "-fx-padding: 0; " +
+                "-fx-background-radius: 0; " +
+                "-fx-border-color: transparent; " +
+                "-fx-background-insets: 0; " +
+                "-fx-focus-color: transparent; " +
+                "-fx-faint-focus-color: transparent; " +
+                "-fx-accent: transparent; " +
+                "-fx-selection-bar: transparent; " +
+                "-fx-selection-bar-non-focused: transparent;"
+            );
+
+            // Disable all mouse events on the MenuItem itself - only Label handles them
+          //  item.setMouseTransparent(false);
+            item.setHideOnClick(true);
+
+            // Add hover effect on label
             entryLabel.setOnMouseEntered(e -> {
                 selectedIndex = index;
                 updatePopupHighlight();
@@ -513,74 +538,83 @@ public class AutoCompleteTextField<T> {
     }
 
     private void applyHighlightStyle(Label label) {
-        // Professional solid color highlight with perfect readability
+        // Professional grayscale highlight with perfect readability
         label.setStyle(
             "-fx-background-color: " + BACKGROUND_SELECTED + "; " +
-            "-fx-background-radius: 8px; " +
-            "-fx-padding: 14px 18px 14px 18px; " +
-            "-fx-text-fill: " + TEXT_ON_PRIMARY + "; " +
+            "-fx-background-radius: 6px; " +
+            "-fx-padding: 12px 16px 12px 16px; " +
+            "-fx-text-fill: " + TEXT_ON_SELECTED + "; " +
             "-fx-font-weight: 600; " +
-            "-fx-effect: dropshadow(gaussian, " + SHADOW_FOCUS + ", 4, 0.0, 0, 2);"
+            "-fx-cursor: hand;"
         );
-        label.setTextFill(Color.web(TEXT_ON_PRIMARY));
+        label.setTextFill(Color.web(TEXT_ON_SELECTED));
         label.setTextAlignment(TextAlignment.LEFT);
         label.setMaxWidth(Double.MAX_VALUE);
-        label.setWrapText(true); // Enable text wrapping for long text
-        label.setEllipsisString("..."); // Add ellipsis for very long text
+        label.setWrapText(true);
+        label.setEllipsisString("...");
+
+        // Remove any mouse event handlers to prevent hover conflicts
+        label.setOnMouseEntered(null);
+        label.setOnMouseExited(null);
 
         // Also update nested labels (for custom cell factories with VBox/HBox)
         if (label.getGraphic() != null && label.getGraphic() instanceof javafx.scene.layout.Pane) {
-            updateNestedLabelsColor((javafx.scene.layout.Pane) label.getGraphic(), Color.web(TEXT_ON_PRIMARY));
+            updateNestedLabelsColor((javafx.scene.layout.Pane) label.getGraphic(), Color.web(TEXT_ON_SELECTED));
         }
     }
 
     private void applyNormalStyle(Label label) {
-        // Clean professional style with excellent readability
+        // Clean professional grayscale style with excellent readability
         label.setStyle(
             "-fx-background-color: transparent; " +
-            "-fx-background-radius: 8px; " +
-            "-fx-padding: 14px 18px 14px 18px; " +
+            "-fx-background-radius: 6px; " +
+            "-fx-padding: 12px 16px 12px 16px; " +
             "-fx-text-fill: " + TEXT_PRIMARY + "; " +
-            "-fx-font-weight: 500;"
+            "-fx-font-weight: 500; " +
+            "-fx-cursor: hand;"
         );
         label.setTextFill(Color.web(TEXT_PRIMARY));
         label.setTextAlignment(TextAlignment.LEFT);
         label.setMaxWidth(Double.MAX_VALUE);
-        label.setWrapText(true); // Enable text wrapping for long text
-        label.setEllipsisString("..."); // Add ellipsis for very long text
+        label.setWrapText(true);
+        label.setEllipsisString("...");
 
         // Update nested labels
         if (label.getGraphic() != null && label.getGraphic() instanceof javafx.scene.layout.Pane) {
             updateNestedLabelsColorWithSecondary((javafx.scene.layout.Pane) label.getGraphic());
         }
 
-        // Add smooth hover effect
+        // Add smooth hover effect with grayscale only
         label.setOnMouseEntered(e -> {
+            // Check if this item is currently selected to avoid conflicts
             if (!label.getStyle().contains(BACKGROUND_SELECTED)) {
                 label.setStyle(
                     "-fx-background-color: " + BACKGROUND_HOVER + "; " +
-                    "-fx-background-radius: 8px; " +
-                    "-fx-padding: 14px 18px 14px 18px; " +
-                    "-fx-text-fill: " + PRIMARY_DARK + "; " +
-                    "-fx-font-weight: 600;"
+                    "-fx-background-radius: 6px; " +
+                    "-fx-padding: 12px 16px 12px 16px; " +
+                    "-fx-text-fill: " + TEXT_PRIMARY + "; " +
+                    "-fx-font-weight: 600; " +
+                    "-fx-cursor: hand;"
                 );
-                label.setTextFill(Color.web(PRIMARY_DARK));
+                label.setTextFill(Color.web(TEXT_PRIMARY));
 
                 // Update nested labels on hover
                 if (label.getGraphic() != null && label.getGraphic() instanceof javafx.scene.layout.Pane) {
-                    updateNestedLabelsColor((javafx.scene.layout.Pane) label.getGraphic(), Color.web(PRIMARY_DARK));
+                    updateNestedLabelsColor((javafx.scene.layout.Pane) label.getGraphic(), Color.web(TEXT_PRIMARY));
                 }
             }
         });
 
         label.setOnMouseExited(e -> {
+            // Reset only if not selected
             if (!label.getStyle().contains(BACKGROUND_SELECTED)) {
                 label.setStyle(
                     "-fx-background-color: transparent; " +
-                    "-fx-background-radius: 8px; " +
-                    "-fx-padding: 14px 18px 14px 18px; " +
+                    "-fx-background-radius: 6px; " +
+                    "-fx-padding: 12px 16px 12px 16px; " +
                     "-fx-text-fill: " + TEXT_PRIMARY + "; " +
-                    "-fx-font-weight: 500;"
+                    "-fx-font-weight: 500; " +
+                    "-fx-cursor: hand;"
                 );
                 label.setTextFill(Color.web(TEXT_PRIMARY));
 
@@ -629,25 +663,103 @@ public class AutoCompleteTextField<T> {
         Label label = new Label(displayFunction.apply(item));
         label.setPrefWidth(Region.USE_COMPUTED_SIZE);
         label.setMaxWidth(Double.MAX_VALUE);
+        label.setMinHeight(40); // Ensure label has height
+        label.setPrefHeight(Region.USE_COMPUTED_SIZE);
         label.setFont(Font.font("Segoe UI", FontWeight.MEDIUM, 14));
-        label.setWrapText(true); // Enable text wrapping
-        label.setEllipsisString("..."); // Add ellipsis for truncated text
+        label.setWrapText(true);
+        label.setEllipsisString("...");
+        label.setAlignment(Pos.CENTER_LEFT);
         label.setTextAlignment(TextAlignment.LEFT);
-        label.setStyle("-fx-cursor: hand; -fx-text-fill: " + TEXT_PRIMARY + ";");
+        label.setStyle(
+            "-fx-cursor: hand; " +
+            "-fx-text-fill: " + TEXT_PRIMARY + "; " +
+            "-fx-background-color: transparent; " + // Ensure label starts transparent
+            "-fx-padding: 12px 16px 12px 16px;"
+        );
         return label;
     }
 
     private void styleComponents() {
-        // Professional popup styling with modern Material Design shadow
+        // Professional clean popup styling with grayscale design - override all default blue colors
         suggestionsPopup.setStyle(
-                "-fx-background-color: " + BACKGROUND_FOCUS + "; " +
-                "-fx-background-radius: 12px; " +
+                "-fx-background-color: " + BACKGROUND_POPUP + "; " +
+                "-fx-background-radius: 8px; " +
                 "-fx-border-color: " + BORDER_DEFAULT + "; " +
                 "-fx-border-width: 1px; " +
-                "-fx-border-radius: 12px; " +
-                "-fx-effect: dropshadow(gaussian, " + SHADOW_POPUP + ", 20, 0.0, 0, 6); " +
-                "-fx-padding: 8px;"
+                "-fx-border-radius: 8px; " +
+                "-fx-effect: dropshadow(gaussian, " + SHADOW_POPUP + ", 12, 0.0, 0, 4); " +
+                "-fx-padding: 6px;"
         );
+
+        // Comprehensive CSS override to completely remove all blue colors
+        String menuItemCSS =
+            ".context-menu { " +
+            "    -fx-background-color: " + BACKGROUND_POPUP + "; " +
+            "    -fx-background-radius: 8px; " +
+            "    -fx-border-color: " + BORDER_DEFAULT + "; " +
+            "} " +
+            ".context-menu .menu-item { " +
+            "    -fx-background-color: transparent; " +
+            "    -fx-text-fill: " + TEXT_PRIMARY + "; " +
+            "    -fx-padding: 0; " +
+            "    -fx-background-insets: 0; " +
+            "} " +
+            ".context-menu .menu-item:hover { " +
+            "    -fx-background-color: transparent !important; " +
+            "    -fx-text-fill: " + TEXT_PRIMARY + "; " +
+            "} " +
+            ".context-menu .menu-item:focused { " +
+            "    -fx-background-color: transparent !important; " +
+            "    -fx-text-fill: " + TEXT_PRIMARY + "; " +
+            "    -fx-border-color: transparent; " +
+            "    -fx-focus-color: transparent; " +
+            "    -fx-faint-focus-color: transparent; " +
+            "} " +
+            ".context-menu .menu-item:showing { " +
+            "    -fx-background-color: transparent !important; " +
+            "} " +
+            ".context-menu .menu-item .label { " +
+            "    -fx-text-fill: " + TEXT_PRIMARY + "; " +
+            "    -fx-background-color: transparent; " +
+            "} " +
+            // Override all focus colors
+            ".context-menu:focused { " +
+            "    -fx-focus-color: transparent; " +
+            "    -fx-faint-focus-color: transparent; " +
+            "} " +
+            // Ensure no selection color
+            ".context-menu .menu-item:selected { " +
+            "    -fx-background-color: transparent !important; " +
+            "}";
+
+        // Apply CSS to the popup's scene when it's shown
+        suggestionsPopup.setOnShowing(e -> {
+            // Use Platform.runLater to ensure the scene is fully initialized
+            javafx.application.Platform.runLater(() -> {
+                if (suggestionsPopup.getScene() != null) {
+                    javafx.scene.Scene scene = suggestionsPopup.getScene();
+
+                    // Create CSS as a data URI stylesheet
+                    String cssData = "data:text/css;base64," +
+                        java.util.Base64.getEncoder().encodeToString(menuItemCSS.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+                    // Remove any existing autocomplete stylesheets
+                    scene.getStylesheets().removeIf(s -> s.contains("data:text/css") || s.contains("autocomplete"));
+
+                    // Add our CSS stylesheet
+                    scene.getStylesheets().add(cssData);
+
+                    // Also apply directly to root for immediate effect
+                    javafx.scene.Parent root = scene.getRoot();
+                    if (root != null) {
+                        root.setStyle(
+                            "-fx-background-color: " + BACKGROUND_POPUP + "; " +
+                            "-fx-background-radius: 8px;"
+                        );
+                    }
+                }
+            });
+        });
     }
 
     public void setStyle(String style) {

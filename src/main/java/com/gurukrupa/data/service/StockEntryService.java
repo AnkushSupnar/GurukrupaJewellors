@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +21,9 @@ public class StockEntryService {
 
     private final StockEntryMasterRepository stockEntryMasterRepository;
     private final StockEntryItemRepository stockEntryItemRepository;
+
+    @Autowired
+    private MetalService metalService;
 
     /**
      * Generate next entry number
@@ -48,7 +52,8 @@ public class StockEntryService {
 
     /**
      * Calculate consumed metal from all stock entries for a given purchase invoice
-     * Returns map: "MetalType Purity" -> consumed weight
+     * Returns map: "MetalID" or "MetalType Purity" -> consumed weight
+     * Uses Metal entity reference if available, otherwise falls back to denormalized fields
      */
     public java.util.Map<String, java.math.BigDecimal> getConsumedMetalForInvoice(Long purchaseInvoiceId) {
         java.util.Map<String, java.math.BigDecimal> consumedMetal = new java.util.HashMap<>();
@@ -62,7 +67,8 @@ public class StockEntryService {
                 JewelryItem jewelry = item.getJewelryItem();
                 if (jewelry == null) continue;
 
-                String key = jewelry.getMetalType() + " " + jewelry.getPurity();
+                // Generate key using Metal entity if available, otherwise use denormalized fields
+                String key = getMetalKey(jewelry.getMetal(), jewelry.getMetalType(), jewelry.getPurity());
                 java.math.BigDecimal consumed = consumedMetal.getOrDefault(key, java.math.BigDecimal.ZERO);
 
                 // Calculate total consumed weight (net weight * quantity)
@@ -79,7 +85,8 @@ public class StockEntryService {
 
     /**
      * Calculate remaining metal available in a purchase invoice
-     * Returns map: "MetalType Purity" -> remaining weight
+     * Returns map: "MetalID" or "MetalType Purity" -> remaining weight
+     * Uses Metal entity reference if available, otherwise falls back to denormalized fields
      */
     public java.util.Map<String, java.math.BigDecimal> getRemainingMetalForInvoice(PurchaseInvoice invoice) {
         java.util.Map<String, java.math.BigDecimal> remainingMetal = new java.util.HashMap<>();
@@ -91,7 +98,8 @@ public class StockEntryService {
         // Calculate total available metal from invoice
         java.util.Map<String, java.math.BigDecimal> availableMetal = new java.util.HashMap<>();
         for (PurchaseMetalTransaction transaction : invoice.getPurchaseMetalTransactions()) {
-            String key = transaction.getMetalType() + " " + transaction.getPurity();
+            // Generate key using Metal entity if available, otherwise use denormalized fields
+            String key = getMetalKey(transaction.getMetal(), transaction.getMetalType(), transaction.getPurity());
             java.math.BigDecimal current = availableMetal.getOrDefault(key, java.math.BigDecimal.ZERO);
             availableMetal.put(key, current.add(transaction.getGrossWeight()));
         }
@@ -111,6 +119,24 @@ public class StockEntryService {
         }
 
         return remainingMetal;
+    }
+
+    /**
+     * Generate consistent metal key for matching
+     * Uses Metal entity ID if available, otherwise creates key from metalType and purity
+     * @param metal Metal entity (can be null)
+     * @param metalType Denormalized metal type (fallback)
+     * @param purity Denormalized purity (fallback)
+     * @return Consistent metal key for matching
+     */
+    private String getMetalKey(Metal metal, String metalType, java.math.BigDecimal purity) {
+        if (metal != null && metal.getId() != null) {
+            // Use Metal ID as key for exact matching
+            return "M-" + metal.getId();
+        } else {
+            // Fallback to denormalized fields with normalized purity
+            return metalType + " " + purity.stripTrailingZeros().toPlainString();
+        }
     }
 
     /**

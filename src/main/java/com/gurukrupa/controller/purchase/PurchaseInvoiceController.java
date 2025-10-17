@@ -37,9 +37,9 @@ import java.util.ResourceBundle;
  * Uses Material Design UI and modern Spring Boot practices
  */
 @Component
-public class PurchaseInvoiceController_New implements Initializable {
+public class PurchaseInvoiceController implements Initializable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PurchaseInvoiceController_New.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PurchaseInvoiceController.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a");
 
     // ==================== FXML Components ====================
@@ -153,7 +153,7 @@ public class PurchaseInvoiceController_New implements Initializable {
 
     // ==================== Spring Services ====================
 
-    @Autowired private PurchaseInvoiceService_New purchaseInvoiceService;
+    @Autowired private PurchaseInvoiceService purchaseInvoiceService;
     @Autowired private PurchaseMetalStockService purchaseMetalStockService;
     @Autowired private SupplierService supplierService;
     @Autowired private MetalService metalService;
@@ -284,14 +284,17 @@ public class PurchaseInvoiceController_New implements Initializable {
             }
         });
 
-        // Rate
-        colPurchaseRate.setCellValueFactory(cellData ->
-            new SimpleObjectProperty<>(cellData.getValue().getRatePerGram()));
+        // Rate (display per 10 grams)
+        colPurchaseRate.setCellValueFactory(cellData -> {
+            BigDecimal ratePerGram = cellData.getValue().getRatePerGram();
+            BigDecimal ratePer10g = ratePerGram != null ? ratePerGram.multiply(new BigDecimal("10")) : null;
+            return new SimpleObjectProperty<>(ratePer10g);
+        });
         colPurchaseRate.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(BigDecimal item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? "" : CurrencyFormatter.format(item));
+                setText(empty || item == null ? "" : CurrencyFormatter.format(item) + "/10g");
             }
         });
 
@@ -380,14 +383,17 @@ public class PurchaseInvoiceController_New implements Initializable {
             }
         });
 
-        // Rate
-        colExchangeRate.setCellValueFactory(cellData ->
-            new SimpleObjectProperty<>(cellData.getValue().getRatePerGram()));
+        // Rate (display per 10 grams)
+        colExchangeRate.setCellValueFactory(cellData -> {
+            BigDecimal ratePerGram = cellData.getValue().getRatePerGram();
+            BigDecimal ratePer10g = ratePerGram != null ? ratePerGram.multiply(new BigDecimal("10")) : null;
+            return new SimpleObjectProperty<>(ratePer10g);
+        });
         colExchangeRate.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(BigDecimal item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? "" : CurrencyFormatter.format(item));
+                setText(empty || item == null ? "" : CurrencyFormatter.format(item) + "/10g");
             }
         });
 
@@ -495,6 +501,22 @@ public class PurchaseInvoiceController_New implements Initializable {
             }
         });
 
+        // Add listener to auto-populate purity when metal type is selected
+        cmbPurchaseMetalType.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                try {
+                    BigDecimal purity = newVal.getPurityNumeric();
+                    if (purity != null) {
+                        txtPurchasePurity.setText(purity.stripTrailingZeros().toPlainString());
+                        LOG.debug("Auto-populated purchase purity: {} for metal: {}",
+                                purity, newVal.getMetalName());
+                    }
+                } catch (Exception e) {
+                    LOG.warn("Could not auto-populate purity for metal: {}", newVal.getMetalName(), e);
+                }
+            }
+        });
+
         // Exchange Metal Type ComboBox
         cmbExchangeMetalType.setItems(metals);
         cmbExchangeMetalType.setConverter(new StringConverter<>() {
@@ -506,6 +528,22 @@ public class PurchaseInvoiceController_New implements Initializable {
             @Override
             public Metal fromString(String string) {
                 return null;
+            }
+        });
+
+        // Add listener to auto-populate purity when metal type is selected
+        cmbExchangeMetalType.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                try {
+                    BigDecimal purity = newVal.getPurityNumeric();
+                    if (purity != null) {
+                        txtExchangePurity.setText(purity.stripTrailingZeros().toPlainString());
+                        LOG.debug("Auto-populated exchange purity: {} for metal: {}",
+                                purity, newVal.getMetalName());
+                    }
+                } catch (Exception e) {
+                    LOG.warn("Could not auto-populate purity for metal: {}", newVal.getMetalName(), e);
+                }
             }
         });
 
@@ -599,17 +637,23 @@ public class PurchaseInvoiceController_New implements Initializable {
                 return;
             }
 
-            BigDecimal purity = new BigDecimal(txtPurchasePurity.getText().trim());
+            // Get metal and its properties
+            Metal selectedMetal = cmbPurchaseMetalType.getValue();
+            BigDecimal purity = selectedMetal.getPurityNumeric(); // Get purity from Metal entity
+            String metalType = selectedMetal.getMetalName(); // Get metal name from Metal entity (e.g., "Gold 24K")
+
             BigDecimal grossWeight = new BigDecimal(txtPurchaseGrossWeight.getText().trim());
             BigDecimal sellerPercentage = new BigDecimal(txtSellerPercentage.getText().trim());
-            BigDecimal rate = new BigDecimal(txtPurchaseRate.getText().trim());
+            // User enters rate per 10 grams, convert to rate per gram
+            BigDecimal ratePer10g = new BigDecimal(txtPurchaseRate.getText().trim());
+            BigDecimal rate = ratePer10g.divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP);
 
             // Check if editing or adding new
             if (editingPurchaseTransaction != null) {
                 // Update existing transaction
-                editingPurchaseTransaction.setMetal(cmbPurchaseMetalType.getValue()); // Set Metal reference
-                editingPurchaseTransaction.setMetalType(cmbPurchaseMetalType.getValue().getMetalType());
-                editingPurchaseTransaction.setPurity(purity);
+                editingPurchaseTransaction.setMetal(selectedMetal); // Set Metal reference
+                editingPurchaseTransaction.setMetalType(metalType); // Use metalType from Metal entity
+                editingPurchaseTransaction.setPurity(purity); // Use purity from Metal entity
                 editingPurchaseTransaction.setGrossWeight(grossWeight);
                 editingPurchaseTransaction.setSellerPercentage(sellerPercentage);
                 editingPurchaseTransaction.setRatePerGram(rate);
@@ -626,9 +670,9 @@ public class PurchaseInvoiceController_New implements Initializable {
             } else {
                 // Create new transaction
                 PurchaseMetalTransaction transaction = PurchaseMetalTransaction.builder()
-                        .metal(cmbPurchaseMetalType.getValue()) // Set Metal reference
-                        .metalType(cmbPurchaseMetalType.getValue().getMetalType())
-                        .purity(purity)
+                        .metal(selectedMetal) // Set Metal reference
+                        .metalType(metalType) // Use metalType from Metal entity
+                        .purity(purity) // Use purity from Metal entity
                         .grossWeight(grossWeight)
                         .sellerPercentage(sellerPercentage)
                         .ratePerGram(rate)
@@ -683,7 +727,9 @@ public class PurchaseInvoiceController_New implements Initializable {
         txtPurchasePurity.setText(selected.getPurity().toString());
         txtPurchaseGrossWeight.setText(selected.getGrossWeight().toString());
         txtSellerPercentage.setText(selected.getSellerPercentage().toString());
-        txtPurchaseRate.setText(selected.getRatePerGram().toString());
+        // Convert rate per gram to rate per 10 grams for display
+        BigDecimal ratePer10g = selected.getRatePerGram().multiply(new BigDecimal("10"));
+        txtPurchaseRate.setText(ratePer10g.stripTrailingZeros().toPlainString());
 
         // Calculations will auto-update via listeners
         btnAddPurchase.setText("UPDATE");
@@ -742,17 +788,23 @@ public class PurchaseInvoiceController_New implements Initializable {
                 return;
             }
 
-            BigDecimal purity = new BigDecimal(txtExchangePurity.getText().trim());
+            // Get metal and its properties
+            Metal selectedMetal = cmbExchangeMetalType.getValue();
+            BigDecimal purity = selectedMetal.getPurityNumeric(); // Get purity from Metal entity
+            String metalType = selectedMetal.getMetalName(); // Get metal name from Metal entity (e.g., "Gold 24K")
+
             BigDecimal grossWeight = new BigDecimal(txtExchangeGrossWeight.getText().trim());
             BigDecimal finePercentage = new BigDecimal(txtFinePercentage.getText().trim());
-            BigDecimal rate = new BigDecimal(txtExchangeRate.getText().trim());
+            // User enters rate per 10 grams, convert to rate per gram
+            BigDecimal ratePer10g = new BigDecimal(txtExchangeRate.getText().trim());
+            BigDecimal rate = ratePer10g.divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP);
 
             // Check if editing or adding new
             if (editingExchangeTransaction != null) {
                 // Update existing transaction
                 editingExchangeTransaction.setItemName(txtExchangeItemName.getText().trim());
-                editingExchangeTransaction.setMetalType(cmbExchangeMetalType.getValue().getMetalType());
-                editingExchangeTransaction.setPurity(purity);
+                editingExchangeTransaction.setMetalType(metalType); // Use metalType from Metal entity
+                editingExchangeTransaction.setPurity(purity); // Use purity from Metal entity
                 editingExchangeTransaction.setGrossWeight(grossWeight);
                 editingExchangeTransaction.setFinePercentage(finePercentage);
                 editingExchangeTransaction.setRatePerGram(rate);
@@ -771,8 +823,8 @@ public class PurchaseInvoiceController_New implements Initializable {
                 // Create new transaction
                 PurchaseExchangeTransaction transaction = PurchaseExchangeTransaction.builder()
                         .itemName(txtExchangeItemName.getText().trim())
-                        .metalType(cmbExchangeMetalType.getValue().getMetalType())
-                        .purity(purity)
+                        .metalType(metalType) // Use metalType from Metal entity
+                        .purity(purity) // Use purity from Metal entity
                         .grossWeight(grossWeight)
                         .finePercentage(finePercentage)
                         .ratePerGram(rate)
@@ -830,7 +882,9 @@ public class PurchaseInvoiceController_New implements Initializable {
         txtExchangePurity.setText(selected.getPurity().toString());
         txtExchangeGrossWeight.setText(selected.getGrossWeight().toString());
         txtFinePercentage.setText(selected.getFinePercentage().toString());
-        txtExchangeRate.setText(selected.getRatePerGram().toString());
+        // Convert rate per gram to rate per 10 grams for display
+        BigDecimal ratePer10g = selected.getRatePerGram().multiply(new BigDecimal("10"));
+        txtExchangeRate.setText(ratePer10g.stripTrailingZeros().toPlainString());
 
         // Calculations will auto-update via listeners
         btnAddExchange.setText("UPDATE");
@@ -1495,7 +1549,7 @@ public class PurchaseInvoiceController_New implements Initializable {
     /**
      * Load invoice data into the form for editing
      */
-    private void loadInvoiceIntoForm(PurchaseInvoice invoice) {
+    public void loadInvoiceIntoForm(PurchaseInvoice invoice) {
         // Clear existing data
         handleClearAll();
 

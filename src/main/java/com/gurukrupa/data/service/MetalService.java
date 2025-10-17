@@ -111,6 +111,50 @@ public class MetalService {
         }
     }
     
+    /**
+     * Find Metal by metal type and numeric purity value
+     * Handles conversion from numeric purity (e.g., 22, 18) to string format (e.g., "22K", "18K")
+     * @param metalType The metal type (e.g., "Gold", "Silver")
+     * @param numericPurity The numeric purity value (e.g., 22.00, 18.00)
+     * @return Optional<Metal> matching metal or empty
+     */
+    public Optional<Metal> findByMetalTypeAndNumericPurity(String metalType, java.math.BigDecimal numericPurity) {
+        if (metalType == null || numericPurity == null) {
+            return Optional.empty();
+        }
+
+        // Get all metals of this type
+        List<Metal> metals = metalRepository.findByMetalType(metalType);
+
+        // Find matching metal by parsing purity
+        for (Metal metal : metals) {
+            try {
+                java.math.BigDecimal metalPurity = metal.getPurityNumeric();
+                // Compare with stripTrailingZeros for consistent comparison
+                if (metalPurity.stripTrailingZeros().compareTo(numericPurity.stripTrailingZeros()) == 0) {
+                    return Optional.of(metal);
+                }
+            } catch (Exception e) {
+                // Skip if purity cannot be parsed
+                continue;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Find Metal ID by metal type and numeric purity value
+     * @param metalType The metal type (e.g., "Gold", "Silver")
+     * @param numericPurity The numeric purity value (e.g., 22.00, 18.00)
+     * @return Metal ID or null if not found
+     */
+    public Long findMetalIdByTypeAndPurity(String metalType, java.math.BigDecimal numericPurity) {
+        return findByMetalTypeAndNumericPurity(metalType, numericPurity)
+                .map(Metal::getId)
+                .orElse(null);
+    }
+
     // Initialize default metals if none exist
     public void initializeDefaultMetals() {
         if (metalRepository.count() == 0) {

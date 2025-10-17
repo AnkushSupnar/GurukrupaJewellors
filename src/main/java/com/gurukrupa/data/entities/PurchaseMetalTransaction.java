@@ -44,7 +44,7 @@ public class PurchaseMetalTransaction {
     @Column(nullable = false, length = 50)
     private String metalType; // GOLD, SILVER, PLATINUM, etc. (denormalized from Metal)
 
-    @Column(nullable = false, precision = 5, scale = 2)
+    @Column(nullable = false, precision = 7, scale = 3)
     private BigDecimal purity; // 916, 750, 585 for gold (22k, 18k, 14k) or 999, 925 for silver (denormalized from Metal)
 
     // Weight Details

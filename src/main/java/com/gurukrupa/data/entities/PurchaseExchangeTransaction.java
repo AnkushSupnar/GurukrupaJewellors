@@ -35,9 +35,9 @@ public class PurchaseExchangeTransaction {
     @Column(nullable = false)
     private String metalType;
 
-    @Column(precision = 5, scale = 2)
+    @Column(precision = 7, scale = 3)
     @Builder.Default
-    private BigDecimal purity = new BigDecimal("916"); // Default to 91.6%
+    private BigDecimal purity = new BigDecimal("916"); // Default to 916 fineness
 
     // Weight
     @Column(nullable = false, precision = 10, scale = 3)

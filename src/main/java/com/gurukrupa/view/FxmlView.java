@@ -211,7 +211,7 @@ public enum FxmlView {
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/purchase/PurchaseInvoiceFrame_New.fxml";
+            return "/fxml/purchase/PurchaseInvoiceFrame.fxml";
         }
     },
     STOCK_ENTRY {
