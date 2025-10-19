@@ -45,6 +45,8 @@ public class CustomerController implements Initializable {
     private Stage dialogStage;
     @Getter
     private boolean saved = false;
+    @Getter
+    private Customer savedCustomer = null;
     @FXML
     private Button btnBack;
     @FXML
@@ -243,7 +245,7 @@ public class CustomerController implements Initializable {
             if(!validate()){
                 return;
             }
-            
+
             Customer customer = Customer.builder()
                     .city(txtCity.getText().trim())
                     .alternativeMobile(txtAlterMobile.getText().trim())
@@ -258,10 +260,21 @@ public class CustomerController implements Initializable {
 
             customer = customerService.saveCustomer(customer);
             customers.add(customer);
+
+            // Store the saved customer and set saved flag
+            this.savedCustomer = customer;
+            this.saved = true;
+
             alert.showSuccess("Customer saved successfully!");
-            clearForm();
             logger.info("Customer saved: {} {}", customer.getFirstName(), customer.getLastName());
-            
+
+            // Close the dialog if this was opened as a dialog
+            if (dialogStage != null) {
+                dialogStage.close();
+            } else {
+                clearForm();
+            }
+
         } catch (Exception e) {
             alert.showError("Error saving customer: " + e.getMessage());
             logger.error("Error saving customer: {}", e.getMessage());

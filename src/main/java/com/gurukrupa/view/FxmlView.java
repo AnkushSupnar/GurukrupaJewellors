@@ -131,7 +131,7 @@ public enum FxmlView {
         }
         @Override
         public String getFxmlFile() {
-            return "/fxml/transaction/ViewPurchases.fxml";
+            return "/fxml/purchase/ViewPurchases.fxml";
         }
     },
     BANK_ACCOUNT_LIST {

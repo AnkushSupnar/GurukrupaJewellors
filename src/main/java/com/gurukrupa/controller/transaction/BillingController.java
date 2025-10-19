@@ -369,6 +369,25 @@ public class BillingController implements Initializable {
             // Handle the result after dialog closes
             if (controller.isSaved()) {
                 System.out.println("Customer saved successfully!");
+
+                // Get the saved customer
+                Customer savedCustomer = controller.getSavedCustomer();
+                if (savedCustomer != null) {
+                    // Populate customer fields with the newly saved customer
+                    String fullName = savedCustomer.getFirstName() + " " +
+                                     savedCustomer.getMiddleName() + " " +
+                                     savedCustomer.getLastName();
+                    txtCustomerName.setText(fullName.trim());
+                    txtMobileNo.setText(savedCustomer.getMobile());
+
+                    // Build full address
+                    String fullAddress = "City: " + savedCustomer.getCity() +
+                                        ", Taluka: " + savedCustomer.getTaluka() +
+                                        ", District: " + savedCustomer.getDistrict() +
+                                        ", Pin: " + savedCustomer.getPinCode();
+                    txtCustomerAddress.setText(fullAddress);
+                }
+
                 // Refresh customer suggestions for auto-completion
                 refreshCustomerSuggestions();
             } else {

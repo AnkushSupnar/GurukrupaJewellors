@@ -53,18 +53,6 @@ public class PurchaseMenuController implements Initializable {
     private Button btnViewPurchases;
 
     @FXML
-    private Button btnAddSupplier;
-
-    @FXML
-    private Button btnViewSuppliers;
-
-    @FXML
-    private Button btnMetalStock;
-
-    @FXML
-    private Button btnStockReport;
-
-    @FXML
     private Button btnRefresh;
 
     // Statistics labels
@@ -90,10 +78,6 @@ public class PurchaseMenuController implements Initializable {
         // Set up button actions
         btnPurchaseInvoice.setOnAction(e -> openPurchaseInvoiceDialog());
         btnViewPurchases.setOnAction(e -> openViewPurchasesDialog());
-        btnAddSupplier.setOnAction(e -> openAddSupplierDialog());
-        btnViewSuppliers.setOnAction(e -> openViewSuppliersDialog());
-        btnMetalStock.setOnAction(e -> openMetalStockDialog());
-        btnStockReport.setOnAction(e -> openStockReportDialog());
         btnRefresh.setOnAction(e -> loadStatistics());
 
         // Load statistics on initialization
@@ -220,54 +204,4 @@ public class PurchaseMenuController implements Initializable {
         }
     }
 
-    /**
-     * Open Add Supplier form in the Home center
-     */
-    private void openAddSupplierDialog() {
-        LOG.info("Opening Add Supplier form");
-        try {
-            // Get the dashboard's center panel through the parent hierarchy
-            BorderPane dashboard = (BorderPane) btnAddSupplier.getScene().getRoot();
-
-            // Load the FXML
-            Parent supplierForm = springFXMLLoader.load(FxmlView.ADD_SUPPLIER.getFxmlFile());
-
-            // Set the supplier form in the center of the dashboard
-            dashboard.setCenter(supplierForm);
-
-            LOG.info("Supplier form loaded in dashboard successfully");
-
-        } catch (Exception e) {
-            LOG.error("Error opening supplier form: {}", e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Open View Suppliers dialog (currently uses Add Supplier form)
-     */
-    private void openViewSuppliersDialog() {
-        LOG.info("Opening View Suppliers dialog");
-        // For now, open the same Add Supplier dialog
-        // TODO: Create a dedicated View Suppliers screen
-        openAddSupplierDialog();
-    }
-
-    /**
-     * Open Metal Stock dialog
-     */
-    private void openMetalStockDialog() {
-        LOG.info("Opening Metal Stock dialog");
-        // TODO: Create Metal Stock view screen
-        LOG.warn("Metal Stock view not yet implemented");
-    }
-
-    /**
-     * Open Stock Report dialog
-     */
-    private void openStockReportDialog() {
-        LOG.info("Opening Stock Report dialog");
-        // TODO: Create Stock Report screen
-        LOG.warn("Stock Report not yet implemented");
-    }
 }

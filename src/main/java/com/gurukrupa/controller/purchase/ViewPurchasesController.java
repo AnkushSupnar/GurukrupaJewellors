@@ -1,6 +1,6 @@
-package com.gurukrupa.controller.transaction;
+package com.gurukrupa.controller.purchase;
 
-import com.gurukrupa.controller.purchase.PurchaseInvoiceController;
+import com.gurukrupa.data.service.SupplierService;
 import com.gurukrupa.data.entities.PurchaseInvoice;
 import com.gurukrupa.data.entities.Supplier;
 import com.gurukrupa.data.service.PurchaseInvoiceService;
@@ -8,6 +8,8 @@ import com.gurukrupa.view.AlertNotification;
 import com.gurukrupa.view.FxmlView;
 import com.gurukrupa.view.StageManager;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import impl.org.controlsfx.autocompletion.AutoCompletionTextFieldBinding;
+import impl.org.controlsfx.autocompletion.SuggestionProvider;
 import javafx.animation.RotateTransition;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -53,10 +55,13 @@ public class ViewPurchasesController implements Initializable {
     
     @Autowired
     private PurchaseInvoiceService purchaseInvoiceService;
-    
+
+    @Autowired
+    private SupplierService supplierService;
+
     @Autowired
     private AlertNotification alertNotification;
-    
+
     @Autowired
     @Lazy
     private StageManager stageManager;
@@ -111,7 +116,25 @@ public class ViewPurchasesController implements Initializable {
         setupEventHandlers();
         setupTable();
         setupDateFilter();
+        setupSupplierAutoCompletion();
         loadAllPurchases();
+    }
+
+    private void setupSupplierAutoCompletion() {
+        try {
+            // Get all supplier names from database
+            List<String> supplierNames = supplierService.getAllSupplierNames();
+
+            // Create suggestion provider with supplier names
+            SuggestionProvider<String> supplierSuggestionProvider = SuggestionProvider.create(supplierNames);
+
+            // Bind auto-completion to the text field
+            new AutoCompletionTextFieldBinding<>(txtSupplierName, supplierSuggestionProvider);
+
+            LOG.info("Supplier auto-completion setup completed with {} suppliers", supplierNames.size());
+        } catch (Exception e) {
+            LOG.error("Error setting up supplier auto-completion: {}", e.getMessage());
+        }
     }
     
     private void setupEventHandlers() {

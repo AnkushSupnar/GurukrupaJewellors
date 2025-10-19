@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 
@@ -182,7 +183,10 @@ public class JewelryItemFormController implements Initializable {
         
         // Auto-generate item code when category and metal type change
         cmbCategory.valueProperty().addListener((obs, oldValue, newValue) -> generateItemCode());
-        cmbMetalType.valueProperty().addListener((obs, oldValue, newValue) -> generateItemCode());
+        cmbMetalType.valueProperty().addListener((obs, oldValue, newValue) -> {
+            generateItemCode();
+            loadPurityForSelectedMetal();
+        });
     }
     
     private void setupAutoCalculations() {
@@ -199,18 +203,9 @@ public class JewelryItemFormController implements Initializable {
     }
     
     private void loadInitialData() {
-        // Load existing categories and metal types from database
-        try {
-            List<String> existingCategories = jewelryItemService.getDistinctCategories();
-            if (!existingCategories.isEmpty()) {
-                cmbCategory.getItems().clear();
-                cmbCategory.getItems().addAll(existingCategories);
-                cmbFilterCategory.getItems().clear();
-                cmbFilterCategory.getItems().addAll(existingCategories);
-            }
-        } catch (Exception e) {
-            logger.warn("Could not load existing categories: {}", e.getMessage());
-        }
+        // This method is kept for future use if needed
+        // Categories are loaded via loadCategories() in setupFormFields()
+        // Metal types are loaded via loadMetalTypes() in setupFormFields()
     }
     
     private void loadCategories() {
@@ -260,6 +255,34 @@ public class JewelryItemFormController implements Initializable {
         } catch (Exception e) {
             logger.error("Error loading metal types: {}", e.getMessage());
             alert.showError("Failed to load metal types: " + e.getMessage());
+        }
+    }
+
+    private void loadPurityForSelectedMetal() {
+        // Only auto-populate purity when adding new item, not when editing
+        if (isEditMode) {
+            return;
+        }
+
+        String selectedMetalName = cmbMetalType.getValue();
+        if (selectedMetalName == null || selectedMetalName.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            Optional<Metal> metalOpt = metalService.getMetalByName(selectedMetalName);
+            if (metalOpt.isPresent()) {
+                Metal metal = metalOpt.get();
+                String purity = metal.getPurity();
+
+                // Extract numeric value from purity (e.g., "24K" -> "24", "92.5" -> "92.5")
+                String purityValue = purity.replaceAll("[^0-9.]", "");
+                txtPurity.setText(purityValue);
+
+                logger.debug("Auto-populated purity: {} for metal: {}", purityValue, selectedMetalName);
+            }
+        } catch (Exception e) {
+            logger.error("Error loading purity for metal {}: {}", selectedMetalName, e.getMessage());
         }
     }
     
