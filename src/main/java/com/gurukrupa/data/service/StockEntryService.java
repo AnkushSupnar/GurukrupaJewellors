@@ -25,6 +25,12 @@ public class StockEntryService {
     @Autowired
     private MetalService metalService;
 
+    @Autowired
+    private StockTransactionService stockTransactionService;
+
+    @Autowired
+    private PurchaseMetalStockService purchaseMetalStockService;
+
     /**
      * Generate next entry number
      * Format: SE-YYYYMMDD-XXXX
@@ -198,8 +204,11 @@ public class StockEntryService {
         // Calculate totals before saving
         stockEntry.calculateTotals();
 
+        // Determine if this is a new entry
+        boolean isNewEntry = (stockEntry.getId() == null);
+
         // If new entry, validate invoice not already used
-        if (stockEntry.getId() == null) {
+        if (isNewEntry) {
             String validationError = validatePurchaseInvoice(stockEntry.getPurchaseInvoice());
             if (validationError != null) {
                 throw new IllegalArgumentException(validationError);
@@ -207,7 +216,119 @@ public class StockEntryService {
         }
 
         log.info("Saving stock entry: {}", stockEntry.getEntryNumber());
-        return stockEntryMasterRepository.save(stockEntry);
+        StockEntryMaster savedEntry = stockEntryMasterRepository.save(stockEntry);
+
+        // Record stock transactions for new entries only
+        if (isNewEntry) {
+            recordStockTransactions(savedEntry);
+        }
+
+        return savedEntry;
+    }
+
+    /**
+     * Record stock transactions for all items in the stock entry
+     * This creates a STOCK IN transaction for each jewelry item
+     * Also updates purchase metal stock to track metal consumption
+     */
+    private void recordStockTransactions(StockEntryMaster stockEntry) {
+        if (stockEntry.getStockEntryItems() == null || stockEntry.getStockEntryItems().isEmpty()) {
+            log.warn("No items to record transactions for stock entry: {}", stockEntry.getEntryNumber());
+            return;
+        }
+
+        String purchaseInvoiceNumber = stockEntry.getPurchaseInvoice() != null ?
+                stockEntry.getPurchaseInvoice().getInvoiceNumber() : "Unknown";
+
+        log.info("Recording stock transactions for {} items in stock entry: {}",
+                stockEntry.getStockEntryItems().size(), stockEntry.getEntryNumber());
+
+        for (StockEntryItem item : stockEntry.getStockEntryItems()) {
+            try {
+                JewelryItem jewelryItem = item.getJewelryItem();
+                if (jewelryItem == null) {
+                    log.warn("Skipping item with null jewelryItem in stock entry: {}", stockEntry.getEntryNumber());
+                    continue;
+                }
+
+                int quantity = item.getQuantity();
+                if (quantity <= 0) {
+                    log.warn("Skipping item {} with zero or negative quantity", jewelryItem.getItemCode());
+                    continue;
+                }
+
+                String description = String.format("Stock Entry from Purchase Invoice %s - %s",
+                        purchaseInvoiceNumber,
+                        item.getRemarks() != null ? item.getRemarks() : "");
+
+                // Record stock IN transaction
+                stockTransactionService.recordStockIn(
+                        jewelryItem,
+                        quantity,
+                        StockTransaction.TransactionSource.PRODUCTION, // Using PRODUCTION as it's manufactured items
+                        "STOCK_ENTRY",
+                        stockEntry.getId(),
+                        stockEntry.getEntryNumber(),
+                        description.trim(),
+                        "System"
+                );
+
+                log.info("Recorded stock IN transaction: Item={}, Quantity={}, Entry={}",
+                        jewelryItem.getItemCode(), quantity, stockEntry.getEntryNumber());
+
+                // Update purchase metal stock - consume metal used for this jewelry item
+                updatePurchaseMetalStock(stockEntry, jewelryItem, quantity);
+
+            } catch (Exception e) {
+                log.error("Error recording stock transaction for item in entry {}: {}",
+                        stockEntry.getEntryNumber(), e.getMessage(), e);
+                // Continue with next item rather than failing entire entry
+            }
+        }
+
+        log.info("Completed recording stock transactions for stock entry: {}", stockEntry.getEntryNumber());
+    }
+
+    /**
+     * Update purchase metal stock to track metal consumption for a jewelry item
+     * This updates the used_weight and available_weight in purchase_metal_stock table
+     */
+    private void updatePurchaseMetalStock(StockEntryMaster stockEntry, JewelryItem jewelryItem, int quantity) {
+        try {
+            if (jewelryItem.getMetal() == null) {
+                log.warn("Cannot update metal stock - jewelry item {} has no metal reference",
+                        jewelryItem.getItemCode());
+                return;
+            }
+
+            // Calculate total metal weight consumed (net weight × quantity)
+            java.math.BigDecimal metalWeightConsumed = jewelryItem.getNetWeight()
+                    .multiply(java.math.BigDecimal.valueOf(quantity));
+
+            String reference = "STOCK_ENTRY: " + stockEntry.getEntryNumber();
+            String description = String.format("Metal consumed for %s (Qty: %d) - %s",
+                    jewelryItem.getItemCode(),
+                    quantity,
+                    jewelryItem.getItemName());
+
+            // Use Metal entity reference for accurate tracking
+            purchaseMetalStockService.useMetal(
+                    jewelryItem.getMetal(),
+                    metalWeightConsumed,
+                    reference,
+                    description
+            );
+
+            log.info("Updated metal stock: {} (ID: {}) - consumed {} for item {}",
+                    jewelryItem.getMetal().getMetalName(),
+                    jewelryItem.getMetal().getId(),
+                    metalWeightConsumed,
+                    jewelryItem.getItemCode());
+
+        } catch (Exception e) {
+            log.error("Error updating purchase metal stock for item {} in entry {}: {}",
+                    jewelryItem.getItemCode(), stockEntry.getEntryNumber(), e.getMessage(), e);
+        }
     }
 
     /**
@@ -250,21 +371,136 @@ public class StockEntryService {
 
     /**
      * Delete stock entry
+     * Also reverses all stock transactions associated with this entry
      */
     @Transactional
     public void delete(StockEntryMaster stockEntry) {
         log.info("Deleting stock entry: {}", stockEntry.getEntryNumber());
+
+        // Reverse stock transactions before deleting
+        reverseStockTransactions(stockEntry);
+
         stockEntryMasterRepository.delete(stockEntry);
     }
 
     /**
      * Cancel stock entry (soft delete)
+     * Also reverses all stock transactions associated with this entry
      */
     @Transactional
     public void cancel(StockEntryMaster stockEntry) {
+        log.info("Cancelling stock entry: {}", stockEntry.getEntryNumber());
+
+        // Reverse stock transactions for cancelled entry
+        reverseStockTransactions(stockEntry);
+
         stockEntry.setStatus(StockEntryMaster.EntryStatus.CANCELLED);
-        save(stockEntry);
+        // Note: We don't call save() here as it would trigger recordStockTransactions again
+        stockEntryMasterRepository.save(stockEntry);
+
         log.info("Cancelled stock entry: {}", stockEntry.getEntryNumber());
+    }
+
+    /**
+     * Reverse stock transactions for a stock entry
+     * Creates STOCK OUT transactions to reverse the original STOCK IN transactions
+     * Also returns metal back to purchase metal stock
+     */
+    private void reverseStockTransactions(StockEntryMaster stockEntry) {
+        if (stockEntry.getStockEntryItems() == null || stockEntry.getStockEntryItems().isEmpty()) {
+            log.warn("No items to reverse transactions for stock entry: {}", stockEntry.getEntryNumber());
+            return;
+        }
+
+        log.info("Reversing stock transactions for {} items in stock entry: {}",
+                stockEntry.getStockEntryItems().size(), stockEntry.getEntryNumber());
+
+        for (StockEntryItem item : stockEntry.getStockEntryItems()) {
+            try {
+                JewelryItem jewelryItem = item.getJewelryItem();
+                if (jewelryItem == null) {
+                    log.warn("Skipping item with null jewelryItem in stock entry: {}", stockEntry.getEntryNumber());
+                    continue;
+                }
+
+                int quantity = item.getQuantity();
+                if (quantity <= 0) {
+                    log.warn("Skipping item {} with zero or negative quantity", jewelryItem.getItemCode());
+                    continue;
+                }
+
+                String description = String.format("Reversal of Stock Entry %s - %s",
+                        stockEntry.getEntryNumber(),
+                        stockEntry.getStatus() == StockEntryMaster.EntryStatus.CANCELLED ? "Entry Cancelled" : "Entry Deleted");
+
+                // Record stock OUT transaction to reverse the original stock IN
+                stockTransactionService.recordStockOut(
+                        jewelryItem,
+                        quantity,
+                        StockTransaction.TransactionSource.ADJUSTMENT,
+                        "STOCK_ENTRY_REVERSAL",
+                        stockEntry.getId(),
+                        "REV-" + stockEntry.getEntryNumber(),
+                        description,
+                        "System"
+                );
+
+                log.info("Reversed stock transaction: Item={}, Quantity={}, Entry={}",
+                        jewelryItem.getItemCode(), quantity, stockEntry.getEntryNumber());
+
+                // Return metal back to purchase metal stock
+                returnPurchaseMetalStock(stockEntry, jewelryItem, quantity);
+
+            } catch (Exception e) {
+                log.error("Error reversing stock transaction for item in entry {}: {}",
+                        stockEntry.getEntryNumber(), e.getMessage(), e);
+                // Continue with next item rather than failing entire reversal
+            }
+        }
+
+        log.info("Completed reversing stock transactions for stock entry: {}", stockEntry.getEntryNumber());
+    }
+
+    /**
+     * Return metal back to purchase metal stock when stock entry is cancelled/deleted
+     * This updates the used_weight and available_weight in purchase_metal_stock table
+     */
+    private void returnPurchaseMetalStock(StockEntryMaster stockEntry, JewelryItem jewelryItem, int quantity) {
+        try {
+            if (jewelryItem.getMetal() == null) {
+                log.warn("Cannot return metal stock - jewelry item {} has no metal reference",
+                        jewelryItem.getItemCode());
+                return;
+            }
+
+            // Calculate total metal weight to return (net weight × quantity)
+            java.math.BigDecimal metalWeightToReturn = jewelryItem.getNetWeight()
+                    .multiply(java.math.BigDecimal.valueOf(quantity));
+
+            String reference = "STOCK_ENTRY_REVERSAL: " + stockEntry.getEntryNumber();
+            String description = String.format("Metal returned from %s (Qty: %d) - Entry %s",
+                    jewelryItem.getItemCode(),
+                    quantity,
+                    stockEntry.getStatus() == StockEntryMaster.EntryStatus.CANCELLED ? "Cancelled" : "Deleted");
+
+            // Use Metal entity reference for accurate tracking
+            purchaseMetalStockService.returnMetal(
+                    jewelryItem.getMetal(),
+                    metalWeightToReturn,
+                    reference,
+                    description
+            );
+
+            log.info("Returned metal stock: {} (ID: {}) - returned {} for item {}",
+                    jewelryItem.getMetal().getMetalName(),
+                    jewelryItem.getMetal().getId(),
+                    metalWeightToReturn,
+                    jewelryItem.getItemCode());
+
+        } catch (Exception e) {
+            log.error("Error returning purchase metal stock for item {} in entry {}: {}",
+                    jewelryItem.getItemCode(), stockEntry.getEntryNumber(), e.getMessage(), e);
+        }
     }
 
     /**

@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.report.MetalStockReportController">
+
+   <top>
+      <!-- Header Section -->
+      <HBox alignment="CENTER_LEFT" minHeight="45.0" prefHeight="50.0" style="-fx-background-color: #FFFFFF; -fx-padding: 12 20; -fx-border-color: #E0E0E0; -fx-border-width: 0 0 1 0;">
+         <children>
+            <Button fx:id="btnBack" onAction="#handleBack" style="-fx-background-color: #F5F5F5; -fx-text-fill: #424242; -fx-background-radius: 6; -fx-padding: 6 10; -fx-cursor: hand;">
+               <graphic>
+                  <FontAwesomeIcon fill="#424242" glyphName="ARROW_LEFT" size="1.0em" />
+               </graphic>
+            </Button>
+            <Region minWidth="15.0" />
+            <FontAwesomeIcon fill="#009688" glyphName="BRIEFCASE" size="1.3em">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+            </FontAwesomeIcon>
+            <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Metal Stock Report" textFill="#212121" />
+            <Region HBox.hgrow="ALWAYS" />
+         </children>
+      </HBox>
+   </top>
+
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent;">
+         <content>
+            <VBox spacing="20.0" style="-fx-padding: 20;">
+               <children>
+
+                  <!-- Filters Section -->
+                  <VBox spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#009688" glyphName="FILTER" size="1.3em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Filters" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
+                           <children>
+                              <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Metal Type" textFill="#424242" />
+                                    <ComboBox fx:id="cmbMetalType" prefWidth="250.0" promptText="Select Metal Type" style="-fx-font-family: 'Segoe UI';" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Stock Status" textFill="#424242" />
+                                    <ComboBox fx:id="cmbStockStatus" prefWidth="250.0" promptText="All Stock" style="-fx-font-family: 'Segoe UI';" />
+                                 </children>
+                              </VBox>
+
+                              <VBox alignment="BOTTOM_LEFT" spacing="6.0">
+                                 <children>
+                                    <Label text=" " />
+                                    <Button fx:id="btnShow" onAction="#handleShow" style="-fx-background-color: #009688; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 14px; -fx-padding: 10 30; -fx-background-radius: 8; -fx-cursor: hand;" text="SHOW">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="EYE" size="1.0em" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+
+                  <!-- Statistics Cards -->
+                  <GridPane hgap="15.0" vgap="15.0">
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="25.0" />
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="25.0" />
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="25.0" />
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="25.0" />
+                     </columnConstraints>
+                     <children>
+
+                        <!-- Total Metal Types Card -->
+                        <VBox spacing="12.0" style="-fx-background-color: linear-gradient(to bottom right, #009688, #00796B); -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 8, 0, 0, 3); -fx-padding: 20;" GridPane.columnIndex="0">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <VBox alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 10; -fx-padding: 10;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="CUBES" size="1.8em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Metal Types" textFill="rgba(255,255,255,0.9)" />
+                                          <Label fx:id="lblMetalTypes" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 24px;" text="0" textFill="#FFFFFF" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+
+                        <!-- Total Gross Weight Card -->
+                        <VBox spacing="12.0" style="-fx-background-color: linear-gradient(to bottom right, #FF9800, #F57C00); -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 8, 0, 0, 3); -fx-padding: 20;" GridPane.columnIndex="1">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <VBox alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 10; -fx-padding: 10;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="BRIEFCASE" size="1.8em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Total Gross" textFill="rgba(255,255,255,0.9)" />
+                                          <Label fx:id="lblTotalGross" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 24px;" text="0.000g" textFill="#FFFFFF" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+
+                        <!-- Total Net Weight Card -->
+                        <VBox spacing="12.0" style="-fx-background-color: linear-gradient(to bottom right, #4CAF50, #45a049); -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 8, 0, 0, 3); -fx-padding: 20;" GridPane.columnIndex="2">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <VBox alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 10; -fx-padding: 10;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="BALANCE_SCALE" size="1.8em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Available Wt" textFill="rgba(255,255,255,0.9)" />
+                                          <Label fx:id="lblAvailableWeight" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 24px;" text="0.000g" textFill="#FFFFFF" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+
+                        <!-- Used Weight Card -->
+                        <VBox spacing="12.0" style="-fx-background-color: linear-gradient(to bottom right, #2196F3, #1976D2); -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 8, 0, 0, 3); -fx-padding: 20;" GridPane.columnIndex="3">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <VBox alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 10; -fx-padding: 10;">
+                                       <children>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="SHOPPING_CART" size="1.8em" />
+                                       </children>
+                                    </VBox>
+                                    <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Used Weight" textFill="rgba(255,255,255,0.9)" />
+                                          <Label fx:id="lblUsedWeight" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 700; -fx-font-size: 24px;" text="0.000g" textFill="#FFFFFF" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+
+                     </children>
+                  </GridPane>
+
+                  <!-- Stock Table -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#009688" glyphName="LIST" size="1.3em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Metal Stock Details" textFill="#212121" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnExport" onAction="#handleExport" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 8 16; -fx-background-radius: 6; -fx-cursor: hand;" text="EXPORT">
+                                 <graphic>
+                                    <FontAwesomeIcon fill="#FFFFFF" glyphName="DOWNLOAD" size="1.0em" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <Separator prefWidth="200.0" />
+                        <TableView fx:id="tableStock" prefHeight="400.0">
+                           <columns>
+                              <TableColumn fx:id="colSno" prefWidth="50.0" text="#" />
+                              <TableColumn fx:id="colMetalName" prefWidth="200.0" text="Metal Name" />
+                              <TableColumn fx:id="colMetalType" prefWidth="120.0" text="Metal Type" />
+                              <TableColumn fx:id="colPurity" prefWidth="100.0" text="Purity" />
+                              <TableColumn fx:id="colTotalGross" prefWidth="130.0" text="Total Gross (g)" />
+                              <TableColumn fx:id="colTotalNet" prefWidth="130.0" text="Total Net (g)" />
+                              <TableColumn fx:id="colAvailable" prefWidth="130.0" text="Available (g)" />
+                              <TableColumn fx:id="colUsed" prefWidth="130.0" text="Used (g)" />
+                              <TableColumn fx:id="colUtilization" prefWidth="110.0" text="Utilization %" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </VBox>
+
+                  <!-- Add spacing at bottom -->
+                  <Region prefHeight="15.0" minHeight="10.0" />
+
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>

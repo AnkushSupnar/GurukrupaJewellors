@@ -61,7 +61,11 @@ public interface JewelryItemRepository extends JpaRepository<JewelryItem, Long> 
     // Get all distinct purities
     @Query("SELECT DISTINCT j.purity FROM JewelryItem j WHERE j.isActive = true ORDER BY j.purity DESC")
     List<BigDecimal> findDistinctPurities();
-    
+
+    // Get all distinct metal types
+    @Query("SELECT DISTINCT j.metalType FROM JewelryItem j WHERE j.isActive = true ORDER BY j.metalType")
+    List<String> findDistinctMetalTypes();
+
     // Get items with low stock (quantity <= threshold)
     @Query("SELECT j FROM JewelryItem j WHERE j.quantity <= :threshold AND j.isActive = true")
     List<JewelryItem> findLowStockItems(@Param("threshold") Integer threshold);

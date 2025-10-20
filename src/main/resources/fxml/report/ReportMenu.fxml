@@ -102,7 +102,11 @@
                               <!-- Action Buttons -->
                               <HBox spacing="12.0">
                                  <children>
-                                    <Button fx:id="btnSalesReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                    <Button fx:id="btnSalesReport" onAction="#handleSalesReport" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;" text="VIEW REPORT">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="EXTERNAL_LINK" size="1.0em" />
+                                       </graphic>
+                                    </Button>
                                  </children>
                               </HBox>
                            </children>
@@ -133,7 +137,16 @@
                               <!-- Action Buttons -->
                               <HBox spacing="12.0">
                                  <children>
-                                    <Button fx:id="btnInventoryReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                    <Button fx:id="btnItemStockReport" onAction="#handleItemStockReport" style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;" text="ITEM STOCK">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="DIAMOND" size="1.0em" />
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="btnMetalStockReport" onAction="#handleMetalStockReport" style="-fx-background-color: #009688; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;" text="METAL STOCK">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="BRIEFCASE" size="1.0em" />
+                                       </graphic>
+                                    </Button>
                                  </children>
                               </HBox>
                            </children>

@@ -134,6 +134,26 @@ public class PurchaseMetalStockService {
     }
 
     /**
+     * Use metal from purchase stock using Metal entity reference (preferred method)
+     */
+    public PurchaseMetalStock useMetal(Metal metal, BigDecimal weight, String reference, String description) {
+        LOG.info("Using metal from purchase stock: {} (ID: {}) - Weight: {}g - Ref: {}",
+                metal.getMetalName(), metal.getId(), weight, reference);
+
+        Optional<PurchaseMetalStock> stockOpt = purchaseMetalStockRepository.findByMetal(metal);
+
+        if (stockOpt.isEmpty()) {
+            throw new IllegalStateException("No purchase stock found for " + metal.getMetalName() + " (ID: " + metal.getId() + ")");
+        }
+
+        PurchaseMetalStock stock = stockOpt.get();
+        stock.useMetal(weight);
+
+        LOG.info("Metal used successfully - Remaining available: {}g", stock.getAvailableWeight());
+        return purchaseMetalStockRepository.save(stock);
+    }
+
+    /**
      * Use metal from purchase stock (for manufacturing/sales)
      */
     public PurchaseMetalStock useMetal(String metalType, BigDecimal purity,
@@ -152,6 +172,26 @@ public class PurchaseMetalStockService {
         stock.useMetal(weight);
 
         LOG.info("Metal used successfully - Remaining available: {}g", stock.getAvailableWeight());
+        return purchaseMetalStockRepository.save(stock);
+    }
+
+    /**
+     * Return metal to purchase stock using Metal entity reference (preferred method)
+     */
+    public PurchaseMetalStock returnMetal(Metal metal, BigDecimal weight, String reference, String description) {
+        LOG.info("Returning metal to purchase stock: {} (ID: {}) - Weight: {}g - Ref: {}",
+                metal.getMetalName(), metal.getId(), weight, reference);
+
+        Optional<PurchaseMetalStock> stockOpt = purchaseMetalStockRepository.findByMetal(metal);
+
+        if (stockOpt.isEmpty()) {
+            throw new IllegalStateException("No purchase stock found for " + metal.getMetalName() + " (ID: " + metal.getId() + ")");
+        }
+
+        PurchaseMetalStock stock = stockOpt.get();
+        stock.returnMetal(weight);
+
+        LOG.info("Metal returned successfully - New available: {}g", stock.getAvailableWeight());
         return purchaseMetalStockRepository.save(stock);
     }
 
@@ -248,5 +288,12 @@ public class PurchaseMetalStockService {
      */
     public void delete(Long id) {
         purchaseMetalStockRepository.deleteById(id);
+    }
+
+    /**
+     * Get distinct metal types from purchase metal stock
+     */
+    public List<String> getDistinctMetalTypes() {
+        return purchaseMetalStockRepository.findDistinctMetalTypes();
     }
 }

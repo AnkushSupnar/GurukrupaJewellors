@@ -1062,11 +1062,11 @@ public class PurchaseInvoiceController implements Initializable {
                 invoice.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
             }
 
-            // Save invoice
+            // Save invoice (stock is automatically added by the service)
             PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoice(invoice);
 
-            // Add purchased metal to stock
-            addPurchasedMetalToStock(savedInvoice);
+            // NOTE: Stock addition is handled automatically by PurchaseInvoiceService.processNewPurchaseInvoice()
+            // No need to call addPurchasedMetalToStock() here to avoid duplicate stock addition
 
             return savedInvoice;
 
@@ -1112,6 +1112,8 @@ public class PurchaseInvoiceController implements Initializable {
             // Save updated invoice
             PurchaseInvoice savedInvoice = purchaseInvoiceService.savePurchaseInvoice(currentEditingInvoice);
 
+            // NOTE: For updates, we manually handle stock reversal/addition
+            // because the service only auto-processes new invoices (isNewInvoice check)
             // Step 3: Add new stock quantities
             addPurchasedMetalToStock(savedInvoice);
 

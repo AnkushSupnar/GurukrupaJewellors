@@ -320,4 +320,14 @@ public class JewelryItemService {
                     java.util.stream.Collectors.counting()
                 ));
     }
+
+    /**
+     * Get distinct metal types from jewelry items
+     */
+    public List<String> getDistinctMetalTypes() {
+        return jewelryItemRepository.findDistinctMetalTypes().stream()
+                .filter(metalType -> metalType != null && !metalType.trim().isEmpty())
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

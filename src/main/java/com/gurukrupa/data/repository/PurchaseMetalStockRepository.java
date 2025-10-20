@@ -61,4 +61,10 @@ public interface PurchaseMetalStockRepository extends JpaRepository<PurchaseMeta
      * Check if stock exists for metal type and purity
      */
     boolean existsByMetalTypeAndPurity(String metalType, BigDecimal purity);
+
+    /**
+     * Get distinct metal types from purchase metal stock
+     */
+    @Query("SELECT DISTINCT p.metalType FROM PurchaseMetalStock p ORDER BY p.metalType")
+    List<String> findDistinctMetalTypes();
 }
