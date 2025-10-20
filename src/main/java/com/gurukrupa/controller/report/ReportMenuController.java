@@ -54,9 +54,9 @@ public class ReportMenuController implements Initializable {
         btnCustomerReport.setOnAction(event -> handleCustomerReport());
         btnSalesReport.setOnAction(event -> handleSalesReport());
 
-        // Other reports can be implemented later
+        // Other reports
         if (btnFinancialReport != null) {
-            btnFinancialReport.setOnAction(event -> alert.showSuccess("Financial Reports feature will be available soon!"));
+            btnFinancialReport.setOnAction(event -> handleFinancialReport());
         }
         if (btnTaxReport != null) {
             btnTaxReport.setOnAction(event -> alert.showSuccess("Tax Reports feature will be available soon!"));
@@ -152,6 +152,29 @@ public class ReportMenuController implements Initializable {
             logger.error("Error opening Metal Stock Report: {}", e.getMessage());
             e.printStackTrace();
             alert.showError("Error opening Metal Stock Report: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleFinancialReport() {
+        try {
+            logger.info("Opening Financial Report");
+
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnFinancialReport.getScene().getRoot();
+
+            // Load the Financial Report FXML
+            Parent financialReport = stageManager.getSpringFXMLLoader().load("/fxml/report/FinancialReport.fxml");
+
+            // Set the financial report in the center of the dashboard
+            dashboard.setCenter(financialReport);
+
+            logger.info("Financial Report loaded in dashboard successfully");
+
+        } catch (Exception e) {
+            logger.error("Error opening Financial Report: {}", e.getMessage());
+            e.printStackTrace();
+            alert.showError("Error opening Financial Report: " + e.getMessage());
         }
     }
 }

@@ -2,7 +2,10 @@ package com.gurukrupa.controller.report;
 
 import com.gurukrupa.data.entities.Bill;
 import com.gurukrupa.data.entities.BillTransaction;
+import com.gurukrupa.data.entities.Exchange;
+import com.gurukrupa.data.entities.ExchangeTransaction;
 import com.gurukrupa.data.service.BillService;
+import com.gurukrupa.data.service.ExchangeService;
 import com.gurukrupa.data.service.SalesReportPdfService;
 import com.gurukrupa.utility.CurrencyFormatter;
 import com.gurukrupa.view.AlertNotification;
@@ -58,6 +61,9 @@ public class SalesReportController implements Initializable {
     @Autowired
     private SalesReportPdfService salesReportPdfService;
 
+    @Autowired
+    private ExchangeService exchangeService;
+
     // Header Controls
     @FXML private Button btnBack;
 
@@ -75,20 +81,23 @@ public class SalesReportController implements Initializable {
     @FXML private Button btnGenerateReport;
 
     // Statistics Labels
-    @FXML private Label lblTotalSales;
-    @FXML private Label lblTotalBills;
-    @FXML private Label lblAvgBillValue;
+    @FXML private Label lblTotalSales; // Now shows Items Sales Value (subtotal)
+    @FXML private Label lblExchangeValue; // Value of metal received from customers
+    @FXML private Label lblGrossRevenue; // Total business revenue (sales + exchange)
     @FXML private Label lblCollectedAmount;
     @FXML private Label lblPendingAmount;
+    @FXML private Label lblTotalBills;
     @FXML private Label lblTotalItems;
-    @FXML private Label lblTotalWeight;
-    @FXML private Label lblTotalGST;
+    @FXML private Label lblTotalWeight; // Sold weight
+    @FXML private Label lblExchangeWeight; // Exchange weight
+    // @FXML private Label lblTotalGST; // Removed from UI
 
     // Breakdown Tables
     @FXML private TableView<MetalBreakdown> tableMetalBreakdown;
     @FXML private TableColumn<MetalBreakdown, String> colMetalType;
     @FXML private TableColumn<MetalBreakdown, String> colMetalQuantity;
     @FXML private TableColumn<MetalBreakdown, String> colMetalWeight;
+    @FXML private TableColumn<MetalBreakdown, String> colExchangeWeight;
     @FXML private TableColumn<MetalBreakdown, String> colMetalAmount;
 
     @FXML private TableView<PaymentBreakdown> tablePaymentBreakdown;
@@ -185,6 +194,8 @@ public class SalesReportController implements Initializable {
         colMetalQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colMetalWeight.setCellValueFactory(cellData ->
             new SimpleStringProperty(String.format("%.3f", cellData.getValue().getWeight())));
+        colExchangeWeight.setCellValueFactory(cellData ->
+            new SimpleStringProperty(String.format("%.3f", cellData.getValue().getExchangeWeight())));
         colMetalAmount.setCellValueFactory(cellData ->
             new SimpleStringProperty(CurrencyFormatter.format(cellData.getValue().getAmount())));
 
@@ -381,17 +392,21 @@ public class SalesReportController implements Initializable {
         int totalBills = bills.size();
         lblTotalBills.setText(String.valueOf(totalBills));
 
-        // Total Sales (Grand Total)
-        BigDecimal totalSales = bills.stream()
-            .map(Bill::getGrandTotal)
+        // Items Sales Value (subtotal - value of jewelry sold)
+        BigDecimal itemsSalesValue = bills.stream()
+            .map(Bill::getSubtotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        lblTotalSales.setText(CurrencyFormatter.format(totalSales));
+        lblTotalSales.setText(CurrencyFormatter.format(itemsSalesValue));
 
-        // Average Bill Value
-        BigDecimal avgBillValue = totalBills > 0 ?
-            totalSales.divide(BigDecimal.valueOf(totalBills), 2, RoundingMode.HALF_UP) :
-            BigDecimal.ZERO;
-        lblAvgBillValue.setText(CurrencyFormatter.format(avgBillValue));
+        // Exchange Value Received (value of metal received from customers)
+        BigDecimal exchangeValueReceived = bills.stream()
+            .map(Bill::getExchangeAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        lblExchangeValue.setText(CurrencyFormatter.format(exchangeValueReceived));
+
+        // Gross Revenue (total business value = items sold + metal received)
+        BigDecimal grossRevenue = itemsSalesValue.add(exchangeValueReceived);
+        lblGrossRevenue.setText(CurrencyFormatter.format(grossRevenue));
 
         // Collected Amount
         BigDecimal collectedAmount = bills.stream()
@@ -412,35 +427,69 @@ public class SalesReportController implements Initializable {
             .sum();
         lblTotalItems.setText(String.valueOf(totalItems));
 
-        // Total Weight
+        // Total Sold Weight
         BigDecimal totalWeight = bills.stream()
             .flatMap(bill -> bill.getBillTransactions().stream())
             .map(BillTransaction::getWeight)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         lblTotalWeight.setText(String.format("%.3fg", totalWeight));
 
-        // Total GST
-        BigDecimal totalGST = bills.stream()
-            .map(Bill::getTotalTaxAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        lblTotalGST.setText(CurrencyFormatter.format(totalGST));
+        // Total Exchange Weight
+        BigDecimal totalExchangeWeight = BigDecimal.ZERO;
+        for (Bill bill : bills) {
+            Optional<Exchange> exchangeOpt = exchangeService.findByBillId(bill.getId());
+            if (exchangeOpt.isPresent()) {
+                Exchange exchange = exchangeOpt.get();
+                if (exchange.getExchangeTransactions() != null) {
+                    for (ExchangeTransaction transaction : exchange.getExchangeTransactions()) {
+                        totalExchangeWeight = totalExchangeWeight.add(transaction.getNetWeight());
+                    }
+                }
+            }
+        }
+        lblExchangeWeight.setText(String.format("%.3fg", totalExchangeWeight));
+
+        // Total GST - Removed from UI
+        // BigDecimal totalGST = bills.stream()
+        //     .map(Bill::getTotalTaxAmount)
+        //     .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // lblTotalGST.setText(CurrencyFormatter.format(totalGST));
     }
 
     private void generateMetalBreakdown() {
         Map<String, MetalBreakdown> breakdownMap = new HashMap<>();
 
+        // Process sold items
         for (Bill bill : allBills) {
             for (BillTransaction transaction : bill.getBillTransactions()) {
                 String metalType = transaction.getMetalType();
 
                 MetalBreakdown breakdown = breakdownMap.getOrDefault(metalType,
-                    new MetalBreakdown(metalType, 0, BigDecimal.ZERO, BigDecimal.ZERO));
+                    new MetalBreakdown(metalType, 0, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
 
                 breakdown.setQuantity(breakdown.getQuantity() + transaction.getQuantity());
                 breakdown.setWeight(breakdown.getWeight().add(transaction.getWeight()));
                 breakdown.setAmount(breakdown.getAmount().add(transaction.getTotalAmount()));
 
                 breakdownMap.put(metalType, breakdown);
+            }
+
+            // Process exchanges
+            Optional<Exchange> exchangeOpt = exchangeService.findByBillId(bill.getId());
+            if (exchangeOpt.isPresent()) {
+                Exchange exchange = exchangeOpt.get();
+                if (exchange.getExchangeTransactions() != null) {
+                    for (ExchangeTransaction exchangeTransaction : exchange.getExchangeTransactions()) {
+                        String metalType = exchangeTransaction.getMetalType();
+
+                        MetalBreakdown breakdown = breakdownMap.getOrDefault(metalType,
+                            new MetalBreakdown(metalType, 0, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+
+                        breakdown.setExchangeWeight(breakdown.getExchangeWeight().add(exchangeTransaction.getNetWeight()));
+
+                        breakdownMap.put(metalType, breakdown);
+                    }
+                }
             }
         }
 
@@ -549,6 +598,7 @@ public class SalesReportController implements Initializable {
         private String metalType;
         private int quantity;
         private BigDecimal weight;
+        private BigDecimal exchangeWeight;
         private BigDecimal amount;
     }
 

@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane style="-fx-background-color: #F5F5F5;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gurukrupa.controller.report.FinancialReportController">
+   <top>
+      <!-- Header Section -->
+      <HBox alignment="CENTER_LEFT" minHeight="45.0" prefHeight="50.0" style="-fx-background-color: #9C27B0; -fx-padding: 12 20;">
+         <children>
+            <Button fx:id="btnBack" onAction="#handleBack" style="-fx-background-color: rgba(255,255,255,0.2); -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 6 10; -fx-cursor: hand;">
+               <graphic>
+                  <FontAwesomeIcon fill="#FFFFFF" glyphName="ARROW_LEFT" size="1.0em" />
+               </graphic>
+            </Button>
+            <Region minWidth="15.0" />
+            <FontAwesomeIcon fill="#FFFFFF" glyphName="CREDIT_CARD" size="1.3em">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+            </FontAwesomeIcon>
+            <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Financial Report" textFill="#FFFFFF" />
+            <Region HBox.hgrow="ALWAYS" />
+         </children>
+      </HBox>
+   </top>
+
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent;">
+         <content>
+            <VBox spacing="16.0" style="-fx-padding: 20;">
+               <children>
+
+                  <!-- Filters Section -->
+                  <VBox spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#9C27B0" glyphName="FILTER" size="1.3em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Filters" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <!-- Date Range Filter -->
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
+                           <children>
+                              <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="From Date" textFill="#424242" />
+                                    <DatePicker fx:id="dpFromDate" prefWidth="200.0" promptText="Select start date" style="-fx-font-family: 'Segoe UI';" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="To Date" textFill="#424242" />
+                                    <DatePicker fx:id="dpToDate" prefWidth="200.0" promptText="Select end date" style="-fx-font-family: 'Segoe UI';" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text="Quick Filters" textFill="#424242" />
+                                    <HBox spacing="8.0">
+                                       <children>
+                                          <Button fx:id="btnToday" onAction="#handleTodayFilter" style="-fx-background-color: #F3E5F5; -fx-text-fill: #9C27B0; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6; -fx-cursor: hand;" text="Today" />
+                                          <Button fx:id="btnThisWeek" onAction="#handleThisWeekFilter" style="-fx-background-color: #F3E5F5; -fx-text-fill: #9C27B0; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6; -fx-cursor: hand;" text="This Week" />
+                                          <Button fx:id="btnThisMonth" onAction="#handleThisMonthFilter" style="-fx-background-color: #F3E5F5; -fx-text-fill: #9C27B0; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6; -fx-cursor: hand;" text="This Month" />
+                                          <Button fx:id="btnThisYear" onAction="#handleThisYearFilter" style="-fx-background-color: #F3E5F5; -fx-text-fill: #9C27B0; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-padding: 6 12; -fx-background-radius: 6; -fx-cursor: hand;" text="This Year" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+
+                              <VBox alignment="BOTTOM_RIGHT" spacing="6.0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px;" text=" " textFill="#424242" />
+                                    <Button fx:id="btnGenerateReport" onAction="#handleGenerateReport" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;" text="GENERATE REPORT">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="REFRESH" size="1em" />
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+
+                  <!-- Revenue Section -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#4CAF50" glyphName="ARROW_DOWN" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Revenue (Sales)" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <GridPane hgap="20.0" vgap="12.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Items Sales Value" textFill="#757575" />
+                                    <Label fx:id="lblTotalSales" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#212121" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Exchange Value Received" textFill="#757575" />
+                                    <Label fx:id="lblExchangeValue" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#212121" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Gross Revenue" textFill="#757575" />
+                                    <Label fx:id="lblGrossRevenue" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#4CAF50" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="GST Collected" textFill="#757575" />
+                                    <Label fx:id="lblSalesGST" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#212121" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Collected Amount" textFill="#757575" />
+                                    <Label fx:id="lblCollectedAmount" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#4CAF50" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Pending Receivables" textFill="#757575" />
+                                    <Label fx:id="lblPendingReceivables" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#FF9800" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- Expenses Section -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#F44336" glyphName="ARROW_UP" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Expenses (Purchases)" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <GridPane hgap="20.0" vgap="12.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Total Purchases" textFill="#757575" />
+                                    <Label fx:id="lblTotalPurchases" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#212121" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Paid to Suppliers" textFill="#757575" />
+                                    <Label fx:id="lblPaidToPurchases" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#F44336" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Pending Payables" textFill="#757575" />
+                                    <Label fx:id="lblPendingPayables" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#FF9800" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="GST Paid" textFill="#757575" />
+                                    <Label fx:id="lblPurchaseGST" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#212121" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- Profit/Loss Section -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#9C27B0" glyphName="LINE_CHART" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Profit &amp; Loss" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <GridPane hgap="20.0" vgap="12.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Gross Profit/Loss" textFill="#757575" />
+                                    <Label fx:id="lblGrossProfit" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#4CAF50" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Net Profit/Loss" textFill="#757575" />
+                                    <Label fx:id="lblNetProfit" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#4CAF50" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Net GST (Payable/Receivable)" textFill="#757575" />
+                                    <Label fx:id="lblNetGST" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#212121" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Profit Margin" textFill="#757575" />
+                                    <Label fx:id="lblProfitMargin" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="0.00%" textFill="#9C27B0" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- Cash Flow Section -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#2196F3" glyphName="MONEY" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Cash Flow Analysis" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <GridPane hgap="20.0" vgap="12.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="20.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Cash Inflow" textFill="#757575" />
+                                    <Label fx:id="lblCashInflow" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#4CAF50" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Cash Outflow" textFill="#757575" />
+                                    <Label fx:id="lblCashOutflow" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#F44336" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Net Cash Flow" textFill="#757575" />
+                                    <Label fx:id="lblNetCashFlow" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="₹0.00" textFill="#2196F3" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Total Bills" textFill="#757575" />
+                                    <Label fx:id="lblTotalBills" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="0" textFill="#212121" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="6.0" GridPane.columnIndex="4" GridPane.rowIndex="0">
+                                 <children>
+                                    <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px;" text="Total Purchases" textFill="#757575" />
+                                    <Label fx:id="lblTotalPurchaseInvoices" style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 20px;" text="0" textFill="#212121" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- Metal Inventory & P/L Section -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#FF5722" glyphName="CUBES" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Metal Inventory &amp; P/L (Weight-based)" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <TableView fx:id="tableMetalInventory" fixedCellSize="35" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;">
+                           <columns>
+                              <TableColumn fx:id="colInvMetalType" minWidth="100.0" prefWidth="120.0" text="Metal Type" />
+                              <TableColumn fx:id="colMetalPurchased" minWidth="100.0" prefWidth="130.0" text="Purchased (g)" />
+                              <TableColumn fx:id="colMetalFromCustomers" minWidth="120.0" prefWidth="150.0" text="From Customers (g)" />
+                              <TableColumn fx:id="colMetalSold" minWidth="90.0" prefWidth="110.0" text="Sold (g)" />
+                              <TableColumn fx:id="colMetalToSuppliers" minWidth="110.0" prefWidth="140.0" text="To Suppliers (g)" />
+                              <TableColumn fx:id="colMetalBalance" minWidth="100.0" prefWidth="120.0" text="Net Balance (g)" />
+                              <TableColumn fx:id="colItemsWeight" minWidth="110.0" prefWidth="130.0" text="Items Weight (g)" />
+                           </columns>
+                           <placeholder>
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px; -fx-text-fill: #757575;" text="No metal inventory data available for the selected date range" />
+                           </placeholder>
+                        </TableView>
+                     </children>
+                  </VBox>
+
+                  <!-- Metal Movement Breakdown -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#FF9800" glyphName="EXCHANGE" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Metal Movement Analysis (Value-based)" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <TableView fx:id="tableMetalMovement" fixedCellSize="35" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;">
+                           <columns>
+                              <TableColumn fx:id="colMetalType" minWidth="90.0" prefWidth="100.0" text="Metal Type" />
+                              <TableColumn fx:id="colPurchasedWeight" minWidth="95.0" prefWidth="110.0" text="Purchased (g)" />
+                              <TableColumn fx:id="colExchangedFromCustomers" minWidth="115.0" prefWidth="130.0" text="From Customers (g)" />
+                              <TableColumn fx:id="colSoldWeight" minWidth="80.0" prefWidth="90.0" text="Sold (g)" />
+                              <TableColumn fx:id="colExchangedToSuppliers" minWidth="115.0" prefWidth="130.0" text="To Suppliers (g)" />
+                              <TableColumn fx:id="colNetMovement" minWidth="105.0" prefWidth="120.0" text="Net Movement" />
+                              <TableColumn fx:id="colPurchaseValue" minWidth="105.0" prefWidth="120.0" text="Purchase Value" />
+                              <TableColumn fx:id="colSalesValue" minWidth="100.0" prefWidth="110.0" text="Sales Value" />
+                           </columns>
+                           <placeholder>
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px; -fx-text-fill: #757575;" text="No metal movement data available for the selected date range" />
+                           </placeholder>
+                        </TableView>
+                     </children>
+                  </VBox>
+
+                  <!-- Payment Method Summary -->
+                  <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 20;">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontAwesomeIcon fill="#009688" glyphName="CREDIT_CARD" size="1.5em" />
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 18px;" text="Payment Method Summary" textFill="#212121" />
+                           </children>
+                        </HBox>
+
+                        <Separator prefWidth="200.0" />
+
+                        <TableView fx:id="tablePaymentSummary" fixedCellSize="35" style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px;">
+                           <columns>
+                              <TableColumn fx:id="colPaymentMethod" minWidth="150.0" prefWidth="200.0" text="Payment Method" />
+                              <TableColumn fx:id="colSalesAmount" minWidth="150.0" prefWidth="200.0" text="Sales Amount" />
+                              <TableColumn fx:id="colPurchaseAmount" minWidth="150.0" prefWidth="200.0" text="Purchase Amount" />
+                              <TableColumn fx:id="colNetAmount" minWidth="150.0" prefWidth="200.0" text="Net Amount" />
+                           </columns>
+                           <placeholder>
+                              <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 14px; -fx-text-fill: #757575;" text="No payment data available for the selected date range" />
+                           </placeholder>
+                        </TableView>
+                     </children>
+                  </VBox>
+
+                  <!-- Add spacing at bottom for better scroll experience -->
+                  <Region prefHeight="15.0" minHeight="10.0" />
+
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>

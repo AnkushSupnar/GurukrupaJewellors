@@ -138,14 +138,31 @@ public class BankTransactionService {
     }
     
     /**
+     * Record a customer refund payment (when exchange value > purchase value)
+     * This debits from the bank account as we're paying the customer
+     */
+    public BankTransaction recordCustomerRefund(BankAccount bankAccount, BigDecimal amount,
+                                              Long billId, String billNumber,
+                                              String transactionReference, String customerName) {
+
+        String description = String.format("Refund paid to %s for Bill %s (Exchange value exceeded purchase)",
+                                         customerName != null ? customerName : "Customer",
+                                         billNumber);
+
+        return recordDebit(bankAccount, amount, TransactionSource.BILL_PAYMENT,
+                         "BILL", billId, billNumber, transactionReference,
+                         customerName, description);
+    }
+
+    /**
      * Record an exchange related transaction
      */
     public BankTransaction recordExchangeTransaction(BankAccount bankAccount, BigDecimal amount,
                                                    TransactionType type, Long exchangeId,
                                                    String exchangeNumber, String transactionReference,
                                                    String customerName) {
-        
-        String description = String.format("%s for Exchange %s - %s", 
+
+        String description = String.format("%s for Exchange %s - %s",
                                          type == TransactionType.CREDIT ? "Received" : "Paid",
                                          exchangeNumber,
                                          customerName != null ? customerName : "Customer");

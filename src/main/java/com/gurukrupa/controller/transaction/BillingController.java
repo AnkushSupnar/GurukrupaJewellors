@@ -810,7 +810,8 @@ public class BillingController implements Initializable {
     
     private void makeNumericOnly(TextField textField, int maxLength) {
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*(\\.\\d*)?$")) {
+            // Allow negative numbers (with optional minus sign at the start)
+            if (!newValue.matches("-?\\d*(\\.\\d*)?")) {
                 textField.setText(oldValue);
             } else if (newValue.length() > maxLength) {
                 textField.setText(oldValue);
@@ -1476,24 +1477,34 @@ public class BillingController implements Initializable {
                     return; // Error already shown in createBillFromCurrentData
                 }
             }
-            
+
+            BigDecimal grandTotal = currentBill.getGrandTotal();
+            boolean isRefund = grandTotal.compareTo(BigDecimal.ZERO) < 0;
+
             // Check if partial payment is active
-            BigDecimal paidAmount = currentBill.getGrandTotal(); // Default to full payment
+            BigDecimal paidAmount = grandTotal; // Default to full payment/refund
             if (isPartialPayment) {
                 String amountText = txtPartialAmount.getText().trim();
                 if (amountText.isEmpty()) {
                     alert.showError("Please enter a valid partial payment amount.");
                     return;
                 }
-                
+
                 try {
                     paidAmount = new BigDecimal(amountText);
-                    if (paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                        alert.showError("Partial payment amount must be greater than zero.");
+                    // Allow zero or non-zero amounts based on refund status
+                    if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
+                        alert.showError("Payment amount cannot be zero.");
                         return;
                     }
-                    if (paidAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+
+                    // Validate based on whether it's a refund or payment
+                    if (!isRefund && paidAmount.compareTo(grandTotal) > 0) {
                         alert.showError("Payment amount cannot exceed the bill total.");
+                        return;
+                    }
+                    if (isRefund && paidAmount.abs().compareTo(grandTotal.abs()) > 0) {
+                        alert.showError("Refund amount cannot exceed the refund total.");
                         return;
                     }
                 } catch (NumberFormatException e) {
@@ -1501,23 +1512,23 @@ public class BillingController implements Initializable {
                     return;
                 }
             }
-            
+
             // Update bill payment details
             currentBill.setPaymentMethod(Bill.PaymentMethod.CASH);
             currentBill.setPaidAmount(paidAmount);
-            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(paidAmount));
-            currentBill.setStatus(paidAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
+            currentBill.setPendingAmount(grandTotal.subtract(paidAmount));
+            currentBill.setStatus(paidAmount.abs().compareTo(grandTotal.abs()) >= 0 ?
                                  Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
-            
+
             // Save the updated bill
             Bill updatedBill = billService.saveBill(currentBill);
-            
+
             // Create PaymentMode entry for cash payment
             PaymentMode cashPayment = paymentModeService.createCashPayment(updatedBill, paidAmount);
-            
+
             // Generate PDF
             generateAndSavePdf(updatedBill);
-            
+
             // Hide partial payment box
             if (isPartialPayment) {
                 partialPaymentBox.setVisible(false);
@@ -1525,18 +1536,39 @@ public class BillingController implements Initializable {
                 txtPartialAmount.clear();
                 isPartialPayment = false;
             }
-            
+
             // Show success message
-            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
-                alert.showSuccess(String.format(
-                    "Cash payment processed successfully!\n" +
-                    "Paid Amount: ₹%.2f\n" +
-                    "Pending Amount: ₹%.2f\n" +
-                    "Bill saved and PDF generated.",
-                    paidAmount, updatedBill.getPendingAmount()
-                ));
+            if (isRefund) {
+                // Refund scenario
+                if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) < 0) {
+                    alert.showSuccess(String.format(
+                        "Cash refund processed successfully!\n" +
+                        "Refunded Amount: ₹%.2f\n" +
+                        "Pending Refund: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        paidAmount.abs(), updatedBill.getPendingAmount().abs()
+                    ));
+                } else {
+                    alert.showSuccess(String.format(
+                        "Cash refund processed successfully!\n" +
+                        "Refunded Amount: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        paidAmount.abs()
+                    ));
+                }
             } else {
-                alert.showSuccess("Cash payment processed successfully!\nBill saved and PDF generated.");
+                // Normal payment scenario
+                if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                    alert.showSuccess(String.format(
+                        "Cash payment processed successfully!\n" +
+                        "Paid Amount: ₹%.2f\n" +
+                        "Pending Amount: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        paidAmount, updatedBill.getPendingAmount()
+                    ));
+                } else {
+                    alert.showSuccess("Cash payment processed successfully!\nBill saved and PDF generated.");
+                }
             }
             
             // Reset for new bill
@@ -1952,29 +1984,30 @@ public class BillingController implements Initializable {
                 alert.showError("Please select a bank account.");
                 return;
             }
-            
+
             if (txtBankTransactionNo.getText().trim().isEmpty()) {
                 alert.showError("Please enter transaction/reference number.");
                 return;
             }
-            
+
             if (txtBankAmount.getText().trim().isEmpty()) {
                 alert.showError("Please enter the payment amount.");
                 return;
             }
-            
+
             BigDecimal bankAmount;
             try {
                 bankAmount = new BigDecimal(txtBankAmount.getText().trim());
-                if (bankAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    alert.showError("Payment amount must be greater than zero.");
+                // Allow negative amounts for customer refunds
+                if (bankAmount.compareTo(BigDecimal.ZERO) == 0) {
+                    alert.showError("Payment amount cannot be zero.");
                     return;
                 }
             } catch (NumberFormatException e) {
                 alert.showError("Please enter a valid numeric amount.");
                 return;
             }
-            
+
             // Create bill if not already created
             if (currentBill == null) {
                 currentBill = createBillFromCurrentData();
@@ -1982,31 +2015,40 @@ public class BillingController implements Initializable {
                     return; // Error already shown in createBillFromCurrentData
                 }
             }
-            
-            // Validate payment amount doesn't exceed bill total
-            if (bankAmount.compareTo(currentBill.getGrandTotal()) > 0) {
+
+            BigDecimal grandTotal = currentBill.getGrandTotal();
+            boolean isRefund = grandTotal.compareTo(BigDecimal.ZERO) < 0;
+
+            // Validate payment amount based on bill type
+            if (!isRefund && bankAmount.compareTo(grandTotal) > 0) {
                 alert.showError("Payment amount cannot exceed the bill total.");
                 return;
             }
-            
+
+            if (isRefund && bankAmount.abs().compareTo(grandTotal.abs()) > 0) {
+                alert.showError("Refund amount cannot exceed the refund total.");
+                return;
+            }
+
             // Update bill payment details
             currentBill.setPaymentMethod(Bill.PaymentMethod.BANK_TRANSFER);
             currentBill.setPaidAmount(bankAmount);
-            currentBill.setPendingAmount(currentBill.getGrandTotal().subtract(bankAmount));
-            currentBill.setStatus(bankAmount.compareTo(currentBill.getGrandTotal()) >= 0 ? 
+            currentBill.setPendingAmount(grandTotal.subtract(bankAmount));
+            currentBill.setStatus(bankAmount.abs().compareTo(grandTotal.abs()) >= 0 ?
                                  Bill.BillStatus.PAID : Bill.BillStatus.CONFIRMED);
-            
+
             // Save the bill first
             Bill updatedBill = billService.saveBill(currentBill);
             
             // Create PaymentMode entry for bank payment
             BankAccount selectedBank = cmbBankAccount.getValue();
             String transactionNo = txtBankTransactionNo.getText().trim();
-            
+
+            // Create payment mode entry - this will automatically create the appropriate bank transaction
             PaymentMode bankPayment = paymentModeService.createBankPayment(
-                updatedBill, 
-                bankAmount, 
-                selectedBank, 
+                updatedBill,
+                bankAmount,
+                selectedBank,
                 transactionNo
             );
             
@@ -2023,30 +2065,60 @@ public class BillingController implements Initializable {
             btnBank.setStyle("-fx-background-color: #673AB7; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 16 12 16; -fx-cursor: hand;");
             
             // Show success message
-            if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
-                alert.showSuccess(String.format(
-                    "Bank payment processed successfully!\n" +
-                    "Bank: %s\n" +
-                    "Transaction No: %s\n" +
-                    "Paid Amount: ₹%.2f\n" +
-                    "Pending Amount: ₹%.2f\n" +
-                    "Bill saved and PDF generated.",
-                    selectedBank.getBankName(),
-                    transactionNo,
-                    bankAmount, 
-                    updatedBill.getPendingAmount()
-                ));
+            if (isRefund) {
+                // Refund scenario
+                if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) < 0) {
+                    alert.showSuccess(String.format(
+                        "Bank refund processed successfully!\n" +
+                        "Bank: %s\n" +
+                        "Transaction No: %s\n" +
+                        "Refunded Amount: ₹%.2f\n" +
+                        "Pending Refund: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        selectedBank.getBankName(),
+                        transactionNo,
+                        bankAmount.abs(),
+                        updatedBill.getPendingAmount().abs()
+                    ));
+                } else {
+                    alert.showSuccess(String.format(
+                        "Bank refund processed successfully!\n" +
+                        "Bank: %s\n" +
+                        "Transaction No: %s\n" +
+                        "Refunded Amount: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        selectedBank.getBankName(),
+                        transactionNo,
+                        bankAmount.abs()
+                    ));
+                }
             } else {
-                alert.showSuccess(String.format(
-                    "Bank payment processed successfully!\n" +
-                    "Bank: %s\n" +
-                    "Transaction No: %s\n" +
-                    "Amount: ₹%.2f\n" +
-                    "Bill saved and PDF generated.",
-                    selectedBank.getBankName(),
-                    transactionNo,
-                    bankAmount
-                ));
+                // Normal payment scenario
+                if (updatedBill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                    alert.showSuccess(String.format(
+                        "Bank payment processed successfully!\n" +
+                        "Bank: %s\n" +
+                        "Transaction No: %s\n" +
+                        "Paid Amount: ₹%.2f\n" +
+                        "Pending Amount: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        selectedBank.getBankName(),
+                        transactionNo,
+                        bankAmount,
+                        updatedBill.getPendingAmount()
+                    ));
+                } else {
+                    alert.showSuccess(String.format(
+                        "Bank payment processed successfully!\n" +
+                        "Bank: %s\n" +
+                        "Transaction No: %s\n" +
+                        "Amount: ₹%.2f\n" +
+                        "Bill saved and PDF generated.",
+                        selectedBank.getBankName(),
+                        transactionNo,
+                        bankAmount
+                    ));
+                }
             }
             
             // Reset for new bill

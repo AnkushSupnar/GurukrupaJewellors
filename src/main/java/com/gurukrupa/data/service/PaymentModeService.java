@@ -60,18 +60,34 @@ public class PaymentModeService {
         }
         
         if (cashAccount.isPresent()) {
-            // Record bank transaction for cash payment
+            // Record bank transaction based on amount sign
             String customerName = bill.getCustomer() != null ? bill.getCustomer().getCustomerFullName() : "Customer";
-            bankTransactionService.recordBillPayment(
-                cashAccount.get(),
-                amount,
-                bill.getId(),
-                bill.getBillNumber(),
-                "CASH-" + bill.getBillNumber(),
-                customerName
-            );
+            String referenceNumber = "CASH-" + bill.getBillNumber();
+
+            // Check if this is a refund (negative amount) or payment (positive amount)
+            if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                // Negative amount means we owe customer - record as refund (DEBIT)
+                bankTransactionService.recordCustomerRefund(
+                    cashAccount.get(),
+                    amount.abs(), // Use absolute value for refund amount
+                    bill.getId(),
+                    bill.getBillNumber(),
+                    referenceNumber,
+                    customerName
+                );
+            } else {
+                // Positive amount means customer pays us - record as payment (CREDIT)
+                bankTransactionService.recordBillPayment(
+                    cashAccount.get(),
+                    amount,
+                    bill.getId(),
+                    bill.getBillNumber(),
+                    referenceNumber,
+                    customerName
+                );
+            }
         }
-        
+
         return savedPayment;
     }
     
@@ -85,20 +101,35 @@ public class PaymentModeService {
                 .status(PaymentStatus.COMPLETED)
                 .paymentDate(LocalDateTime.now())
                 .build();
-        
+
         PaymentMode savedPayment = paymentModeRepository.save(payment);
-        
-        // Record bank transaction for the payment received
+
+        // Record bank transaction based on amount sign
         String customerName = bill.getCustomer() != null ? bill.getCustomer().getCustomerFullName() : "Customer";
-        bankTransactionService.recordBillPayment(
-            bankAccount,
-            amount,
-            bill.getId(),
-            bill.getBillNumber(),
-            referenceNumber,
-            customerName
-        );
-        
+
+        // Check if this is a refund (negative amount) or payment (positive amount)
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            // Negative amount means we owe customer - record as refund (DEBIT)
+            bankTransactionService.recordCustomerRefund(
+                bankAccount,
+                amount.abs(), // Use absolute value for refund amount
+                bill.getId(),
+                bill.getBillNumber(),
+                referenceNumber,
+                customerName
+            );
+        } else {
+            // Positive amount means customer pays us - record as payment (CREDIT)
+            bankTransactionService.recordBillPayment(
+                bankAccount,
+                amount,
+                bill.getId(),
+                bill.getBillNumber(),
+                referenceNumber,
+                customerName
+            );
+        }
+
         return savedPayment;
     }
     
@@ -130,18 +161,33 @@ public class PaymentModeService {
                 .build();
         
         PaymentMode savedPayment = paymentModeRepository.save(payment);
-        
-        // Record bank transaction for UPI payment
+
+        // Record bank transaction based on amount sign
         String customerName = bill.getCustomer() != null ? bill.getCustomer().getCustomerFullName() : "Customer";
-        bankTransactionService.recordBillPayment(
-            bankAccount,
-            amount,
-            bill.getId(),
-            bill.getBillNumber(),
-            referenceNumber,
-            customerName
-        );
-        
+
+        // Check if this is a refund (negative amount) or payment (positive amount)
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            // Negative amount means we owe customer - record as refund (DEBIT)
+            bankTransactionService.recordCustomerRefund(
+                bankAccount,
+                amount.abs(), // Use absolute value for refund amount
+                bill.getId(),
+                bill.getBillNumber(),
+                referenceNumber,
+                customerName
+            );
+        } else {
+            // Positive amount means customer pays us - record as payment (CREDIT)
+            bankTransactionService.recordBillPayment(
+                bankAccount,
+                amount,
+                bill.getId(),
+                bill.getBillNumber(),
+                referenceNumber,
+                customerName
+            );
+        }
+
         return savedPayment;
     }
     

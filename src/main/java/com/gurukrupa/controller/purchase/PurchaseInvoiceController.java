@@ -1059,7 +1059,34 @@ public class PurchaseInvoiceController implements Initializable {
             } else {
                 invoice.setPaymentMethod(PurchaseInvoice.PaymentMethod.BANK_TRANSFER);
                 BigDecimal paidAmount = parseBigDecimal(txtPaidAmount.getText());
-                invoice.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
+                paidAmount = paidAmount != null ? paidAmount : BigDecimal.ZERO;
+                invoice.setPaidAmount(paidAmount);
+
+                // Validate bank account balance
+                BankAccount selectedBank = cmbBankAccount.getValue();
+                if (selectedBank == null) {
+                    alertNotification.showError("Please select a bank account for payment.");
+                    return null;
+                }
+
+                // Check if bank has sufficient balance for the payment amount
+                BigDecimal bankBalance = selectedBank.getCurrentBalance();
+
+                if (paidAmount.compareTo(BigDecimal.ZERO) > 0 && bankBalance.compareTo(paidAmount) < 0) {
+                    alertNotification.showError(String.format(
+                        "Insufficient bank balance!\n\n" +
+                        "Bank Account: %s\n" +
+                        "Current Balance: %s\n" +
+                        "Payment Amount: %s\n" +
+                        "Shortfall: %s\n\n" +
+                        "Please select a different bank account or reduce the payment amount.",
+                        selectedBank.getBankName(),
+                        CurrencyFormatter.format(bankBalance),
+                        CurrencyFormatter.format(paidAmount),
+                        CurrencyFormatter.format(paidAmount.subtract(bankBalance))
+                    ));
+                    return null;
+                }
             }
 
             // Save invoice (stock is automatically added by the service)
@@ -1099,7 +1126,34 @@ public class PurchaseInvoiceController implements Initializable {
             } else {
                 currentEditingInvoice.setPaymentMethod(PurchaseInvoice.PaymentMethod.BANK_TRANSFER);
                 BigDecimal paidAmount = parseBigDecimal(txtPaidAmount.getText());
-                currentEditingInvoice.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
+                paidAmount = paidAmount != null ? paidAmount : BigDecimal.ZERO;
+                currentEditingInvoice.setPaidAmount(paidAmount);
+
+                // Validate bank account balance
+                BankAccount selectedBank = cmbBankAccount.getValue();
+                if (selectedBank == null) {
+                    alertNotification.showError("Please select a bank account for payment.");
+                    return null;
+                }
+
+                // Check if bank has sufficient balance for the payment amount
+                BigDecimal bankBalance = selectedBank.getCurrentBalance();
+
+                if (paidAmount.compareTo(BigDecimal.ZERO) > 0 && bankBalance.compareTo(paidAmount) < 0) {
+                    alertNotification.showError(String.format(
+                        "Insufficient bank balance!\n\n" +
+                        "Bank Account: %s\n" +
+                        "Current Balance: %s\n" +
+                        "Payment Amount: %s\n" +
+                        "Shortfall: %s\n\n" +
+                        "Please select a different bank account or reduce the payment amount.",
+                        selectedBank.getBankName(),
+                        CurrencyFormatter.format(bankBalance),
+                        CurrencyFormatter.format(paidAmount),
+                        CurrencyFormatter.format(paidAmount.subtract(bankBalance))
+                    ));
+                    return null;
+                }
             }
 
             // Update transactions - clear old and add new

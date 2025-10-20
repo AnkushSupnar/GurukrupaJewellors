@@ -177,7 +177,11 @@
                               <!-- Action Buttons -->
                               <HBox spacing="12.0">
                                  <children>
-                                    <Button fx:id="btnFinancialReport" style="-fx-background-color: #E0E0E0; -fx-text-fill: #757575; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8;" text="COMING SOON" disable="true" />
+                                    <Button fx:id="btnFinancialReport" onAction="#handleFinancialReport" style="-fx-background-color: #9C27B0; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 13px; -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;" text="VIEW REPORT">
+                                       <graphic>
+                                          <FontAwesomeIcon fill="#FFFFFF" glyphName="EXTERNAL_LINK" size="1.0em" />
+                                       </graphic>
+                                    </Button>
                                  </children>
                               </HBox>
                            </children>
