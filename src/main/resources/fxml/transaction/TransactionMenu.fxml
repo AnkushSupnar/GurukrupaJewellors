@@ -125,6 +125,41 @@
                                         </HBox>
                                     </children>
                                 </VBox>
+
+                                <!-- Customer Payment Receipt Card -->
+                                <VBox spacing="12.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3); -fx-padding: 24;">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                                            <children>
+                                                <VBox style="-fx-background-color: #E8F5E9; -fx-background-radius: 12; -fx-padding: 16; -fx-pref-width: 60; -fx-pref-height: 60; -fx-alignment: CENTER;">
+                                                    <children>
+                                                        <FontAwesomeIcon fill="#388E3C" glyphName="MONEY" size="2.0em" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                                    <children>
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Customer Payment Receipt" textFill="#212121" />
+                                                        <Label style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px;" text="Receive payments from customers for credit sales and manage pending collections" textFill="#616161" wrapText="true" />
+                                                    </children>
+                                                </VBox>
+                                                <HBox spacing="12.0">
+                                                    <children>
+                                                        <Button fx:id="btnCustomerPayment" style="-fx-background-color: #388E3C; -fx-text-fill: white; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(56,142,60,0.3), 4, 0, 0, 2);" text="RECEIVE PAYMENT">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                        <Button fx:id="btnViewCustomerPayments" style="-fx-background-color: transparent; -fx-text-fill: #388E3C; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 12 20 12 20; -fx-cursor: hand; -fx-border-color: #388E3C; -fx-border-radius: 8; -fx-border-width: 1.5;" text="VIEW ALL">
+                                                            <font>
+                                                                <Font size="12.0" />
+                                                            </font>
+                                                        </Button>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
                             </children>
                         </VBox>
 

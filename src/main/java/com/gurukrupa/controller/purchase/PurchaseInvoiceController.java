@@ -82,6 +82,8 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private TextField txtSellerPercentage;
     @FXML private TextField txtPurchaseNetWeight;
     @FXML private TextField txtPurchaseRate;
+    @FXML private ComboBox<String> cmbPurchaseChargeType;
+    @FXML private TextField txtPurchaseChargeAmount;
     @FXML private TextField txtPurchaseAmount;
     @FXML private Button btnAddPurchase;
     @FXML private Button btnEditPurchase;
@@ -97,6 +99,8 @@ public class PurchaseInvoiceController implements Initializable {
     @FXML private TableColumn<PurchaseMetalTransaction, BigDecimal> colPurchaseSellerPct;
     @FXML private TableColumn<PurchaseMetalTransaction, BigDecimal> colPurchaseNetWeight;
     @FXML private TableColumn<PurchaseMetalTransaction, BigDecimal> colPurchaseRate;
+    @FXML private TableColumn<PurchaseMetalTransaction, String> colPurchaseChargeType;
+    @FXML private TableColumn<PurchaseMetalTransaction, BigDecimal> colPurchaseChargeAmount;
     @FXML private TableColumn<PurchaseMetalTransaction, BigDecimal> colPurchaseAmount;
     @FXML private Label lblPurchaseItemCount;
 
@@ -298,6 +302,26 @@ public class PurchaseInvoiceController implements Initializable {
             }
         });
 
+        // Charge Type
+        colPurchaseChargeType.setCellValueFactory(cellData ->
+            new SimpleStringProperty(cellData.getValue().getChargeType() != null ? cellData.getValue().getChargeType() : "-"));
+
+        // Charge Amount
+        colPurchaseChargeAmount.setCellValueFactory(cellData ->
+            new SimpleObjectProperty<>(cellData.getValue().getChargeAmount()));
+        colPurchaseChargeAmount.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.compareTo(BigDecimal.ZERO) == 0) {
+                    setText("-");
+                } else {
+                    setText(CurrencyFormatter.format(item));
+                    setStyle("-fx-text-fill: #FF6F00;");
+                }
+            }
+        });
+
         // Amount
         colPurchaseAmount.setCellValueFactory(cellData ->
             new SimpleObjectProperty<>(cellData.getValue().getTotalAmount()));
@@ -487,6 +511,17 @@ public class PurchaseInvoiceController implements Initializable {
      * Setup combo boxes
      */
     private void setupComboBoxes() {
+        // Purchase Charge Type ComboBox
+        ObservableList<String> chargeTypes = FXCollections.observableArrayList(
+            "Making Charges",
+            "Labour Charges",
+            "Stone Charges",
+            "Polishing Charges",
+            "Design Charges",
+            "Other Charges"
+        );
+        cmbPurchaseChargeType.setItems(chargeTypes);
+
         // Purchase Metal Type ComboBox
         cmbPurchaseMetalType.setItems(metals);
         cmbPurchaseMetalType.setConverter(new StringConverter<>() {
@@ -570,6 +605,7 @@ public class PurchaseInvoiceController implements Initializable {
         txtPurchaseGrossWeight.textProperty().addListener((obs, old, val) -> calculatePurchaseNetWeight());
         txtSellerPercentage.textProperty().addListener((obs, old, val) -> calculatePurchaseNetWeight());
         txtPurchaseRate.textProperty().addListener((obs, old, val) -> calculatePurchaseAmount());
+        txtPurchaseChargeAmount.textProperty().addListener((obs, old, val) -> calculatePurchaseAmount());
 
         // Exchange calculations
         txtExchangeGrossWeight.textProperty().addListener((obs, old, val) -> calculateExchangeNetWeight());
@@ -648,6 +684,11 @@ public class PurchaseInvoiceController implements Initializable {
             BigDecimal ratePer10g = new BigDecimal(txtPurchaseRate.getText().trim());
             BigDecimal rate = ratePer10g.divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP);
 
+            // Get charge information
+            String chargeType = cmbPurchaseChargeType.getValue();
+            BigDecimal chargeAmount = parseBigDecimal(txtPurchaseChargeAmount.getText());
+            if (chargeAmount == null) chargeAmount = BigDecimal.ZERO;
+
             // Check if editing or adding new
             if (editingPurchaseTransaction != null) {
                 // Update existing transaction
@@ -657,6 +698,8 @@ public class PurchaseInvoiceController implements Initializable {
                 editingPurchaseTransaction.setGrossWeight(grossWeight);
                 editingPurchaseTransaction.setSellerPercentage(sellerPercentage);
                 editingPurchaseTransaction.setRatePerGram(rate);
+                editingPurchaseTransaction.setChargeType(chargeType);
+                editingPurchaseTransaction.setChargeAmount(chargeAmount);
                 editingPurchaseTransaction.calculateNetWeightAndAmount();
 
                 LOG.info("Updated purchase metal: {} {} - {}g @ {}",
@@ -676,6 +719,8 @@ public class PurchaseInvoiceController implements Initializable {
                         .grossWeight(grossWeight)
                         .sellerPercentage(sellerPercentage)
                         .ratePerGram(rate)
+                        .chargeType(chargeType)
+                        .chargeAmount(chargeAmount)
                         .build();
 
                 transaction.calculateNetWeightAndAmount();
@@ -730,6 +775,14 @@ public class PurchaseInvoiceController implements Initializable {
         // Convert rate per gram to rate per 10 grams for display
         BigDecimal ratePer10g = selected.getRatePerGram().multiply(new BigDecimal("10"));
         txtPurchaseRate.setText(ratePer10g.stripTrailingZeros().toPlainString());
+
+        // Set charge information
+        cmbPurchaseChargeType.setValue(selected.getChargeType());
+        if (selected.getChargeAmount() != null) {
+            txtPurchaseChargeAmount.setText(selected.getChargeAmount().stripTrailingZeros().toPlainString());
+        } else {
+            txtPurchaseChargeAmount.setText("0.00");
+        }
 
         // Calculations will auto-update via listeners
         btnAddPurchase.setText("UPDATE");
@@ -1298,18 +1351,22 @@ public class PurchaseInvoiceController implements Initializable {
     }
 
     /**
-     * Calculate purchase amount (rate is per 10 grams)
+     * Calculate purchase amount (rate is per 10 grams) + charge amount
      */
     private void calculatePurchaseAmount() {
         try {
             BigDecimal netWeight = parseBigDecimal(txtPurchaseNetWeight.getText());
             BigDecimal ratePer10g = parseBigDecimal(txtPurchaseRate.getText());
+            BigDecimal chargeAmount = parseBigDecimal(txtPurchaseChargeAmount.getText());
+
+            if (chargeAmount == null) chargeAmount = BigDecimal.ZERO;
 
             if (netWeight != null && ratePer10g != null) {
-                // Formula: amount = (netWeight / 10) * ratePer10g
-                BigDecimal amount = netWeight.multiply(ratePer10g)
+                // Formula: amount = (netWeight / 10) * ratePer10g + chargeAmount
+                BigDecimal baseAmount = netWeight.multiply(ratePer10g)
                         .divide(new BigDecimal("10"), 2, RoundingMode.HALF_UP);
-                txtPurchaseAmount.setText(CurrencyFormatter.format(amount));
+                BigDecimal totalAmount = baseAmount.add(chargeAmount);
+                txtPurchaseAmount.setText(CurrencyFormatter.format(totalAmount));
             }
         } catch (Exception e) {
             // Ignore calculation errors during typing
@@ -1433,6 +1490,8 @@ public class PurchaseInvoiceController implements Initializable {
         txtSellerPercentage.setText("97.00");
         txtPurchaseNetWeight.clear();
         txtPurchaseRate.clear();
+        cmbPurchaseChargeType.setValue(null);
+        txtPurchaseChargeAmount.setText("0.00");
         txtPurchaseAmount.clear();
 
         // Reset editing mode
@@ -1633,6 +1692,8 @@ public class PurchaseInvoiceController implements Initializable {
                         .sellerPercentage(txn.getSellerPercentage())
                         .netWeightCharged(txn.getNetWeightCharged())
                         .ratePerGram(txn.getRatePerGram())
+                        .chargeType(txn.getChargeType())
+                        .chargeAmount(txn.getChargeAmount())
                         .totalAmount(txn.getTotalAmount())
                         .build();
                 purchaseTransactions.add(newTxn);

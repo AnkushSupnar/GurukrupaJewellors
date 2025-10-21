@@ -65,9 +65,17 @@ public class PurchaseMetalTransaction {
     @Builder.Default
     private BigDecimal ratePerGram = BigDecimal.ZERO; // Rate per gram
 
+    // Additional Charges
+    @Column(length = 100)
+    private String chargeType; // MAKING_CHARGES, LABOUR_CHARGES, STONE_CHARGES, etc.
+
+    @Column(precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal chargeAmount = BigDecimal.ZERO; // Additional charge amount
+
     @Column(nullable = false, precision = 12, scale = 2)
     @Builder.Default
-    private BigDecimal totalAmount = BigDecimal.ZERO; // Total amount = netWeightCharged * ratePerGram
+    private BigDecimal totalAmount = BigDecimal.ZERO; // Total amount = (netWeightCharged * ratePerGram) + chargeAmount
 
     @Column(length = 500)
     private String description;
@@ -94,7 +102,7 @@ public class PurchaseMetalTransaction {
     /**
      * Calculate net weight charged and total amount
      * Net Weight = Gross Weight * Seller Percentage / 100
-     * Total Amount = Net Weight * Rate Per Gram
+     * Total Amount = (Net Weight * Rate Per Gram) + Charge Amount
      */
     public void calculateNetWeightAndAmount() {
         // Calculate net weight charged based on seller percentage
@@ -106,14 +114,17 @@ public class PurchaseMetalTransaction {
             netWeightCharged = BigDecimal.ZERO;
         }
 
-        // Calculate total amount
+        // Calculate base amount (metal value)
+        BigDecimal baseAmount = BigDecimal.ZERO;
         if (netWeightCharged != null && ratePerGram != null) {
-            totalAmount = netWeightCharged
+            baseAmount = netWeightCharged
                 .multiply(ratePerGram)
                 .setScale(2, RoundingMode.HALF_UP);
-        } else {
-            totalAmount = BigDecimal.ZERO;
         }
+
+        // Add additional charges
+        BigDecimal additionalCharge = (chargeAmount != null) ? chargeAmount : BigDecimal.ZERO;
+        totalAmount = baseAmount.add(additionalCharge).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**

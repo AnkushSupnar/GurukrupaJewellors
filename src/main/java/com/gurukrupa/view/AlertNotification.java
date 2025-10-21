@@ -29,10 +29,24 @@ public class AlertNotification {
     {
         try {
             Notifications message = Notifications.create().
-                    title("Success Message").
+                    title("Error Message").
                     text(msg).hideAfter(Duration.seconds(5)).
                     position(Pos.TOP_CENTER);
             message.showError();
+        }catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void showInfo(String msg)
+    {
+        try {
+            Notifications message = Notifications.create().
+                    title("Information").
+                    text(msg).hideAfter(Duration.seconds(5)).
+                    position(Pos.TOP_CENTER);
+            message.showInformation();
         }catch(Exception e)
         {
             e.printStackTrace();

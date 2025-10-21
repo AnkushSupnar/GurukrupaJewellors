@@ -53,6 +53,12 @@ public class PurchaseMenuController implements Initializable {
     private Button btnViewPurchases;
 
     @FXML
+    private Button btnSupplierPayment;
+
+    @FXML
+    private Button btnViewPayments;
+
+    @FXML
     private Button btnRefresh;
 
     // Statistics labels
@@ -78,6 +84,8 @@ public class PurchaseMenuController implements Initializable {
         // Set up button actions
         btnPurchaseInvoice.setOnAction(e -> openPurchaseInvoiceDialog());
         btnViewPurchases.setOnAction(e -> openViewPurchasesDialog());
+        btnSupplierPayment.setOnAction(e -> openSupplierPaymentDialog());
+        btnViewPayments.setOnAction(e -> openViewPaymentsDialog());
         btnRefresh.setOnAction(e -> loadStatistics());
 
         // Load statistics on initialization
@@ -200,6 +208,54 @@ public class PurchaseMenuController implements Initializable {
 
         } catch (Exception e) {
             LOG.error("Error opening view purchases dialog: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Open Supplier Payment screen in the center of the home screen
+     */
+    private void openSupplierPaymentDialog() {
+        LOG.info("Opening Supplier Payment screen");
+        try {
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnSupplierPayment.getScene().getRoot();
+
+            // Load the Supplier Payment FXML
+            Parent supplierPayment = stageManager.getSpringFXMLLoader()
+                    .load(FxmlView.SUPPLIER_PAYMENT.getFxmlFile());
+
+            // Set the supplier payment screen in the center of the dashboard
+            dashboard.setCenter(supplierPayment);
+
+            LOG.info("Supplier Payment screen loaded in dashboard successfully");
+
+        } catch (Exception e) {
+            LOG.error("Error opening Supplier Payment screen: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Open View Payments screen in the center of the home screen
+     */
+    private void openViewPaymentsDialog() {
+        LOG.info("Opening View Payments screen");
+        try {
+            // Get the dashboard's center panel through the parent hierarchy
+            BorderPane dashboard = (BorderPane) btnViewPayments.getScene().getRoot();
+
+            // Load the View Payments FXML
+            Parent viewPayments = stageManager.getSpringFXMLLoader()
+                    .load(FxmlView.VIEW_SUPPLIER_PAYMENTS.getFxmlFile());
+
+            // Set the view payments screen in the center of the dashboard
+            dashboard.setCenter(viewPayments);
+
+            LOG.info("View Payments screen loaded in dashboard successfully");
+
+        } catch (Exception e) {
+            LOG.error("Error opening View Payments screen: {}", e.getMessage());
             e.printStackTrace();
         }
     }

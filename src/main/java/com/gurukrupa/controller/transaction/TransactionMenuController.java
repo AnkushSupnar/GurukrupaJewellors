@@ -77,6 +77,12 @@ public class TransactionMenuController implements Initializable {
     @FXML
     private Button btnViewStock;
 
+    @FXML
+    private Button btnCustomerPayment;
+
+    @FXML
+    private Button btnViewCustomerPayments;
+
     private final NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -87,6 +93,8 @@ public class TransactionMenuController implements Initializable {
         btnViewRates.setOnAction(e -> openMetalRatesDialog()); // Same dialog for now
         btnStockEntry.setOnAction(e -> openStockEntryDialog());
         btnViewStock.setOnAction(e -> openStockEntryDialog()); // Same dialog for now
+        btnCustomerPayment.setOnAction(e -> openCustomerPaymentDialog());
+        btnViewCustomerPayments.setOnAction(e -> openViewCustomerPaymentsDialog());
 
         // Load statistics on initialization
         Platform.runLater(this::loadStatistics);
@@ -281,6 +289,73 @@ public class TransactionMenuController implements Initializable {
 
         } catch (Exception e) {
             LOG.error("Error opening stock entry dialog: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void openCustomerPaymentDialog() {
+        LOG.info("Opening Customer Payment dialog");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+
+            // Load the FXML and get both the root and controller
+            Map.Entry<Parent, CustomerPaymentController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.CUSTOMER_PAYMENT.getFxmlFile(), CustomerPaymentController.class);
+
+            Parent root = entry.getKey();
+            CustomerPaymentController controller = entry.getValue();
+
+            // Set up the dialog stage in controller
+            controller.setDialogStage(dialog);
+
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("Customer Payment Receipt - Gurukrupa Jewelry");
+            dialog.setResizable(true);
+            dialog.setMaximized(true); // Open maximized for better visibility
+
+            // Show the dialog
+            dialog.show();
+
+            // Refresh statistics when dialog is closed
+            dialog.setOnHidden(event -> loadStatistics());
+
+            LOG.info("Customer Payment dialog opened successfully");
+
+        } catch (Exception e) {
+            LOG.error("Error opening customer payment dialog: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void openViewCustomerPaymentsDialog() {
+        LOG.info("Opening View Customer Payments dialog");
+        try {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(stageManager.getPrimaryStage());
+
+            // Load the FXML and get both the root and controller
+            Map.Entry<Parent, ViewCustomerPaymentsController> entry = stageManager.getSpringFXMLLoader()
+                    .loadWithController(FxmlView.VIEW_CUSTOMER_PAYMENTS.getFxmlFile(), ViewCustomerPaymentsController.class);
+
+            Parent root = entry.getKey();
+
+            // Set up the dialog
+            dialog.setScene(new Scene(root));
+            dialog.setTitle("View Customer Payments - Gurukrupa Jewelry");
+            dialog.setResizable(true);
+            dialog.setMaximized(true);
+
+            // Show the dialog
+            dialog.show();
+
+            LOG.info("View Customer Payments dialog opened successfully");
+
+        } catch (Exception e) {
+            LOG.error("Error opening view customer payments dialog: {}", e.getMessage());
             e.printStackTrace();
         }
     }

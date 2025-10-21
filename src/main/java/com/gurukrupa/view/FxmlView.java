@@ -214,6 +214,46 @@ public enum FxmlView {
             return "/fxml/purchase/PurchaseInvoiceFrame.fxml";
         }
     },
+    SUPPLIER_PAYMENT {
+        @Override
+        String getTitle() {
+            return "Supplier Payment Receipt";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/purchase/SupplierPaymentFrame.fxml";
+        }
+    },
+    VIEW_SUPPLIER_PAYMENTS {
+        @Override
+        String getTitle() {
+            return "View Supplier Payments";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/purchase/ViewSupplierPayments.fxml";
+        }
+    },
+    CUSTOMER_PAYMENT {
+        @Override
+        String getTitle() {
+            return "Customer Payment Receipt";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/transaction/CustomerPaymentFrame.fxml";
+        }
+    },
+    VIEW_CUSTOMER_PAYMENTS {
+        @Override
+        String getTitle() {
+            return "View Customer Payments";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/transaction/ViewCustomerPayments.fxml";
+        }
+    },
     STOCK_ENTRY {
         @Override
         String getTitle() {

@@ -220,6 +220,18 @@
                                   style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
                      </VBox>
 
+                     <VBox spacing="6.0" prefWidth="150.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="CHARGE TYPE" />
+                        <ComboBox fx:id="cmbPurchaseChargeType" maxWidth="Infinity" promptText="Select Charge"
+                                 style="-fx-background-color: white; -fx-background-radius: 6; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-padding: 6; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
+                     <VBox spacing="6.0" prefWidth="130.0">
+                        <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #616161;" text="CHARGE AMOUNT" />
+                        <TextField fx:id="txtPurchaseChargeAmount" text="0.00"
+                                  style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-border-color: #BDBDBD; -fx-border-radius: 6; -fx-border-width: 1.5;" />
+                     </VBox>
+
                      <VBox spacing="6.0" prefWidth="180.0">
                         <Label style="-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 11px; -fx-text-fill: #1976D2;" text="TOTAL AMOUNT" />
                         <TextField fx:id="txtPurchaseAmount" editable="false" promptText="₹ 0.00"
@@ -267,14 +279,16 @@
 
                   <TableView fx:id="purchaseMetalTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 6; -fx-font-size: 14px;">
                      <columns>
-                        <TableColumn fx:id="colPurchaseSno" prefWidth="50.0" text="#" style="-fx-alignment: CENTER;" />
-                        <TableColumn fx:id="colPurchaseMetalType" prefWidth="140.0" text="Metal Type" />
-                        <TableColumn fx:id="colPurchasePurity" prefWidth="90.0" text="Purity" style="-fx-alignment: CENTER;" />
-                        <TableColumn fx:id="colPurchaseGrossWeight" prefWidth="130.0" text="Gross Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
-                        <TableColumn fx:id="colPurchaseSellerPct" prefWidth="110.0" text="Seller %" style="-fx-alignment: CENTER-RIGHT;" />
-                        <TableColumn fx:id="colPurchaseNetWeight" prefWidth="130.0" text="Net Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
-                        <TableColumn fx:id="colPurchaseRate" prefWidth="130.0" text="Rate/10g" style="-fx-alignment: CENTER-RIGHT;" />
-                        <TableColumn fx:id="colPurchaseAmount" prefWidth="160.0" text="Amount" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseSno" prefWidth="40.0" text="#" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colPurchaseMetalType" prefWidth="120.0" text="Metal Type" />
+                        <TableColumn fx:id="colPurchasePurity" prefWidth="80.0" text="Purity" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colPurchaseGrossWeight" prefWidth="110.0" text="Gross Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseSellerPct" prefWidth="90.0" text="Seller %" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseNetWeight" prefWidth="110.0" text="Net Wt (g)" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseRate" prefWidth="110.0" text="Rate/10g" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseChargeType" prefWidth="120.0" text="Charge Type" style="-fx-alignment: CENTER;" />
+                        <TableColumn fx:id="colPurchaseChargeAmount" prefWidth="110.0" text="Charge Amt" style="-fx-alignment: CENTER-RIGHT;" />
+                        <TableColumn fx:id="colPurchaseAmount" prefWidth="140.0" text="Total Amount" style="-fx-alignment: CENTER-RIGHT;" />
                      </columns>
                   </TableView>
                </VBox>
