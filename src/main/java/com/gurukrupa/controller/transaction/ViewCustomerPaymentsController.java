@@ -114,7 +114,7 @@ public class ViewCustomerPaymentsController implements Initializable {
             new StringConverter<>() {
                 @Override
                 public String toString(Customer customer) {
-                    return customer == null ? "" : customer.getFullname();
+                    return customer == null ? "" : customer.getCustomerFullName();
                 }
 
                 @Override
@@ -123,7 +123,7 @@ public class ViewCustomerPaymentsController implements Initializable {
                 }
             },
             searchText -> customers.stream()
-                .filter(customer -> customer.getFullname().toLowerCase().contains(searchText.toLowerCase()) ||
+                .filter(customer -> customer.getCustomerFullName().toLowerCase().contains(searchText.toLowerCase()) ||
                                   (customer.getMobile() != null && customer.getMobile().contains(searchText)))
                 .toList()
         );
@@ -136,15 +136,15 @@ public class ViewCustomerPaymentsController implements Initializable {
             javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(2);
             vbox.setStyle("-fx-padding: 4;");
 
-            Label nameLabel = new Label(customer.getFullname());
+            Label nameLabel = new Label(customer.getCustomerFullName());
             nameLabel.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px;");
 
             String details = "";
             if (customer.getMobile() != null && !customer.getMobile().isEmpty()) {
                 details = customer.getMobile();
             }
-            if (customer.getAddress() != null && !customer.getAddress().isEmpty()) {
-                details += (details.isEmpty() ? "" : " • ") + customer.getAddress();
+            if (customer.getCustomerAddress() != null && !customer.getCustomerAddress().isEmpty()) {
+                details += (details.isEmpty() ? "" : " • ") + customer.getCustomerAddress();
             }
 
             if (!details.isEmpty()) {
@@ -177,7 +177,7 @@ public class ViewCustomerPaymentsController implements Initializable {
 
         colCustomer.setCellValueFactory(cellData ->
             new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getCustomer().getFullname()));
+                cellData.getValue().getCustomer().getCustomerFullName()));
 
         colAmount.setCellValueFactory(cellData ->
             new javafx.beans.property.SimpleStringProperty(
@@ -313,7 +313,7 @@ public class ViewCustomerPaymentsController implements Initializable {
         details.append("═══════════════════════════════════════\n\n");
         details.append("Receipt Number: ").append(selected.getReceiptNumber()).append("\n\n");
         details.append("---  Payment Information  ---\n");
-        details.append("Customer: ").append(selected.getCustomer().getFullname()).append("\n");
+        details.append("Customer: ").append(selected.getCustomer().getCustomerFullName()).append("\n");
         details.append("Date: ").append(selected.getPaymentDate().format(DATETIME_FORMATTER)).append("\n");
         details.append("Amount Received: ").append(CurrencyFormatter.format(selected.getPaymentAmount())).append("\n\n");
         details.append("---  Transaction Details  ---\n");
@@ -363,12 +363,12 @@ public class ViewCustomerPaymentsController implements Initializable {
             receipt.append("─────────────────────────────────────────────────────────────\n");
             receipt.append("CUSTOMER DETAILS\n");
             receipt.append("─────────────────────────────────────────────────────────────\n");
-            receipt.append("Name: ").append(selected.getCustomer().getFullname()).append("\n");
+            receipt.append("Name: ").append(selected.getCustomer().getCustomerFullName()).append("\n");
             if (selected.getCustomer().getMobile() != null) {
                 receipt.append("Mobile: ").append(selected.getCustomer().getMobile()).append("\n");
             }
-            if (selected.getCustomer().getAddress() != null) {
-                receipt.append("Address: ").append(selected.getCustomer().getAddress()).append("\n");
+            if (selected.getCustomer().getCustomerAddress() != null) {
+                receipt.append("Address: ").append(selected.getCustomer().getCustomerAddress()).append("\n");
             }
             receipt.append("\n");
             receipt.append("─────────────────────────────────────────────────────────────\n");

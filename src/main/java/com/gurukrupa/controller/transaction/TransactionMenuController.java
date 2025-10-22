@@ -294,68 +294,43 @@ public class TransactionMenuController implements Initializable {
     }
 
     private void openCustomerPaymentDialog() {
-        LOG.info("Opening Customer Payment dialog");
+        LOG.info("Opening Customer Payment screen in center");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard BorderPane
+            javafx.scene.layout.BorderPane dashboard = (javafx.scene.layout.BorderPane) btnBilling.getScene().getRoot();
 
-            // Load the FXML and get both the root and controller
-            Map.Entry<Parent, CustomerPaymentController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.CUSTOMER_PAYMENT.getFxmlFile(), CustomerPaymentController.class);
+            // Load the Customer Payment view
+            Parent customerPaymentView = stageManager.getSpringFXMLLoader()
+                    .load(FxmlView.CUSTOMER_PAYMENT.getFxmlFile());
 
-            Parent root = entry.getKey();
-            CustomerPaymentController controller = entry.getValue();
+            // Set the view in the center of the dashboard
+            dashboard.setCenter(customerPaymentView);
 
-            // Set up the dialog stage in controller
-            controller.setDialogStage(dialog);
-
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("Customer Payment Receipt - Gurukrupa Jewelry");
-            dialog.setResizable(true);
-            dialog.setMaximized(true); // Open maximized for better visibility
-
-            // Show the dialog
-            dialog.show();
-
-            // Refresh statistics when dialog is closed
-            dialog.setOnHidden(event -> loadStatistics());
-
-            LOG.info("Customer Payment dialog opened successfully");
+            LOG.info("Customer Payment screen opened successfully in center");
 
         } catch (Exception e) {
-            LOG.error("Error opening customer payment dialog: {}", e.getMessage());
+            LOG.error("Error opening customer payment screen: {}", e.getMessage());
             e.printStackTrace();
         }
     }
 
     private void openViewCustomerPaymentsDialog() {
-        LOG.info("Opening View Customer Payments dialog");
+        LOG.info("Opening View Customer Payments screen in center");
         try {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stageManager.getPrimaryStage());
+            // Get the dashboard BorderPane
+            javafx.scene.layout.BorderPane dashboard = (javafx.scene.layout.BorderPane) btnBilling.getScene().getRoot();
 
-            // Load the FXML and get both the root and controller
-            Map.Entry<Parent, ViewCustomerPaymentsController> entry = stageManager.getSpringFXMLLoader()
-                    .loadWithController(FxmlView.VIEW_CUSTOMER_PAYMENTS.getFxmlFile(), ViewCustomerPaymentsController.class);
+            // Load the View Customer Payments view
+            Parent viewPaymentsView = stageManager.getSpringFXMLLoader()
+                    .load(FxmlView.VIEW_CUSTOMER_PAYMENTS.getFxmlFile());
 
-            Parent root = entry.getKey();
+            // Set the view in the center of the dashboard
+            dashboard.setCenter(viewPaymentsView);
 
-            // Set up the dialog
-            dialog.setScene(new Scene(root));
-            dialog.setTitle("View Customer Payments - Gurukrupa Jewelry");
-            dialog.setResizable(true);
-            dialog.setMaximized(true);
-
-            // Show the dialog
-            dialog.show();
-
-            LOG.info("View Customer Payments dialog opened successfully");
+            LOG.info("View Customer Payments screen opened successfully in center");
 
         } catch (Exception e) {
-            LOG.error("Error opening view customer payments dialog: {}", e.getMessage());
+            LOG.error("Error opening view customer payments screen: {}", e.getMessage());
             e.printStackTrace();
         }
     }

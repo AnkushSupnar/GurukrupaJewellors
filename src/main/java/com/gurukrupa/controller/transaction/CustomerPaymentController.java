@@ -41,7 +41,7 @@ public class CustomerPaymentController implements Initializable {
     // Header
     @FXML private Button btnBack;
     @FXML private Label lblReceiptNumber;
-    @FXML private TextField txtPaymentDate;
+    @FXML private DatePicker datePaymentDate;
     @FXML private HBox customerSearchContainer;
 
     // Pending Amount Display
@@ -84,7 +84,7 @@ public class CustomerPaymentController implements Initializable {
     @Autowired private CustomerPaymentService customerPaymentService;
     @Autowired private CustomerService customerService;
     @Autowired private BankAccountService bankAccountService;
-    @Autowired private BillingService billingService;
+    @Autowired private BillService billService;
     @Autowired private AlertNotification alertNotification;
 
     @Autowired
@@ -104,6 +104,7 @@ public class CustomerPaymentController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         LOG.info("Initializing Customer Payment Controller");
 
+        setupDatePicker();
         setupCustomerSearch();
         setupComboBoxes();
         setupPaymentHistoryList();
@@ -111,6 +112,28 @@ public class CustomerPaymentController implements Initializable {
         loadInitialData();
 
         LOG.info("Customer Payment Controller initialized successfully");
+    }
+
+    /**
+     * Setup date picker with proper format
+     */
+    private void setupDatePicker() {
+        // Set date format for the payment date picker
+        datePaymentDate.setConverter(new StringConverter<LocalDate>() {
+            final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+            @Override
+            public String toString(LocalDate date) {
+                return (date != null) ? dateFormatter.format(date) : "";
+            }
+
+            @Override
+            public LocalDate fromString(String string) {
+                return (string != null && !string.isEmpty())
+                    ? LocalDate.parse(string, dateFormatter)
+                    : null;
+            }
+        });
     }
 
     /**
@@ -122,7 +145,7 @@ public class CustomerPaymentController implements Initializable {
             new StringConverter<>() {
                 @Override
                 public String toString(Customer customer) {
-                    return customer == null ? "" : customer.getFullname();
+                    return customer == null ? "" : customer.getCustomerFullName();
                 }
 
                 @Override
@@ -131,7 +154,7 @@ public class CustomerPaymentController implements Initializable {
                 }
             },
             searchText -> customers.stream()
-                .filter(customer -> customer.getFullname().toLowerCase().contains(searchText.toLowerCase()) ||
+                .filter(customer -> customer.getCustomerFullName().toLowerCase().contains(searchText.toLowerCase()) ||
                                   (customer.getMobile() != null && customer.getMobile().contains(searchText)))
                 .toList()
         );
@@ -144,15 +167,15 @@ public class CustomerPaymentController implements Initializable {
             javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(2);
             vbox.setStyle("-fx-padding: 4;");
 
-            Label nameLabel = new Label(customer.getFullname());
+            Label nameLabel = new Label(customer.getCustomerFullName());
             nameLabel.setStyle("-fx-font-family: 'Segoe UI Semibold'; -fx-font-size: 13px;");
 
             String details = "";
             if (customer.getMobile() != null && !customer.getMobile().isEmpty()) {
                 details = customer.getMobile();
             }
-            if (customer.getAddress() != null && !customer.getAddress().isEmpty()) {
-                details += (details.isEmpty() ? "" : " • ") + customer.getAddress();
+            if (customer.getCustomerAddress() != null && !customer.getCustomerAddress().isEmpty()) {
+                details += (details.isEmpty() ? "" : " • ") + customer.getCustomerAddress();
             }
 
             if (!details.isEmpty()) {
@@ -285,7 +308,7 @@ public class CustomerPaymentController implements Initializable {
 
         colCustomerName.setCellValueFactory(cellData ->
             new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getCustomer().getFullname()));
+                cellData.getValue().getCustomer().getCustomerFullName()));
 
         colPaymentAmount.setCellValueFactory(cellData ->
             new javafx.beans.property.SimpleStringProperty(
@@ -337,8 +360,8 @@ public class CustomerPaymentController implements Initializable {
                 List<BankAccount> accountList = bankAccountService.getAllActiveBankAccounts();
                 bankAccounts.setAll(accountList);
 
-                // Set payment date
-                txtPaymentDate.setText(LocalDateTime.now().format(DATE_FORMATTER));
+                // Set payment date to current date
+                datePaymentDate.setValue(LocalDate.now());
 
                 // Generate receipt number
                 lblReceiptNumber.setText("Receipt #: " + customerPaymentService.generateReceiptNumber());
@@ -373,10 +396,10 @@ public class CustomerPaymentController implements Initializable {
 
             alertNotification.showSuccess(
                 "Customer data loaded successfully!\n\n" +
-                "Customer: " + selectedCustomer.getFullname()
+                "Customer: " + selectedCustomer.getCustomerFullName()
             );
 
-            LOG.info("Loaded data for customer: {}", selectedCustomer.getFullname());
+            LOG.info("Loaded data for customer: {}", selectedCustomer.getCustomerFullName());
 
         } catch (Exception e) {
             LOG.error("Error loading customer data", e);
@@ -409,6 +432,11 @@ public class CustomerPaymentController implements Initializable {
             // Validate inputs
             if (customerSearch.getSelectedItem() == null) {
                 alertNotification.showError("Please select a customer");
+                return;
+            }
+
+            if (datePaymentDate.getValue() == null) {
+                alertNotification.showError("Please select payment date");
                 return;
             }
 
@@ -455,14 +483,15 @@ public class CustomerPaymentController implements Initializable {
                 paymentAmount,
                 CustomerPayment.PaymentMode.valueOf(cmbPaymentMode.getValue()),
                 txtTransactionRef.getText(),
-                txtNotes.getText()
+                txtNotes.getText(),
+                datePaymentDate.getValue()
             );
 
             alertNotification.showSuccess(
                 "Payment received successfully!\n\n" +
                 "Receipt #: " + payment.getReceiptNumber() + "\n" +
                 "Amount: " + CurrencyFormatter.format(payment.getPaymentAmount()) + "\n" +
-                "Customer: " + payment.getCustomer().getFullname()
+                "Customer: " + payment.getCustomer().getCustomerFullName()
             );
 
             LOG.info("Payment saved: {}", payment.getReceiptNumber());
@@ -491,6 +520,7 @@ public class CustomerPaymentController implements Initializable {
     @FXML
     private void handleClearForm() {
         customerSearch.clear();
+        datePaymentDate.setValue(LocalDate.now());
         txtPaymentAmount.clear();
         cmbBankAccount.setValue(null);
         cmbPaymentMode.setValue(null);
@@ -511,7 +541,7 @@ public class CustomerPaymentController implements Initializable {
         }
 
         try {
-            List<Billing> pendingBills = customerPaymentService
+            List<Bill> pendingBills = customerPaymentService
                 .getCustomerPendingBills(customerSearch.getSelectedItem().getId());
 
             if (pendingBills.isEmpty()) {
@@ -521,11 +551,11 @@ public class CustomerPaymentController implements Initializable {
 
             StringBuilder details = new StringBuilder();
             details.append("Pending Bills for: ")
-                   .append(customerSearch.getSelectedItem().getFullname())
+                   .append(customerSearch.getSelectedItem().getCustomerFullName())
                    .append("\n\n");
 
-            for (Billing bill : pendingBills) {
-                details.append("Bill: ").append(bill.getBillNo())
+            for (Bill bill : pendingBills) {
+                details.append("Bill: ").append(bill.getBillNumber())
                        .append("\nDate: ").append(bill.getBillDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
                        .append("\nGrand Total: ").append(CurrencyFormatter.format(bill.getGrandTotal()))
                        .append("\nPaid: ").append(CurrencyFormatter.format(bill.getPaidAmount()))
@@ -596,7 +626,7 @@ public class CustomerPaymentController implements Initializable {
         details.append("═══════════════════════════════════════\n\n");
         details.append("Receipt Number: ").append(selected.getReceiptNumber()).append("\n\n");
         details.append("---  Payment Information  ---\n");
-        details.append("Customer: ").append(selected.getCustomer().getFullname()).append("\n");
+        details.append("Customer: ").append(selected.getCustomer().getCustomerFullName()).append("\n");
         details.append("Date: ").append(selected.getPaymentDate().format(DATE_FORMATTER)).append("\n");
         details.append("Amount Received: ").append(CurrencyFormatter.format(selected.getPaymentAmount())).append("\n\n");
         details.append("---  Transaction Details  ---\n");
@@ -646,12 +676,12 @@ public class CustomerPaymentController implements Initializable {
             receipt.append("─────────────────────────────────────────────────────────────\n");
             receipt.append("CUSTOMER DETAILS\n");
             receipt.append("─────────────────────────────────────────────────────────────\n");
-            receipt.append("Name: ").append(selected.getCustomer().getFullname()).append("\n");
+            receipt.append("Name: ").append(selected.getCustomer().getCustomerFullName()).append("\n");
             if (selected.getCustomer().getMobile() != null) {
                 receipt.append("Mobile: ").append(selected.getCustomer().getMobile()).append("\n");
             }
-            if (selected.getCustomer().getAddress() != null) {
-                receipt.append("Address: ").append(selected.getCustomer().getAddress()).append("\n");
+            if (selected.getCustomer().getCustomerAddress() != null) {
+                receipt.append("Address: ").append(selected.getCustomer().getCustomerAddress()).append("\n");
             }
             receipt.append("\n");
             receipt.append("─────────────────────────────────────────────────────────────\n");
@@ -715,7 +745,7 @@ public class CustomerPaymentController implements Initializable {
     private void loadCustomerPendingDetails(Customer customer) {
         try {
             BigDecimal pendingAmount = customerPaymentService.getCustomerPendingAmount(customer.getId());
-            List<Billing> pendingBills = customerPaymentService.getCustomerPendingBills(customer.getId());
+            List<Bill> pendingBills = customerPaymentService.getCustomerPendingBills(customer.getId());
 
             lblTotalPending.setText(CurrencyFormatter.format(pendingAmount));
             lblPendingBillsCount.setText(String.valueOf(pendingBills.size()));

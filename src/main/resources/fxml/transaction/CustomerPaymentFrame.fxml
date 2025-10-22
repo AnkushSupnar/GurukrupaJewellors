@@ -90,8 +90,8 @@
                         <VBox spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 4, 0, 0, 1); -fx-padding: 10;" HBox.hgrow="ALWAYS">
                            <children>
                               <Label style="-fx-text-fill: #212121; -fx-font-weight: 600; -fx-font-size: 13px; -fx-font-family: 'Segoe UI';" text="Payment Date" />
-                              <TextField fx:id="txtPaymentDate" editable="false" maxWidth="Infinity"
-                                        style="-fx-background-color: #F5F5F5; -fx-background-radius: 4; -fx-padding: 8; -fx-font-size: 13px; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
+                              <DatePicker fx:id="datePaymentDate" maxWidth="Infinity"
+                                        style="-fx-background-color: #FFFFFF; -fx-background-radius: 4; -fx-font-size: 13px; -fx-border-color: #E0E0E0; -fx-border-radius: 4; -fx-border-width: 1; -fx-font-family: 'Segoe UI';" />
                            </children>
                         </VBox>
                         <VBox spacing="6.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 4, 0, 0, 1); -fx-padding: 10;" HBox.hgrow="ALWAYS">

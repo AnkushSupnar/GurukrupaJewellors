@@ -293,6 +293,16 @@ public enum FxmlView {
         public String getFxmlFile() {
             return "/fxml/report/CustomerReport.fxml";
         }
+    },
+    TRANSACTION_MENU {
+        @Override
+        String getTitle() {
+            return "Transaction Menu";
+        }
+        @Override
+        public String getFxmlFile() {
+            return "/fxml/transaction/TransactionMenu.fxml";
+        }
     }
     ;
     abstract String getTitle();

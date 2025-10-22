@@ -3,7 +3,7 @@ package com.gurukrupa.data.service;
 import com.gurukrupa.data.entities.*;
 import com.gurukrupa.data.repository.BankAccountRepository;
 import com.gurukrupa.data.repository.BankTransactionRepository;
-import com.gurukrupa.data.repository.BillingRepository;
+import com.gurukrupa.data.repository.BillRepository;
 import com.gurukrupa.data.repository.CustomerPaymentRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public class CustomerPaymentService {
     private CustomerPaymentRepository customerPaymentRepository;
 
     @Autowired
-    private BillingRepository billingRepository;
+    private BillRepository billRepository;
 
     @Autowired
     private BankAccountRepository bankAccountRepository;
@@ -64,9 +64,9 @@ public class CustomerPaymentService {
      */
     @Transactional
     public BigDecimal getCustomerPendingAmount(Long customerId) {
-        List<Billing> pendingBills = getCustomerPendingBills(customerId);
+        List<Bill> pendingBills = getCustomerPendingBills(customerId);
         return pendingBills.stream()
-                .map(Billing::getPendingAmount)
+                .map(Bill::getPendingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -74,8 +74,8 @@ public class CustomerPaymentService {
      * Get list of pending bills for a customer
      */
     @Transactional
-    public List<Billing> getCustomerPendingBills(Long customerId) {
-        return billingRepository.findByCustomerIdOrderByBillDateDesc(customerId).stream()
+    public List<Bill> getCustomerPendingBills(Long customerId) {
+        return billRepository.findByCustomerIdOrderByBillDateDesc(customerId).stream()
                 .filter(bill -> bill.getPendingAmount() != null &&
                                bill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0)
                 .toList();
@@ -91,10 +91,14 @@ public class CustomerPaymentService {
             BigDecimal paymentAmount,
             CustomerPayment.PaymentMode paymentMode,
             String transactionReference,
-            String notes) {
+            String notes,
+            java.time.LocalDate paymentDate) {
 
-        LOG.info("Recording customer payment: Customer={}, Amount={}, Mode={}",
-                customer.getFullname(), paymentAmount, paymentMode);
+        LOG.info("Recording customer payment: Customer={}, Amount={}, Mode={}, Date={}",
+                customer.getCustomerFullName(), paymentAmount, paymentMode, paymentDate);
+
+        // Convert LocalDate to LocalDateTime (using current time)
+        LocalDateTime paymentDateTime = paymentDate.atTime(java.time.LocalTime.now());
 
         // Get pending amounts
         BigDecimal previousPending = getCustomerPendingAmount(customer.getId());
@@ -103,12 +107,14 @@ public class CustomerPaymentService {
         // Create bank transaction (CREDIT - money coming in)
         BankTransaction bankTransaction = BankTransaction.builder()
                 .bankAccount(bankAccount)
-                .transactionDate(LocalDateTime.now())
+                .transactionDate(paymentDateTime)
                 .transactionType(BankTransaction.TransactionType.CREDIT)
+                .source(BankTransaction.TransactionSource.BILL_PAYMENT)
                 .amount(paymentAmount)
-                .description("Payment received from customer: " + customer.getFullname())
-                .reference(transactionReference)
-                .balanceAfter(bankAccount.getCurrentBalance().add(paymentAmount))
+                .description("Payment received from customer: " + customer.getCustomerFullName())
+                .transactionReference(transactionReference)
+                .party(customer.getCustomerFullName())
+                .balanceAfterTransaction(bankAccount.getCurrentBalance().add(paymentAmount))
                 .build();
 
         bankTransaction = bankTransactionRepository.save(bankTransaction);
@@ -121,7 +127,7 @@ public class CustomerPaymentService {
         CustomerPayment payment = CustomerPayment.builder()
                 .receiptNumber(generateReceiptNumber())
                 .customer(customer)
-                .paymentDate(LocalDateTime.now())
+                .paymentDate(paymentDateTime)
                 .paymentAmount(paymentAmount)
                 .bankAccount(bankAccount)
                 .bankTransaction(bankTransaction)
@@ -147,7 +153,7 @@ public class CustomerPaymentService {
      * Allocate payment to pending bills (oldest first - FIFO)
      */
     private void allocatePaymentToBills(Long customerId, BigDecimal paymentAmount) {
-        List<Billing> pendingBills = billingRepository.findByCustomerIdOrderByBillDateDesc(customerId).stream()
+        List<Bill> pendingBills = billRepository.findByCustomerIdOrderByBillDateDesc(customerId).stream()
                 .filter(bill -> bill.getPendingAmount() != null &&
                                bill.getPendingAmount().compareTo(BigDecimal.ZERO) > 0)
                 .sorted((b1, b2) -> b1.getBillDate().compareTo(b2.getBillDate())) // Oldest first
@@ -155,7 +161,7 @@ public class CustomerPaymentService {
 
         BigDecimal remainingPayment = paymentAmount;
 
-        for (Billing bill : pendingBills) {
+        for (Bill bill : pendingBills) {
             if (remainingPayment.compareTo(BigDecimal.ZERO) <= 0) {
                 break;
             }
@@ -178,12 +184,12 @@ public class CustomerPaymentService {
                     bill.getPaidAmount() : BigDecimal.ZERO;
             bill.setPaidAmount(currentPaid.add(paymentForThisBill));
 
-            billingRepository.save(bill);
+            billRepository.save(bill);
 
             remainingPayment = remainingPayment.subtract(paymentForThisBill);
 
             LOG.info("Allocated {} to bill {}, Remaining pending: {}",
-                    paymentForThisBill, bill.getBillNo(), bill.getPendingAmount());
+                    paymentForThisBill, bill.getBillNumber(), bill.getPendingAmount());
         }
     }
 
